@@ -185,6 +185,25 @@ input[type=range]:focus { outline: none; }
 
 /* ── Map center ── */
 .map-wrap { position: relative; overflow: hidden; background: #FFFFFF; }
+  #leaflet-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+#map-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;  /* let clicks pass through to Leaflet for panning */
+}
+/* Re-enable pointer events just on the ZIP paths so hovering/clicking still works */
+.zip-path {
+  pointer-events: all;
+}
 #map-svg { width: 100%; height: 100%; display: block; }
 .county-path, .zip-path { stroke: rgba(255,255,255,0.6); stroke-width: 0.6; cursor: pointer; transition: opacity .12s, stroke .12s; }
 .county-path:hover, .zip-path:hover { stroke: var(--navy); stroke-width: 2; opacity: .85; }
@@ -513,6 +532,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
     <!-- MAP CENTER -->
     <main class="map-wrap" id="map-container">
+      <div id="leaflet-map"></div>
       <svg id="map-svg" role="img" aria-label="ZIP code choropleth map"></svg>
       <div class="no-community-msg" id="no-community">
         <div class="big-icon">🏘</div>
@@ -633,6 +653,8 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
 </div><!-- .app -->
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -740,6 +762,7 @@ function generateZIPs(community) {
 /* ════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════ */
+let leafletMap = null;
 let layers = { income:true, age:true, outline:true, labels:true };
 let thresholds = { fair:15, income:40, age:30 };
 let hlMode = 3;
@@ -817,103 +840,181 @@ function drawZipMap(features) {
   const zipLookup = {};
   currentZipData.forEach(d => { zipLookup[d.zip] = d; });
 
-const proj = d3.geoIdentity().reflectY(true).fitSize([W - 40, H - 40], { type:'FeatureCollection', features });
-const pathGen = d3.geoPath(proj);
+/* ── Initialize or reuse Leaflet ── */
+const wrap = document.getElementById('map-container');
 
-  const colorScale = makeColorScale(choroMetric, currentZipData);
+// Fit bounds from features to find center
+const allCoords = [];
+features.forEach(f => {
+  const b = d3.geoPath().bounds(f);  // using identity bounds
+  // Instead derive from Leaflet-style: use feature centroids
+});
 
-  const g = svg.append('g').attr('id','map-g');
+// Use the GeoJSON bbox to set initial view
+const collection = { type: 'FeatureCollection', features };
 
-  /* Background */
-  g.append('rect').attr('width', W).attr('height', H).attr('fill','#B8D0E4');
+if (!leafletMap) {
+  leafletMap = L.map('leaflet-map', { zoomControl: false });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(leafletMap);
+}
 
-  /* ZIP fills — we color by risk score using index position
-     since we can't perfectly match real zips to topojson,
-     we color them by sequential assignment to our data */
-  const dataArr = [...currentZipData];
-  features.forEach((feat, i) => {
-    const cd = dataArr[i % dataArr.length]; // cycle through data
-    feat._data = cd;
-  });
+// Fit map to the ZIP features' bounding box
+const tempLayer = L.geoJSON(collection);
+leafletMap.fitBounds(tempLayer.getBounds(), { padding: [20, 20] });
 
-  const paths = g.selectAll('.zip-path')
-    .data(features)
+/* ── D3 overlay that re-projects on every map move ── */
+const svg = d3.select('#map-svg');
+svg.selectAll('*').remove();
+const g = svg.append('g').attr('id', 'map-g');
+
+function projectPoint(lon, lat) {
+  const pt = leafletMap.latLngToLayerPoint(L.latLng(lat, lon));
+  return [pt.x, pt.y];
+}
+
+function projectFeature(d) {
+  // Build SVG path string from GeoJSON coordinates using Leaflet projection
+  const type = d.geometry.type;
+  function ringToPath(ring) {
+    return ring.map((pt, i) => {
+      const [x, y] = projectPoint(pt[0], pt[1]);
+      return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ') + 'Z';
+  }
+  if (type === 'Polygon') {
+    return d.geometry.coordinates.map(ringToPath).join(' ');
+  } else if (type === 'MultiPolygon') {
+    return d.geometry.coordinates.map(poly => poly.map(ringToPath).join(' ')).join(' ');
+  }
+  return '';
+}
+
+const colorScale = makeColorScale(choroMetric, currentZipData);
+
+function redraw() {
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  svg.attr('viewBox', `0 0 ${W} ${H}`);
+
+  // ZIP fills
+  g.selectAll('.zip-path')
+    .data(features, (d, i) => i)
     .join('path')
-    .attr('class','zip-path')
-    .attr('d', pathGen)
+    .attr('class', 'zip-path')
+    .attr('d', projectFeature)
     .attr('fill', d => d._data ? colorScale(getVal(d._data, choroMetric)) : '#ccc')
-    .on('mouseover', function(event, d) {
-      if (d._data) showTooltip(event, d._data);
-    })
+    .attr('fill-opacity', 0.65)   // semi-transparent so basemap shows through
+    .on('mouseover', function(event, d) { if (d._data) showTooltip(event, d._data); })
     .on('mousemove', moveTooltip)
     .on('mouseout', hideTooltip)
     .on('click', function(event, d) {
       if (!d._data) return;
       selectedZip = d._data.zip;
-      svg.selectAll('.zip-path').classed('selected', false);
+      g.selectAll('.zip-path').classed('selected', false);
       d3.select(this).classed('selected', true);
       selectZip(d._data);
       updateTopZips();
     });
 
-  /* High-risk outline */
+  // High-risk outlines
   if (layers.outline) {
     g.selectAll('.risk-outline')
       .data(features.filter(d => d._data && getRiskFactors(d._data) >= hlMode))
       .join('path')
-      .attr('class','risk-outline')
-      .attr('d', pathGen);
+      .attr('class', 'risk-outline')
+      .attr('d', projectFeature);
+  } else {
+    g.selectAll('.risk-outline').remove();
   }
 
-  /* Income dots */
+  // Income dots
+  g.selectAll('.inc-dot').remove();
   if (layers.income) {
     features.forEach(d => {
       if (!d._data || d._data.income < thresholds.income) return;
-      const c = pathGen.centroid(d);
-      if (!c || isNaN(c[0])) return;
-      g.append('circle').attr('cx', c[0]-5).attr('cy', c[1])
-        .attr('r', 3.5).attr('fill','#1B8E8E').attr('stroke','white').attr('stroke-width',0.8).style('pointer-events','none');
+      const c = d3.geoCentroid(d);
+      if (!c) return;
+      const [x, y] = projectPoint(c[0], c[1]);
+      g.append('circle').attr('class','inc-dot')
+        .attr('cx', x - 5).attr('cy', y)
+        .attr('r', 3.5).attr('fill','#1B8E8E').attr('stroke','white').attr('stroke-width',0.8)
+        .style('pointer-events','none');
     });
   }
 
-  /* Age dots */
+  // Age dots
+  g.selectAll('.age-dot').remove();
   if (layers.age) {
     features.forEach(d => {
       if (!d._data || d._data.pre60 < thresholds.age) return;
-      const c = pathGen.centroid(d);
-      if (!c || isNaN(c[0])) return;
-      g.append('circle').attr('cx', c[0]+5).attr('cy', c[1])
-        .attr('r', 3.5).attr('fill','#E07B2A').attr('stroke','white').attr('stroke-width',0.8).style('pointer-events','none');
+      const c = d3.geoCentroid(d);
+      if (!c) return;
+      const [x, y] = projectPoint(c[0], c[1]);
+      g.append('circle').attr('class','age-dot')
+        .attr('cx', x + 5).attr('cy', y)
+        .attr('r', 3.5).attr('fill','#E07B2A').attr('stroke','white').attr('stroke-width',0.8)
+        .style('pointer-events','none');
     });
   }
 
-  /* ZIP labels */
+  // ZIP labels
+  g.selectAll('.zip-label').remove();
   if (layers.labels) {
-    features.forEach((d, i) => {
+    features.forEach(d => {
       const cd = d._data;
       if (!cd) return;
-      const c = pathGen.centroid(d);
-      if (!c || isNaN(c[0])) return;
-      const bounds = pathGen.bounds(d);
-      if (!bounds) return;
-      const bw = bounds[1][0] - bounds[0][0];
-      if (bw < 18) return;
-      g.append('text')
-        .attr('class','zip-label')
-        .attr('x', c[0]).attr('y', c[1] + 3)
-        .attr('font-size', Math.min(9, Math.max(7, bw/8)))
+      const c = d3.geoCentroid(d);
+      if (!c) return;
+      const [x, y] = projectPoint(c[0], c[1]);
+      g.append('text').attr('class','zip-label')
+        .attr('x', x).attr('y', y + 3)
+        .attr('font-size', 9)
         .text(cd.zip);
     });
   }
 
-  /* Zoom */
-  const zoom = d3.zoom().scaleExtent([0.5, 14])
-    .on('zoom', e => g.attr('transform', e.transform));
-  svg.call(zoom);
-  document.getElementById('zoom-in').onclick  = () => svg.transition().call(zoom.scaleBy, 1.5);
-  document.getElementById('zoom-out').onclick = () => svg.transition().call(zoom.scaleBy, 0.67);
-  document.getElementById('zoom-reset').onclick = () => svg.transition().call(zoom.transform, d3.zoomIdentity);
+  // Community boundary
+  if (boundaryFeature) {
+    g.selectAll('.community-boundary').remove();
+    g.append('path')
+      .attr('class','community-boundary')
+      .attr('d', projectFeature.call(null, boundaryFeature))
+      .attr('fill', 'none')
+      .attr('stroke', '#0F1F3C')
+      .attr('stroke-width', 3)
+      .style('pointer-events','none');
+  }
+}
 
+leafletMap.off('move zoom').on('move zoom', redraw);
+redraw();
+
+// Wire zoom buttons to Leaflet instead of D3
+document.getElementById('zoom-in').onclick  = () => leafletMap.zoomIn();
+document.getElementById('zoom-out').onclick = () => leafletMap.zoomOut();
+document.getElementById('zoom-reset').onclick = () => {
+  leafletMap.fitBounds(tempLayer.getBounds(), { padding:[20,20] });
+};
+
+// Legend
+const grad = gradCSS(choroMetric);
+document.getElementById('legend-grad').style.background = grad;
+document.getElementById('legend-title').textContent = metricLabel(choroMetric);
+document.getElementById('sidebar-legend-ramp').style.background = grad;
+document.getElementById('sidebar-legend-label').textContent = metricLabel(choroMetric);
+document.getElementById('choro-legend').style.display = 'block';
+document.getElementById('leg-income').style.display = layers.income ? 'flex' : 'none';
+document.getElementById('leg-age').style.display    = layers.age    ? 'flex' : 'none';
+document.getElementById('leg-outline').style.display= layers.outline? 'flex' : 'none';
+
+updateMetrics();
+updateTopZips();
+document.getElementById('map-loading').style.display = 'none';
+  
   /* Legend */
   const grad = gradCSS(choroMetric);
   document.getElementById('legend-grad').style.background = grad;
