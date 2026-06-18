@@ -817,9 +817,8 @@ function drawZipMap(features) {
   const zipLookup = {};
   currentZipData.forEach(d => { zipLookup[d.zip] = d; });
 
-  const proj = d3.geoMercator().fitSize([W - 40, H - 40], { type:'FeatureCollection', features });
-  proj.translate([proj.translate()[0] + 20, proj.translate()[1] + 20]);
-  const pathGen = d3.geoPath(proj);
+const proj = d3.geoIdentity().reflectY(true).fitSize([W - 40, H - 40], { type:'FeatureCollection', features });
+const pathGen = d3.geoPath(proj);
 
   const colorScale = makeColorScale(choroMetric, currentZipData);
 
