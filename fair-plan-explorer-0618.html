@@ -650,7 +650,7 @@ const COMMUNITY_META = {
   santa_cruz:{ label:'Santa Cruz County',       fips:'06087', detail:'Central Coast · 271K population', region:'central_coast' },
   tulare:    { label:'Tulare County',           fips:'06107', detail:'San Joaquin Valley · 473K population', region:'valley' },
   tuolumne:  { label:'Tuolumne County',         fips:'06109', detail:'Sierra Nevada Foothills · 55K population', region:'sierra' },
-  hoopa:     { label:'Hoopa Valley Tribe',      fips:'06023', detail:'Northwestern California · Tribal Nation', region:'north' },
+  hoopa:     { label:'Hoopa Valley Tribe',      fips:'130821', detail:'Northwestern California · Tribal Nation', region:'north' },
 };
 
 /* Simulated ZIP code data per community */
@@ -740,6 +740,7 @@ function generateZIPs(community) {
 /* ════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════ */
+  let currentBoundary = null;
 let layers = { income:true, age:true, outline:true, labels:true };
 let thresholds = { fair:15, income:40, age:30 };
 let hlMode = 3;
@@ -802,7 +803,7 @@ function metricLabel(m) {
 /* ════════════════════════════════════════════
    MAP DRAWING — ZIP codes within county
 ════════════════════════════════════════════ */
-function drawZipMap(features) {
+function drawZipMap(features, boundaryFeature) {
   geoFeatures = features;
   const wrap = document.getElementById('map-container');
   const W = wrap.clientWidth || 700;
@@ -865,6 +866,18 @@ const pathGen = d3.geoPath(proj);
       .attr('d', pathGen);
   }
 
+/* Community boundary outline */
+if (boundaryFeature) {
+  g.append('path')
+    .datum(boundaryFeature)
+    .attr('d', pathGen)
+    .attr('fill', 'none')
+    .attr('stroke', '#0F1F3C')
+    .attr('stroke-width', 3)
+    .attr('stroke-dasharray', 'none')
+    .style('pointer-events', 'none');
+}
+  
   /* Income dots */
   if (layers.income) {
     features.forEach(d => {
@@ -1021,7 +1034,7 @@ function toggleLayer(name) {
   const colorMap = { income:'on-teal', age:'on-amber', outline:'on-red', labels:'on-navy' };
   const tog = document.getElementById('tog-'+name);
   tog.className = 'toggle' + (layers[name] ? ' ' + colorMap[name] : '');
-  if (geoFeatures && currentCommunity) drawZipMap(geoFeatures);
+  if (geoFeatures && currentCommunity) drawZipMap(geoFeatures, currentBoundary);
 }
 
 /* ════════════════════════════════════════════
@@ -1059,21 +1072,30 @@ function loadCommunityMap(communityKey) {
 }
 
 function renderCommunityFromFeatures(meta) {
-  fetch('./CA_ZIP_simple.json')
-    .then(r => r.json())
-    .then(data => {
-      const zipSet = new Set(currentZipData.map(d => d.zip));
-      const features = data.features.filter(f => zipSet.has(f.properties.ZIP_CODE));
-      const zipLookup = {};
-      currentZipData.forEach(d => { zipLookup[d.zip] = d; });
-      features.forEach(f => { f._data = zipLookup[f.properties.ZIP_CODE]; });
-      drawZipMap(features);
-    })
-    .catch(err => {
-      document.getElementById('map-loading').innerHTML =
-        `<span style="color:var(--red);font-size:12px;text-align:center;padding:20px;">
-        Could not load ZIP boundaries.<br>${err.message}</span>`;
-    });
+  Promise.all([
+    fetch('./CA_ZIP_simple.json').then(r => r.json()),
+    fetch('./Community_Outline.json').then(r => r.json())  // ← replace with your actual filename
+  ])
+  .then(([zipData, boundaryData]) => {
+    // Filter ZIPs to just this community
+    const zipSet = new Set(currentZipData.map(d => d.zip));
+    const features = zipData.features.filter(f => zipSet.has(f.properties.ZIP_CODE));
+    const zipLookup = {};
+    currentZipData.forEach(d => { zipLookup[d.zip] = d; });
+    features.forEach(f => { f._data = zipLookup[f.properties.ZIP_CODE]; });
+
+    // Find the matching boundary polygon
+    const boundaryFeature = boundaryData.features.find(
+      f => String(f.properties.fips) === String(meta.fips)  // ← adjust property name if needed
+    );
+    currentBoundary = boundaryFeature;
+    drawZipMap(features, boundaryFeature);
+  })
+  .catch(err => {
+    document.getElementById('map-loading').innerHTML =
+      `<span style="color:var(--red);font-size:12px;text-align:center;padding:20px;">
+      Could not load boundaries.<br>${err.message}</span>`;
+  });
 }
 
 /* 
@@ -1171,27 +1193,27 @@ document.getElementById('community-select').addEventListener('change', function(
 ════════════════════════════════════════════ */
 document.getElementById('choro-metric').addEventListener('change', function() {
   choroMetric = this.value;
-  if (geoFeatures) drawZipMap(geoFeatures);
+  if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
 });
 document.getElementById('sl-fair').addEventListener('input', function() {
   thresholds.fair = +this.value;
   document.getElementById('sv-fair').textContent = this.value + '%';
-  if (geoFeatures) drawZipMap(geoFeatures);
+  if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
 });
 document.getElementById('sl-income').addEventListener('input', function() {
   thresholds.income = +this.value;
   document.getElementById('sv-income').textContent = this.value + '%';
-  if (geoFeatures) drawZipMap(geoFeatures);
+  if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
 });
 document.getElementById('sl-age').addEventListener('input', function() {
   thresholds.age = +this.value;
   document.getElementById('sv-age').textContent = this.value + '%';
-  if (geoFeatures) drawZipMap(geoFeatures);
+  if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
 });
 document.querySelectorAll('input[name=hl]').forEach(r => {
   r.addEventListener('change', function() {
     hlMode = +this.value;
-    if (geoFeatures) drawZipMap(geoFeatures);
+    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
   });
 });
 
@@ -1433,33 +1455,33 @@ function wireLeftSidebar() {
   const cm = document.getElementById('choro-metric');
   if (cm) cm.addEventListener('change', function() {
     choroMetric = this.value;
-    if (geoFeatures) drawZipMap(geoFeatures);
+    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
   });
   const slFair = document.getElementById('sl-fair');
   if (slFair) slFair.addEventListener('input', function() {
     thresholds.fair = +this.value;
     document.getElementById('sv-fair').textContent = this.value + '%';
-    if (geoFeatures) drawZipMap(geoFeatures);
+    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
     updateMetrics(); updateTopZips();
   });
   const slInc = document.getElementById('sl-income');
   if (slInc) slInc.addEventListener('input', function() {
     thresholds.income = +this.value;
     document.getElementById('sv-income').textContent = this.value + '%';
-    if (geoFeatures) drawZipMap(geoFeatures);
+    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
     updateMetrics(); updateTopZips();
   });
   const slAge = document.getElementById('sl-age');
   if (slAge) slAge.addEventListener('input', function() {
     thresholds.age = +this.value;
     document.getElementById('sv-age').textContent = this.value + '%';
-    if (geoFeatures) drawZipMap(geoFeatures);
+    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
     updateMetrics(); updateTopZips();
   });
   document.querySelectorAll('input[name=hl]').forEach(r => {
     r.addEventListener('change', function() {
       hlMode = +this.value;
-      if (geoFeatures) drawZipMap(geoFeatures);
+      if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
     });
   });
 }
@@ -1751,7 +1773,7 @@ document.getElementById('export-svg').addEventListener('click', () => {
   a.click();
 });
 
-window.addEventListener('resize', () => { if (geoFeatures && currentCommunity) drawZipMap(geoFeatures); });
+window.addEventListener('resize', () => { if (geoFeatures && currentCommunity) drawZipMap(geoFeatures, currentBoundary); });
 
 /* ════════════════════════════════════════════
    INITIAL STATE — pre-load county topology silently
