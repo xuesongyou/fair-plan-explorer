@@ -1060,22 +1060,21 @@ function loadCommunityMap(communityKey) {
 }
 
 function renderCommunityFromFeatures(meta) {
-  /* Find county feature */
-  const countyFeat = allCountyFeatures.find(f =>
-    String(f.id).padStart(5,'0') === meta.fips
-  );
-
-  if (!countyFeat) {
-    document.getElementById('map-loading').innerHTML =
-      '<span style="color:var(--red);font-size:12px;text-align:center;padding:20px;">County not found in dataset.</span>';
-    return;
-  }
-
-  /* Subdivide the county bounding box into n cells to simulate ZIP codes */
-  const n = currentZipData.length;
-  const features = subdivideFeature(countyFeat, n);
-
-  drawZipMap(features);
+  fetch('./CA_ZIP_simple.json')
+    .then(r => r.json())
+    .then(data => {
+      const zipSet = new Set(currentZipData.map(d => d.zip));
+      const features = data.features.filter(f => zipSet.has(f.properties.ZIP_CODE));
+      const zipLookup = {};
+      currentZipData.forEach(d => { zipLookup[d.zip] = d; });
+      features.forEach(f => { f._data = zipLookup[f.properties.ZIP_CODE]; });
+      drawZipMap(features);
+    })
+    .catch(err => {
+      document.getElementById('map-loading').innerHTML =
+        `<span style="color:var(--red);font-size:12px;text-align:center;padding:20px;">
+        Could not load ZIP boundaries.<br>${err.message}</span>`;
+    });
 }
 
 /* 
