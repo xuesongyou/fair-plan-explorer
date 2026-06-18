@@ -994,8 +994,6 @@ function updateMetrics() {
 
 function updateTopZips() {
   const container = document.getElementById('top-zips');
-  if (!container) return;
-  const container = document.getElementById('top-zips');
   if (!currentZipData.length) {
     container.innerHTML = '<div class="empty-state"><div class="es-icon">📊</div><span>Select a community</span></div>';
     return;
@@ -1212,7 +1210,6 @@ function setView(v) {
   if (v === 'map') {
     /* Restore original layout */
     mainBody.innerHTML = `
-      rebuildRightSidebar();
       <aside class="sidebar" id="left-sidebar-restored"></aside>
       <main class="map-wrap" id="map-container">
         <svg id="map-svg"></svg>
