@@ -982,6 +982,7 @@ function selectZip(cd) {
 }
 
 function updateMetrics() {
+  if (!document.getElementById('m-high')) return;
   const high = currentZipData.filter(d => getRiskFactors(d) >= 3);
   document.getElementById('m-high').textContent = currentZipData.length ? high.length : '—';
   document.getElementById('m-rate').textContent = currentZipData.length
@@ -993,6 +994,8 @@ function updateMetrics() {
 }
 
 function updateTopZips() {
+  const container = document.getElementById('top-zips');
+  if (!container) return;
   const container = document.getElementById('top-zips');
   if (!currentZipData.length) {
     container.innerHTML = '<div class="empty-state"><div class="es-icon">📊</div><span>Select a community</span></div>';
@@ -1210,6 +1213,7 @@ function setView(v) {
   if (v === 'map') {
     /* Restore original layout */
     mainBody.innerHTML = `
+    rebuildRightSidebar();
       <aside class="sidebar" id="left-sidebar-restored"></aside>
       <main class="map-wrap" id="map-container">
         <svg id="map-svg"></svg>
