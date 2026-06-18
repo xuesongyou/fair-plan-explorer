@@ -1713,7 +1713,7 @@ window.addEventListener('resize', () => { if (geoFeatures && currentCommunity) d
 /* ════════════════════════════════════════════
    INITIAL STATE — pre-load county topology silently
 ════════════════════════════════════════════ */
-fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json')
+fetch('./CA_ZIP_simple.json')
   .then(r => r.json())
   .then(us => {
     allCountyFeatures = topojson.feature(us, us.objects.counties).features;
