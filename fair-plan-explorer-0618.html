@@ -1243,6 +1243,7 @@ function setView(v) {
       <aside class="sidebar-right" id="right-sidebar-restored"></aside>`;
     mainBody.style.gridTemplateColumns = '226px 1fr 210px';
     rebuildSidebars();
+    rebuildRightSidebar();
     if (currentCommunity) loadCommunityMap(currentCommunity);
     return;
   }
