@@ -781,10 +781,10 @@ function fmt(n) {
 
 /* Color scales */
 const SCHEMES = {
-fair:  ['#FDECEA','#F4A49E','#E55A52','#C0392B','#7B1818'],
-income: ['#E4F4F4','#8FDBDB','#2AACAC','#166E6E','#083535'],
-pre60:  ['#FEF3E6','#FBCB85','#E88F22','#B05C08','#6B3204'],
-score:   ['#E6F0FA','#A8CBED','#5595D4','#1A5FA5','#0B3F75'],
+fair:  ["#FDECEA", "#F9CCC8", "#F5ACA6", "#EF8B84", "#E86A62", "#DC5249", "#CC4438", "#B83528", "#992620", "#7B1818"],
+income: ["#E4F4F4", "#BEE8E8", "#98DDDD", "#6DCBCB", "#40B6B6", "#259E9E", "#1C8282", "#146767", "#0E4E4E", "#083535"],
+pre60:  ["#FEF3E6", "#FCE1BA", "#FBCF8F", "#F4B764", "#EC9C38", "#DB831C", "#C26D10", "#A85707", "#894405", "#6B3204"],
+score:   ["#E6F0FA", "#CADFF4", "#AECFEE", "#8CB9E4", "#67A1D9", "#4789C9", "#2D71B4", "#185B9F", "#114D8A", "#0B3F75"],
 };
 function makeColorScale(metric, data) {
   if (!data.length) return () => '#ccc';
