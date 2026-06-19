@@ -1304,6 +1304,7 @@ function setView(v) {
   const mainBody = document.getElementById('main-body');
 
   if (v === 'map') {
+    if (leafletMap) { leafletMap.remove(); leafletMap = null; }
     /* Restore original layout */
     mainBody.innerHTML = `
       <aside class="sidebar" id="left-sidebar-restored"></aside>
@@ -1352,6 +1353,7 @@ function setView(v) {
   if (v === 'table') {
     mainBody.style.gridTemplateColumns = '226px 1fr';
     if (!currentZipData.length && currentCommunity) currentZipData = generateZIPs(currentCommunity);
+    if (leafletMap) { leafletMap.remove(); leafletMap = null; }
     mainBody.innerHTML = `<aside class="sidebar" id="left-sidebar-restored"></aside><div class="table-view" id="table-area"></div>`;
     rebuildSidebars();
     renderTableView();
@@ -1360,6 +1362,7 @@ function setView(v) {
   if (v === 'chart') {
     mainBody.style.gridTemplateColumns = '226px 1fr';
     if (!currentZipData.length && currentCommunity) currentZipData = generateZIPs(currentCommunity);
+    if (leafletMap) { leafletMap.remove(); leafletMap = null; }
     mainBody.innerHTML = `<aside class="sidebar" id="left-sidebar-restored"></aside><div style="overflow:auto;flex:1;background:var(--slate);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;" id="chart-area"></div>`;
     rebuildSidebars();
     renderChartView();
