@@ -781,10 +781,10 @@ function fmt(n) {
 
 /* Color scales */
 const SCHEMES = {
-  fair:   ['#E6F0FA','#A8CBED','#5595D4','#1A5FA5','#0B3F75'],
-  income: ['#E4F4F4','#8FDBDB','#2AACAC','#166E6E','#083535'],
-  pre60:  ['#FEF3E6','#FBCB85','#E88F22','#B05C08','#6B3204'],
-  score:  ['#FDECEA','#F4A49E','#E55A52','#C0392B','#7B1818'],
+fair:  ['#FDECEA','#F4A49E','#E55A52','#C0392B','#7B1818'],
+income: ['#E4F4F4','#8FDBDB','#2AACAC','#166E6E','#083535'],
+pre60:  ['#FEF3E6','#FBCB85','#E88F22','#B05C08','#6B3204'],
+score:   ['#E6F0FA','#A8CBED','#5595D4','#1A5FA5','#0B3F75'],
 };
 function makeColorScale(metric, data) {
   if (!data.length) return () => '#ccc';
