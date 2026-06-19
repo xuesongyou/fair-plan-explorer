@@ -101,7 +101,7 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 .mv-white { color: #E8EDF4; }
 
 /* ── Body layout ── */
-.body { display: grid; grid-template-columns: 226px 1fr 210px; flex: 1; overflow: hidden; min-height: 0; }
+.body { display: grid; grid-template-columns: 226px 1fr 280px; flex: 1; overflow: hidden; min-height: 0; }
 
 /* ── Sidebar ── */
 .sidebar {
@@ -109,13 +109,6 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   overflow-y: auto; padding: 0; display: flex; flex-direction: column;
 }
 .sidebar-section { padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
-  /* Add these to your Sidebar wrapper/container element */
-.sidebar-container {
-  resize: horizontal; /* or 'both' if you want it to resize up/down as well */
-  overflow: auto;     /* Required for resize to work */
-  min-width: 200px;   /* Prevents the sidebar from collapsing too much */
-  max-width: 600px;   /* Caps how large the sidebar can be dragged */
-}
 .sec-label {
   font-size: 10px; font-weight: 600; color: var(--text3);
   text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px;
