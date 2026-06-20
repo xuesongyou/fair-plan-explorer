@@ -969,6 +969,11 @@ function drawZipMap(features, boundaryFeature) {
   const H = wrap.clientHeight || 500;
 
 // Add Leaflet's own SVG layer so it auto-transforms with pan/zoom
+  if (!leafletMap) {
+  console.error('leafletMap is null — cannot add SVG layer');
+  return;
+}
+const leafletSvgLayer = L.svg({ clickable: true }).addTo(leafletMap);
 const leafletSvgLayer = L.svg({ clickable: true }).addTo(leafletMap);
 const svg = d3.select(leafletSvgLayer._container)
   .style('z-index', '400')
@@ -997,14 +1002,6 @@ features.forEach(f => {
 // Use the GeoJSON bbox to set initial view
 const collection = { type: 'FeatureCollection', features };
 
-if (!leafletMap) {
-  leafletMap = L.map('leaflet-map', { zoomControl: false });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap © CARTO',
-    subdomains: 'abcd',
-    maxZoom: 19
-  }).addTo(leafletMap);
-}
 
 // Fit map to the ZIP features' bounding box
 const tempLayer = L.geoJSON(collection);
@@ -1303,6 +1300,25 @@ function renderCommunityFromFeatures(meta) {
       f => String(f.properties.fips) === String(meta.fips)  // ← adjust property name if needed
     );
     currentBoundary = boundaryFeature;
+
+    // ── ADD THIS BLOCK RIGHT HERE, before drawZipMap ──
+    const leafletContainer = document.getElementById('leaflet-map');
+    if (!leafletContainer) {
+      document.getElementById('map-loading').innerHTML =
+        '<span style="color:var(--red);font-size:12px;">Map container not found.</span>';
+      return;
+    }
+    if (leafletMap) {
+      leafletMap.off();
+      leafletMap.remove();
+      leafletMap = null;
+    }
+    leafletMap = L.map('leaflet-map', {
+      zoomControl: false,
+      preferCanvas: false
+    });
+    // ── END OF NEW BLOCK ──
+    
     drawZipMap(features, boundaryFeature);
   })
   .catch(err => {
