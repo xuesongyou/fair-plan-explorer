@@ -1000,10 +1000,6 @@ const collection = { type: 'FeatureCollection', features };
 
 if (!leafletMap) {
   leafletMap = L.map('leaflet-map', { zoomControl: false });
-  leafletMap.on('move', redraw);
-leafletMap.on('zoom', redraw);
-leafletMap.on('moveend', redraw);
-leafletMap.on('zoomend', redraw);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap © CARTO',
     subdomains: 'abcd',
