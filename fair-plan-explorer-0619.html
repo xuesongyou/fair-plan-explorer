@@ -976,9 +976,17 @@ function drawZipMap(features, boundaryFeature) {
   const W = wrap.clientWidth || 700;
   const H = wrap.clientHeight || 500;
 
-  const svg = d3.select('#map-svg').attr('viewBox', `0 0 ${W} ${H}`);
-  svg.selectAll('*').remove();
-
+const svg = d3.select('#map-svg')
+  .style('position', 'absolute')
+  .style('top', '0')
+  .style('left', '0')
+  .style('width', '100%')
+  .style('height', '100%')
+  .style('pointer-events', 'none')
+  .style('z-index', '400');
+svg.selectAll('*').remove();
+const g = svg.append('g').attr('id', 'map-g');
+  
   if (!currentZipData.length || !features.length) return;
 
   /* Build a lookup of ZIP → data, matching by zipCode property */
@@ -1013,7 +1021,7 @@ leafletMap.fitBounds(tempLayer.getBounds(), { padding: [20, 20] });
 
 /* ── D3 overlay that re-projects on every map move ── */
 
-const g = svg.append('g').attr('id', 'map-g');
+
 
 function projectPoint(lon, lat) {
   const pt = leafletMap.latLngToLayerPoint(L.latLng(lat, lon));
@@ -1040,9 +1048,12 @@ function projectFeature(d) {
 const colorScale = makeColorScale(choroMetric, currentZipData);
 
 function redraw() {
-  const W = wrap.clientWidth;
-  const H = wrap.clientHeight;
-  svg.attr('viewBox', `0 0 ${W} ${H}`);
+  const W = wrap.clientWidth || 800;
+  const H = wrap.clientHeight || 600;
+  svg
+    .attr('width', W)
+    .attr('height', H)
+    .attr('viewBox', `0 0 ${W} ${H}`);
 
   // ZIP fills
   g.selectAll('.zip-path')
@@ -1134,7 +1145,12 @@ function redraw() {
   }
 }
 
-leafletMap.off('move zoom moveend zoomend').on('move zoom moveend zoomend', redraw);
+leafletMap.off('move zoom moveend zoomend viewreset');
+leafletMap.on('move',      redraw);
+leafletMap.on('zoom',      redraw);
+leafletMap.on('moveend',   redraw);
+leafletMap.on('zoomend',   redraw);
+leafletMap.on('viewreset', redraw);
 redraw();
 
 // Wire zoom buttons to Leaflet instead of D3
