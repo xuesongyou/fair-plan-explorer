@@ -974,7 +974,6 @@ function drawZipMap(features, boundaryFeature) {
   return;
 }
 const leafletSvgLayer = L.svg({ clickable: true }).addTo(leafletMap);
-const leafletSvgLayer = L.svg({ clickable: true }).addTo(leafletMap);
 const svg = d3.select(leafletSvgLayer._container)
   .style('z-index', '400')
   .style('pointer-events', 'none');
