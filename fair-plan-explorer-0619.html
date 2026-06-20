@@ -1134,7 +1134,7 @@ function redraw() {
   }
 }
 
-leafletMap.off('move zoom').on('move zoom', redraw);
+leafletMap.off('move zoom moveend zoomend').on('move zoom moveend zoomend', redraw);
 redraw();
 
 // Wire zoom buttons to Leaflet instead of D3
