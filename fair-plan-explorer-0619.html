@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -22,7 +24,7 @@
   --red: #C0392B;
   --red-pale: #FDEDEC;
   --green: #1E7E46;
-  --green-pale: #E8F5EE;
+  --green-pale: #E8F5EEE;
   --slate: #F0F2F5;
   --slate2: #E2E6EB;
   --white: #FFFFFF;
@@ -38,12 +40,6 @@
   --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --mono: 'DM Mono', 'Courier New', monospace;
 }
-@media(prefers-color-scheme:dark){:root{
-  --forest:#0A2816; --forest2:#1F3C0F; --forest-light:#1A522E;
-  --slate:#1C2333; --slate2:#232D40;
-  --white:#1A2540; --text:#E8EDF4; --text2:#9BA9BC; --text3:#546075;
-  --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.14);
-}}
 
 body { font-family: var(--font); background: var(--slate); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
 .app { display: flex; flex-direction: column; height: 100vh; max-height: 100vh; overflow: hidden; }
@@ -52,12 +48,8 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 .header {
   background: var(--forest);
   padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 58px;
-  flex-shrink: 0;
-  gap: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 58px; flex-shrink: 0; gap: 12px;
 }
 .header-brand { display: flex; align-items: center; gap: 12px; }
 .header-logo {
@@ -87,10 +79,7 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   gap: 0; background: var(--forest2); flex-shrink: 0;
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
-.metric {
-  padding: 10px 20px; border-right: 1px solid rgba(255,255,255,0.06);
-  position: relative;
-}
+.metric { padding: 10px 20px; border-right: 1px solid rgba(255,255,255,0.06); }
 .metric:last-child { border-right: none; }
 .metric-label { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .08em; font-weight: 500; }
 .metric-value { font-size: 22px; font-weight: 700; margin-top: 1px; font-family: var(--mono); }
@@ -101,20 +90,117 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 .mv-white { color: #E8EDF4; }
 
 /* ── Body layout ── */
-.body { display: grid; grid-template-columns: 226px 1fr 280px; flex: 1; overflow: hidden; min-height: 0; }
+.body {
+  display: grid;
+  grid-template-columns: 226px 1fr 280px;
+  flex: 1; overflow: hidden; min-height: 0;
+}
 
-/* ── Sidebar ── */
+/* Left sidebar always visible */
 .sidebar {
   background: var(--white); border-right: 1px solid var(--border);
   overflow-y: auto; padding: 0; display: flex; flex-direction: column;
-}
-.sidebar-section { padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
-.sec-label {
-  font-size: 10px; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px;
+  grid-row: 1; grid-column: 1;
 }
 
-/* Community selector */
+/* Center + right area — views stacked, only one visible */
+.view-area {
+  grid-row: 1; grid-column: 2 / 4;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  min-height: 0; overflow: hidden;
+  position: relative;
+}
+
+/* Table & Chart views take full width */
+.view-area.table-active,
+.view-area.chart-active {
+  grid-template-columns: 1fr;
+}
+
+/* ── Map view ── */
+#view-map {
+  display: contents; /* children participate in view-area grid */
+}
+#view-map.hidden { display: none; }
+
+.map-wrap {
+  position: relative; overflow: hidden; background: #e8e0d8;
+  grid-column: 1; grid-row: 1;
+}
+
+/* Leaflet map fills container */
+#leaflet-map { width: 100%; height: 100%; }
+
+/* SVG overlay on top of Leaflet — pointer events pass through except on paths */
+#overlay-svg {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 400;
+}
+#overlay-svg .zip-path {
+  pointer-events: all;
+  cursor: pointer;
+  transition: opacity .12s;
+}
+#overlay-svg .zip-path:hover { opacity: 0.85; stroke: var(--forest) !important; stroke-width: 2px !important; }
+#overlay-svg .zip-path.selected { stroke: var(--forest) !important; stroke-width: 2.5px !important; }
+#overlay-svg .risk-outline { fill: none; stroke: var(--red); stroke-width: 2.5px; stroke-dasharray: 5,3; pointer-events: none; }
+#overlay-svg .zip-label { font-size: 9px; fill: #1a1a2e; font-family: var(--font); pointer-events: none; text-anchor: middle; font-weight: 600; }
+#overlay-svg .boundary-path { fill: none; stroke: #0F1F3C; stroke-width: 3px; pointer-events: none; }
+
+/* Legend over map */
+.choro-legend {
+  position: absolute; bottom: 40px; left: 14px; z-index: 500;
+  background: rgba(255,255,255,0.94); border: 1px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-lg); padding: 10px 12px;
+  font-size: 10px; font-family: var(--font); color: #333; min-width: 140px;
+  box-shadow: var(--shadow-md);
+}
+.legend-title { font-weight: 700; font-size: 11px; margin-bottom: 5px; color: var(--forest); }
+.legend-grad { height: 8px; border-radius: 4px; margin: 4px 0 3px; }
+.legend-ends-row { display: flex; justify-content: space-between; color: var(--text2); }
+
+/* Tooltip */
+.map-tooltip {
+  display: none; position: absolute; background: var(--white);
+  border: 1px solid var(--border2); border-radius: var(--radius-lg);
+  padding: 10px 12px; font-size: 11px; color: var(--text);
+  pointer-events: none; z-index: 600; min-width: 170px;
+  box-shadow: var(--shadow-md);
+}
+.tt-name { font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--forest); }
+.tt-row { display: flex; justify-content: space-between; gap: 14px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.tt-row:last-child { border-bottom: none; }
+.tt-key { color: var(--text2); }
+.tt-val { font-weight: 600; font-family: var(--mono); }
+
+/* Map source attribution override */
+.map-source { position: absolute; bottom: 10px; right: 12px; font-size: 10px; color: rgba(0,0,0,0.45); background: rgba(255,255,255,0.82); padding: 3px 7px; border-radius: 4px; z-index: 500; }
+
+/* No community / loading states */
+.no-community-msg {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px; color: var(--forest2);
+  background: rgba(200,217,232,0.85); z-index: 700;
+}
+.no-community-msg.hidden { display: none; }
+.no-community-msg .big-icon { font-size: 48px; opacity: .4; }
+.no-community-msg h3 { font-size: 16px; font-weight: 700; color: var(--forest); }
+.no-community-msg p { font-size: 12px; color: var(--text2); text-align: center; max-width: 260px; }
+
+.map-loading {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  background: rgba(200,217,232,0.7); flex-direction: column; gap: 10px; font-size: 13px;
+  color: var(--forest2); z-index: 700;
+}
+.map-loading.show { display: flex; }
+.spinner { width: 26px; height: 26px; border: 3px solid rgba(15,31,60,0.15); border-top-color: var(--amber); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Sidebar ── */
+.sidebar-section { padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
+.sec-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+
 .community-select-wrap { position: relative; }
 .community-select-wrap::after {
   content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
@@ -135,7 +221,6 @@ select.community-sel:focus { outline: none; border-color: var(--amber); box-shad
 .community-info-name { font-size: 11px; font-weight: 600; color: var(--amber); margin-bottom: 2px; }
 .community-info-detail { font-size: 10px; color: var(--text2); }
 
-/* Metric selector */
 select.ctrl-select {
   width: 100%; padding: 7px 10px; font-size: 12px; font-family: var(--font);
   border: 1.5px solid var(--border2); border-radius: var(--radius);
@@ -144,7 +229,6 @@ select.ctrl-select {
 }
 select.ctrl-select:focus { outline: none; border-color: var(--amber); }
 
-/* Layers */
 .layer-row { display: flex; align-items: center; gap: 9px; padding: 5px 0; cursor: pointer; user-select: none; }
 .toggle { width: 32px; height: 18px; border-radius: 9px; border: 1.5px solid var(--border2); background: var(--slate2); position: relative; flex-shrink: 0; transition: background .2s, border-color .2s; cursor: pointer; }
 .toggle-knob { width: 12px; height: 12px; border-radius: 50%; background: var(--text3); position: absolute; top: 2px; left: 2px; transition: all .2s; }
@@ -160,7 +244,6 @@ select.ctrl-select:focus { outline: none; border-color: var(--amber); }
 .layer-name { font-size: 12px; color: var(--text); }
 .layer-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
 
-/* Sliders */
 .slider-wrap { margin-bottom: 12px; }
 .slider-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
 .slider-name { font-size: 11px; color: var(--text2); }
@@ -168,97 +251,24 @@ select.ctrl-select:focus { outline: none; border-color: var(--amber); }
 input[type=range] {
   width: 100%; height: 4px; border-radius: 2px;
   appearance: none; -webkit-appearance: none; background: var(--slate2);
-  cursor: pointer; position: relative;
+  cursor: pointer;
 }
 input[type=range]::-webkit-slider-thumb {
   appearance: none; width: 14px; height: 14px; border-radius: 50%;
-  background: var(--amber); border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  cursor: pointer;
+  background: var(--amber); border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer;
 }
 input[type=range]:focus { outline: none; }
 .slider-bounds { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 3px; }
 
-/* Radio */
 .radio-group { display: flex; flex-direction: column; gap: 6px; }
 .radio-row { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; color: var(--text); }
 .radio-row input[type=radio] { accent-color: var(--amber); cursor: pointer; }
-
-/* ── Map center ── */
-.map-wrap { position: relative; overflow: hidden; background: #ffffff; }
-  #leaflet-map {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-/* Re-enable pointer events just on the ZIP paths so hovering/clicking still works */
-.zip-path {
-  pointer-events: all;
-}
-#map-svg { width: 100%; height: 100%; display: block; }
-.county-path, .zip-path { stroke: rgba(255,255,255,0.6); stroke-width: 0.6; cursor: pointer; transition: opacity .12s, stroke .12s; }
-.county-path:hover, .zip-path:hover { stroke: var(--forest); stroke-width: 2; opacity: .85; }
-.county-path.selected, .zip-path.selected { stroke: var(--forest); stroke-width: 2.5; }
-.risk-outline { fill: none; stroke: var(--red); stroke-width: 2.5; stroke-dasharray: 5,3; pointer-events: none; }
-.zip-label { font-size: 8px; fill: #1a1a2e; font-family: var(--font); pointer-events: none; text-anchor: middle; }
-.county-label { font-size: 9px; fill: #1a1a2e; font-family: var(--font); pointer-events: none; text-anchor: middle; }
-
-.choro-legend {
-  position: absolute; bottom: 40px; left: 14px;
-  background: rgba(255,255,255,0.94); border: 1px solid rgba(0,0,0,0.12);
-  border-radius: var(--radius-lg); padding: 10px 12px;
-  font-size: 10px; font-family: var(--font); color: #333; min-width: 140px;
-  box-shadow: var(--shadow-md);
-}
-.legend-title { font-weight: 700; font-size: 11px; margin-bottom: 5px; color: var(--forest); }
-.legend-grad { height: 8px; border-radius: 4px; margin: 4px 0 3px; }
-.legend-ends-row { display: flex; justify-content: space-between; color: var(--text2); }
-
-.map-tooltip {
-  display: none; position: absolute; background: var(--white);
-  border: 1px solid var(--border2); border-radius: var(--radius-lg);
-  padding: 10px 12px; font-size: 11px; color: var(--text);
-  pointer-events: none; z-index: 20; min-width: 170px;
-  box-shadow: var(--shadow-md);
-}
-.tt-name { font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--forest); }
-.tt-row { display: flex; justify-content: space-between; gap: 14px; padding: 3px 0; border-bottom: 1px solid var(--border); }
-.tt-row:last-child { border-bottom: none; }
-.tt-key { color: var(--text2); }
-.tt-val { font-weight: 600; font-family: var(--mono); }
-
-.map-controls { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 4px; }
-.map-btn {
-  width: 32px; height: 32px; background: var(--white); border: 1px solid var(--border2);
-  border-radius: var(--radius); font-size: 16px; cursor: pointer; color: var(--text2);
-  display: flex; align-items: center; justify-content: center; font-family: var(--font);
-  transition: all .15s; box-shadow: var(--shadow);
-}
-.map-btn:hover { background: var(--forest); color: white; }
-.map-source { position: absolute; bottom: 10px; right: 12px; font-size: 10px; color: rgba(0,0,0,0.45); background: rgba(255,255,255,0.82); padding: 3px 7px; border-radius: 4px; }
-
-.map-loading {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  background: rgba(200,217,232,0.7); flex-direction: column; gap: 10px; font-size: 13px; color: var(--forest2);
-}
-.spinner { width: 26px; height: 26px; border: 3px solid rgba(15,31,60,0.15); border-top-color: var(--amber); border-radius: 50%; animation: spin .7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.no-community-msg {
-  position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 12px; color: var(--forest2);
-  background: #C8D9E8;
-}
-.no-community-msg .big-icon { font-size: 48px; opacity: .4; }
-.no-community-msg h3 { font-size: 16px; font-weight: 700; color: var(--forest); }
-.no-community-msg p { font-size: 12px; color: var(--text2); text-align: center; max-width: 260px; }
 
 /* ── Right sidebar ── */
 .sidebar-right {
   background: var(--white); border-left: 1px solid var(--border);
   overflow-y: auto; padding: 0; display: flex; flex-direction: column;
+  grid-column: 2; grid-row: 1;
 }
 .spot-card { background: var(--slate); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 10px; }
 .spot-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); }
@@ -268,11 +278,7 @@ input[type=range]:focus { outline: none; }
 .spot-name { font-size: 14px; font-weight: 700; color: var(--forest); }
 .spot-sub { font-size: 11px; color: var(--text2); margin-top: 1px; margin-bottom: 10px; }
 
-.risk-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10px; font-weight: 700; padding: 4px 10px;
-  border-radius: 20px; margin-top: 10px; text-transform: uppercase; letter-spacing: .04em;
-}
+.risk-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-top: 10px; text-transform: uppercase; letter-spacing: .04em; }
 .risk-high { background: var(--red-pale); color: var(--red); }
 .risk-med { background: var(--amber-pale); color: var(--amber); }
 .risk-low { background: var(--green-pale); color: var(--green); }
@@ -280,7 +286,6 @@ input[type=range]:focus { outline: none; }
 .bar-track { background: var(--slate2); border-radius: 3px; height: 5px; overflow: hidden; margin: 3px 0 7px; }
 .bar-fill { height: 5px; border-radius: 3px; transition: width .4s ease; }
 
-/* Legend sidebar */
 .legend-ramp { height: 9px; border-radius: 4px; margin: 5px 0; }
 .legend-ends { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); }
 .legend-items { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
@@ -288,14 +293,8 @@ input[type=range]:focus { outline: none; }
 .legend-swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .legend-outline-sym { width: 14px; height: 10px; border-radius: 2px; border: 2px dashed var(--red); flex-shrink: 0; }
 
-/* Top ZIPs list */
 .zip-list { display: flex; flex-direction: column; gap: 4px; }
-.zip-item {
-  display: flex; align-items: center; justify-content: space-between;
-  background: var(--slate); border-radius: var(--radius);
-  padding: 7px 10px; cursor: pointer; font-size: 11px;
-  border: 1.5px solid transparent; transition: border-color .15s, background .15s;
-}
+.zip-item { display: flex; align-items: center; justify-content: space-between; background: var(--slate); border-radius: var(--radius); padding: 7px 10px; cursor: pointer; font-size: 11px; border: 1.5px solid transparent; transition: border-color .15s, background .15s; }
 .zip-item:hover { background: var(--slate2); border-color: var(--amber); }
 .zip-item.selected { border-color: var(--amber); background: var(--amber-pale); }
 .zip-rank { font-size: 10px; font-weight: 700; color: var(--text3); font-family: var(--mono); width: 16px; }
@@ -307,21 +306,20 @@ input[type=range]:focus { outline: none; }
 .empty-state .es-icon { font-size: 28px; opacity: .5; }
 
 /* ── Table view ── */
-.table-view { padding: 0; overflow: auto; flex: 1; background: var(--slate); }
-.table-header-bar { 
+#view-table { display: none; grid-column: 1 / 3; grid-row: 1; overflow: auto; background: var(--slate); flex-direction: column; }
+#view-table.active { display: flex; }
+
+.table-header-bar {
   background: var(--white); padding: 14px 20px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 5;
+  flex-shrink: 0;
 }
 .table-title { font-size: 14px; font-weight: 700; color: var(--forest); }
 .table-subtitle { font-size: 11px; color: var(--text2); margin-top: 1px; }
 .table-wrap { padding: 16px; }
 table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--white); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
 table.data-table thead tr { background: var(--forest); }
-table.data-table th {
-  padding: 10px 13px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.75);
-  text-align: left; user-select: none; cursor: pointer; white-space: nowrap;
-  transition: background .15s; letter-spacing: .03em;
-}
+table.data-table th { padding: 10px 13px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.75); text-align: left; user-select: none; cursor: pointer; white-space: nowrap; transition: background .15s; letter-spacing: .03em; }
 table.data-table th:hover { background: var(--forest-light); color: white; }
 table.data-table th.sort-asc::after { content: ' ↑'; color: var(--amber-light); font-size: 10px; }
 table.data-table th.sort-desc::after { content: ' ↓'; color: var(--amber-light); font-size: 10px; }
@@ -339,13 +337,13 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 .flag-amber { color: var(--amber); font-weight: 700; }
 
 /* ── Chart view ── */
-.chart-view { display: grid; grid-template-columns: 1fr 1fr; gap: 0; flex: 1; overflow: hidden; background: var(--slate); }
-.chart-panel { padding: 18px 20px; overflow: auto; background: var(--white); border-right: 1px solid var(--border); }
-.chart-panel:last-child { border-right: none; }
-.chart-panel-full { grid-column: 1 / -1; padding: 18px 20px; overflow: auto; background: var(--white); }
+#view-chart { display: none; grid-column: 1 / 3; grid-row: 1; overflow: auto; background: var(--slate); }
+#view-chart.active { display: grid; grid-template-columns: 1fr 1fr; }
+
+.chart-panel { padding: 18px 20px; overflow: auto; background: var(--white); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.chart-panel:nth-child(even) { border-right: none; }
 .chart-title { font-size: 12px; font-weight: 700; color: var(--forest); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
 .chart-subtitle { font-size: 11px; color: var(--text2); margin-bottom: 14px; }
-.chart-box { position: relative; }
 
 /* ── Footer ── */
 .footer {
@@ -356,21 +354,11 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 .footer a { color: var(--amber); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 .footer-right { margin-left: auto; display: flex; gap: 8px; }
-.export-btn {
-  background: transparent; border: 1.5px solid var(--border2); border-radius: var(--radius);
-  padding: 5px 12px; font-size: 11px; font-family: var(--font); color: var(--text2);
-  cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all .15s; font-weight: 500;
-}
+.export-btn { background: transparent; border: 1.5px solid var(--border2); border-radius: var(--radius); padding: 5px 12px; font-size: 11px; font-family: var(--font); color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all .15s; font-weight: 500; }
 .export-btn:hover { background: var(--forest); color: white; border-color: var(--forest); }
 
-/* Chips */
-.factor-chip {
-  display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700;
-  padding: 2px 6px; border-radius: 10px; margin-left: 4px; text-transform: uppercase; letter-spacing: .04em;
-}
-.chip-fair { background: rgba(192,57,43,0.12); color: var(--red); }
-.chip-income { background: rgba(27,142,142,0.12); color: var(--teal); }
-.chip-age { background: rgba(224,123,42,0.12); color: var(--amber); }
+/* Leaflet attribution positioning */
+.leaflet-control-attribution { font-size: 9px !important; }
 </style>
 </head>
 <body>
@@ -379,7 +367,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
   <!-- HEADER -->
   <header class="header">
     <div class="header-brand">
-      <img src="./I4G.png" alt="Company logo" style="width:36px; height:36px; border-radius:10px; object-fit:contain;">
+      <div class="header-logo">🏘</div>
       <div>
         <div class="header-title">FAIR Plan Community Risk Explorer</div>
         <div class="header-sub">Insurance access · Income · Building age by ZIP code</div>
@@ -402,8 +390,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       <div class="metric-sub">All 3 factors flagged</div>
     </div>
     <div class="metric">
-      <div class="metric-label">Percent of Residential Structures with a FAIR Plan Policy As of 03/31/2026
-</div>
+      <div class="metric-label">Avg FAIR Plan Rate</div>
       <div class="metric-value mv-amber" id="m-rate">—</div>
       <div class="metric-sub">Selected community</div>
     </div>
@@ -419,13 +406,12 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     </div>
   </div>
 
-  <!-- BODY -->
+  <!-- BODY: Left sidebar always present; right area switches views -->
   <div class="body" id="main-body">
 
-    <!-- LEFT SIDEBAR -->
+    <!-- LEFT SIDEBAR (always visible) -->
     <aside class="sidebar" aria-label="Community and filters">
 
-      <!-- Community selector -->
       <div class="sidebar-section">
         <div class="sec-label">Community</div>
         <div class="community-select-wrap">
@@ -446,7 +432,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         </div>
       </div>
 
-      <!-- Choropleth metric -->
       <div class="sidebar-section">
         <div class="sec-label">Choropleth metric</div>
         <select class="ctrl-select" id="choro-metric">
@@ -457,7 +442,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         </select>
       </div>
 
-      <!-- Layers -->
       <div class="sidebar-section">
         <div class="sec-label">Overlay layers</div>
         <div class="layer-row" onclick="toggleLayer('income')">
@@ -483,7 +467,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         </div>
       </div>
 
-      <!-- Thresholds -->
       <div class="sidebar-section">
         <div class="sec-label">Risk thresholds</div>
         <div class="slider-wrap">
@@ -512,7 +495,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         </div>
       </div>
 
-      <!-- Highlight mode -->
       <div class="sidebar-section">
         <div class="sec-label">High-risk when</div>
         <div class="radio-group">
@@ -524,112 +506,101 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
     </aside>
 
-    <!-- MAP CENTER -->
-    <main class="map-wrap" id="map-container">
-      <div id="leaflet-map"></div>
-      <div class="no-community-msg" id="no-community">
-        <div class="big-icon">🏘</div>
-        <h3>Select a Community</h3>
-        <p>Choose a community from the left panel to load its ZIP code map and risk analysis.</p>
-      </div>
-      <div class="map-loading" id="map-loading" style="display:none;">
-        <div class="spinner"></div>
-        <span>Loading ZIP code geography…</span>
-      </div>
-      <div class="choro-legend" id="choro-legend" style="display:none;">
-        <div class="legend-title" id="legend-title">FAIR plan rate</div>
-        <div class="legend-grad" id="legend-grad"></div>
-        <div class="legend-ends-row"><span>Low</span><span>High</span></div>
-      </div>
-      <div class="map-tooltip" id="tooltip">
-        <div class="tt-name" id="tt-name"></div>
-        <div class="tt-row"><span class="tt-key">FAIR plan rate</span><span class="tt-val" id="tt-fair"></span></div>
-        <div class="tt-row"><span class="tt-key">Low-income pop.</span><span class="tt-val" id="tt-income"></span></div>
-        <div class="tt-row"><span class="tt-key">Pre-1960 units</span><span class="tt-val" id="tt-age"></span></div>
-        <div class="tt-row"><span class="tt-key">Median build yr</span><span class="tt-val" id="tt-year"></span></div>
-        <div class="tt-row"><span class="tt-key">Population</span><span class="tt-val" id="tt-pop"></span></div>
-        <div class="tt-row"><span class="tt-key">Risk score</span><span class="tt-val" id="tt-score"></span></div>
-      </div>
-      <div class="map-controls">
-        <button class="map-btn" id="zoom-in" title="Zoom in">+</button>
-        <button class="map-btn" id="zoom-out" title="Zoom out">−</button>
-        <button class="map-btn" id="zoom-reset" title="Reset view">↺</button>
-      </div>
-      <div class="map-source">Sample data · wire to CA DOI + ACS 5-yr + HUD CHAS</div>
-    </main>
+    <!-- VIEW AREA (right of sidebar) -->
+    <div class="view-area" id="view-area">
 
-    <!-- RIGHT SIDEBAR -->
-    <aside class="sidebar-right" aria-label="ZIP details and legend">
-
-      <!-- Spotlight -->
-      <div class="sidebar-section">
-        <div class="sec-label">ZIP Code Spotlight</div>
-        <div id="spotlight-empty" class="empty-state">
-          <div class="es-icon">📍</div>
-          <span>Click a ZIP code on the map</span>
-        </div>
-        <div id="spotlight-content" style="display:none;">
-          <div class="spot-name" id="sp-name"></div>
-          <div class="spot-sub" id="sp-sub"></div>
-          <div class="spot-card">
-            <div class="spot-row">
-              <span class="spot-key">FAIR plan rate</span>
-              <span class="spot-val" id="sp-fair" style="color:var(--red);"></span>
-            </div>
-            <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
-            <div class="spot-row">
-              <span class="spot-key">Low-income pop.</span>
-              <span class="spot-val" id="sp-income"></span>
-            </div>
-            <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
-            <div class="spot-row">
-              <span class="spot-key">Pre-1960 units</span>
-              <span class="spot-val" id="sp-age"></span>
-            </div>
-            <div class="bar-track"><div class="bar-fill" id="bar-age" style="background:var(--amber);"></div></div>
-            <div class="spot-row">
-              <span class="spot-key">Median build yr</span>
-              <span class="spot-val" id="sp-year"></span>
-            </div>
-            <div class="spot-row">
-              <span class="spot-key">Population</span>
-              <span class="spot-val" id="sp-pop"></span>
-            </div>
-            <div class="spot-row">
-              <span class="spot-key">Housing units</span>
-              <span class="spot-val" id="sp-units"></span>
-            </div>
+      <!-- MAP VIEW (persistent, never destroyed) -->
+      <div id="view-map">
+        <!-- Map fills the left column of view-area -->
+        <div class="map-wrap" id="map-container">
+          <!-- Leaflet base map -->
+          <div id="leaflet-map"></div>
+          <!-- SVG overlay (re-drawn on move/zoom) -->
+          <svg id="overlay-svg"></svg>
+          <!-- States -->
+          <div class="no-community-msg" id="no-community">
+            <div class="big-icon">🏘</div>
+            <h3>Select a Community</h3>
+            <p>Choose a community from the left panel to load its ZIP code map and risk analysis.</p>
           </div>
-          <div id="sp-badge"></div>
-        </div>
-      </div>
-
-      <!-- Legend -->
-      <div class="sidebar-section">
-        <div class="sec-label">Map Legend</div>
-        <div style="font-size:11px;color:var(--text2);margin-bottom:3px;" id="sidebar-legend-label">FAIR plan concentration</div>
-        <div class="legend-ramp" id="sidebar-legend-ramp"></div>
-        <div class="legend-ends"><span>Low</span><span>High</span></div>
-        <div class="legend-items">
-          <div class="legend-item" id="leg-income"><div class="legend-swatch" style="background:var(--teal)"></div>Low-income overlay dot</div>
-          <div class="legend-item" id="leg-age"><div class="legend-swatch" style="background:var(--amber)"></div>Pre-1960 building dot</div>
-          <div class="legend-item" id="leg-outline"><div class="legend-outline-sym"></div>High-risk ZIP border</div>
-        </div>
-      </div>
-
-      <!-- Top ZIPs -->
-      <div class="sidebar-section" style="flex:1;">
-        <div class="sec-label">Top At-Risk ZIP Codes</div>
-        <div class="zip-list" id="top-zips">
-          <div class="empty-state">
-            <div class="es-icon">📊</div>
-            <span>Select a community to see rankings</span>
+          <div class="map-loading" id="map-loading">
+            <div class="spinner"></div>
+            <span>Loading ZIP code geography…</span>
+          </div>
+          <!-- Legend -->
+          <div class="choro-legend" id="choro-legend" style="display:none;">
+            <div class="legend-title" id="legend-title">FAIR plan rate</div>
+            <div class="legend-grad" id="legend-grad"></div>
+            <div class="legend-ends-row"><span>Low</span><span>High</span></div>
+          </div>
+          <!-- Tooltip -->
+          <div class="map-tooltip" id="tooltip">
+            <div class="tt-name" id="tt-name"></div>
+            <div class="tt-row"><span class="tt-key">FAIR plan rate</span><span class="tt-val" id="tt-fair"></span></div>
+            <div class="tt-row"><span class="tt-key">Low-income pop.</span><span class="tt-val" id="tt-income"></span></div>
+            <div class="tt-row"><span class="tt-key">Pre-1960 units</span><span class="tt-val" id="tt-age"></span></div>
+            <div class="tt-row"><span class="tt-key">Median build yr</span><span class="tt-val" id="tt-year"></span></div>
+            <div class="tt-row"><span class="tt-key">Population</span><span class="tt-val" id="tt-pop"></span></div>
+            <div class="tt-row"><span class="tt-key">Risk score</span><span class="tt-val" id="tt-score"></span></div>
           </div>
         </div>
-      </div>
 
-    </aside>
-  </div>
+        <!-- Right sidebar (part of map view) -->
+        <aside class="sidebar-right" aria-label="ZIP details and legend">
+          <div class="sidebar-section">
+            <div class="sec-label">ZIP Code Spotlight</div>
+            <div id="spotlight-empty" class="empty-state">
+              <div class="es-icon">📍</div>
+              <span>Click a ZIP code on the map</span>
+            </div>
+            <div id="spotlight-content" style="display:none;">
+              <div class="spot-name" id="sp-name"></div>
+              <div class="spot-sub" id="sp-sub"></div>
+              <div class="spot-card">
+                <div class="spot-row"><span class="spot-key">FAIR plan rate</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
+                <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
+                <div class="spot-row"><span class="spot-key">Low-income pop.</span><span class="spot-val" id="sp-income"></span></div>
+                <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
+                <div class="spot-row"><span class="spot-key">Pre-1960 units</span><span class="spot-val" id="sp-age"></span></div>
+                <div class="bar-track"><div class="bar-fill" id="bar-age" style="background:var(--amber);"></div></div>
+                <div class="spot-row"><span class="spot-key">Median build yr</span><span class="spot-val" id="sp-year"></span></div>
+                <div class="spot-row"><span class="spot-key">Population</span><span class="spot-val" id="sp-pop"></span></div>
+                <div class="spot-row"><span class="spot-key">Housing units</span><span class="spot-val" id="sp-units"></span></div>
+              </div>
+              <div id="sp-badge"></div>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <div class="sec-label">Map Legend</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:3px;" id="sidebar-legend-label">FAIR plan concentration</div>
+            <div class="legend-ramp" id="sidebar-legend-ramp"></div>
+            <div class="legend-ends"><span>Low</span><span>High</span></div>
+            <div class="legend-items">
+              <div class="legend-item" id="leg-income"><div class="legend-swatch" style="background:var(--teal)"></div>Low-income overlay dot</div>
+              <div class="legend-item" id="leg-age"><div class="legend-swatch" style="background:var(--amber)"></div>Pre-1960 building dot</div>
+              <div class="legend-item" id="leg-outline"><div class="legend-outline-sym"></div>High-risk ZIP border</div>
+            </div>
+          </div>
+          <div class="sidebar-section" style="flex:1;">
+            <div class="sec-label">Top At-Risk ZIP Codes</div>
+            <div class="zip-list" id="top-zips">
+              <div class="empty-state">
+                <div class="es-icon">📊</div>
+                <span>Select a community to see rankings</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div><!-- #view-map -->
+
+      <!-- TABLE VIEW (hidden until activated) -->
+      <div id="view-table"></div>
+
+      <!-- CHART VIEW (hidden until activated) -->
+      <div id="view-chart"></div>
+
+    </div><!-- #view-area -->
+  </div><!-- .body -->
 
   <!-- FOOTER -->
   <footer class="footer">
@@ -645,251 +616,167 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
   </footer>
 
 </div><!-- .app -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<!-- Libraries -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-<script>
 
+<script>
 /* ════════════════════════════════════════════
    COMMUNITY DEFINITIONS
-   Each community maps to a set of FIPS codes (CA county prefixes)
-   and ZIP codes in that area with simulated data.
 ════════════════════════════════════════════ */
 const COMMUNITY_META = {
-  monterey:  { label:'Monterey County',        fips:'06053', detail:'Central Coast · 434K population', region:'central_coast' },
-  san_benito:{ label:'San Benito County',       fips:'06069', detail:'Inland Central Coast · 63K population', region:'central_coast' },
-  san_diego: { label:'San Diego County',        fips:'06073', detail:'Southern California · 3.3M population', region:'southern' },
-  santa_cruz:{ label:'Santa Cruz County',       fips:'06087', detail:'Central Coast · 271K population', region:'central_coast' },
-  tulare:    { label:'Tulare County',           fips:'06107', detail:'San Joaquin Valley · 473K population', region:'valley' },
-  tuolumne:  { label:'Tuolumne County',         fips:'06109', detail:'Sierra Nevada Foothills · 55K population', region:'sierra' },
-  hoopa:     { label:'Hoopa Valley Tribe',      fips:'130821', detail:'Northwestern California · Tribal Nation', region:'north' },
+  monterey:   { label:'Monterey County',      fips:'06053', detail:'Central Coast · 434K population',               center:[36.2,-121.3], zoom:9  },
+  san_benito: { label:'San Benito County',    fips:'06069', detail:'Inland Central Coast · 63K population',          center:[36.8,-121.1], zoom:10 },
+  san_diego:  { label:'San Diego County',     fips:'06073', detail:'Southern California · 3.3M population',          center:[32.9,-116.9], zoom:9  },
+  santa_cruz: { label:'Santa Cruz County',    fips:'06087', detail:'Central Coast · 271K population',               center:[37.05,-122.0],zoom:10 },
+  tulare:     { label:'Tulare County',        fips:'06107', detail:'San Joaquin Valley · 473K population',           center:[36.2,-119.0], zoom:9  },
+  tuolumne:   { label:'Tuolumne County',      fips:'06109', detail:'Sierra Nevada Foothills · 55K population',      center:[37.9,-120.0], zoom:10 },
+  hoopa:      { label:'Hoopa Valley Tribe',   fips:'130821',detail:'Northwestern California · Tribal Nation',        center:[41.05,-123.7],zoom:11 },
 };
 
-/* Simulated ZIP code data per community */
+/* ════════════════════════════════════════════
+   ZIP DATA SEEDS (same as original)
+════════════════════════════════════════════ */
 function generateZIPs(community) {
   const seeds = {
     monterey: [
-{ zip:'93426', name:'Bradley', fair:83, income:91, pre60:15.2, buildYr:1965, pop:500, units:2100},
-{ zip:'93450', name:'San Ardo', fair:56.9, income:36, pre60:53.4, buildYr:1970, pop:6800, units:4600},
-{ zip:'93451', name:'San Miguel', fair:96.9, income:54, pre60:78.3, buildYr:1965, pop:4500, units:3900},
-{ zip:'93901', name:'Salinas', fair:92.3, income:23, pre60:59.5, buildYr:1970, pop:4300, units:800},
-{ zip:'93905', name:'Salinas', fair:9.3, income:4, pre60:65.2, buildYr:1965, pop:1900, units:7500},
-{ zip:'93906', name:'Salinas', fair:26, income:129, pre60:0, buildYr:1970, pop:2800, units:8700},
-{ zip:'93907', name:'Salinas', fair:15.3, income:61, pre60:90.6, buildYr:1965, pop:6100, units:8200},
-{ zip:'93908', name:'Salinas', fair:18.6, income:131, pre60:83.7, buildYr:1970, pop:3000, units:8000},
-{ zip:'93920', name:'Big Sur', fair:14.7, income:33, pre60:16.1, buildYr:1971, pop:9700, units:300},
-{ zip:'93923', name:'Carmel', fair:4, income:2, pre60:38.7, buildYr:1965, pop:3800, units:3700},
-{ zip:'93924', name:'Carmel Valley', fair:81.8, income:109, pre60:4.6, buildYr:1965, pop:3700, units:4000},
-{ zip:'93925', name:'Chualar', fair:49.8, income:14, pre60:30.3, buildYr:1965, pop:5100, units:10000},
-{ zip:'93926', name:'Gonzales', fair:17.4, income:4, pre60:80.7, buildYr:1965, pop:8800, units:8700},
-{ zip:'93927', name:'Greenfield', fair:75.3, income:31, pre60:42.7, buildYr:1965, pop:5300, units:8800},
-{ zip:'93930', name:'King City', fair:11.1, income:58, pre60:30, buildYr:1965, pop:9700, units:2900},
-{ zip:'93932', name:'Lockwood', fair:84.6, income:56, pre60:56.5, buildYr:1965, pop:9400, units:9800},
-{ zip:'93933', name:'Marina', fair:27.1, income:85, pre60:11.9, buildYr:1965, pop:3700, units:5400},
-{ zip:'93940', name:'Monterey', fair:59.9, income:51, pre60:1.5, buildYr:1965, pop:1200, units:7500},
-{ zip:'93950', name:'Pacific Grove', fair:13.7, income:68, pre60:12.3, buildYr:1965, pop:100, units:10000},
-{ zip:'93953', name:'Pebble Beach', fair:55.3, income:5, pre60:19.3, buildYr:1965, pop:3600, units:5500},
-{ zip:'93954', name:'San Lucas', fair:57.7, income:91, pre60:26.7, buildYr:1965, pop:2000, units:4500},
-{ zip:'93955', name:'Seaside', fair:19, income:146, pre60:55.6, buildYr:1965, pop:1900, units:9300},
-{ zip:'93960', name:'Soledad', fair:80.5, income:108, pre60:37, buildYr:1965, pop:7600, units:2100},
-{ zip:'93962', name:'Spreckels', fair:74.9, income:32, pre60:37.2, buildYr:1965, pop:500, units:5400},
-{ zip:'95004', name:'Aromas', fair:91, income:13, pre60:67.9, buildYr:1965, pop:3400, units:1100},
-{ zip:'95012', name:'Castroville', fair:55.1, income:48, pre60:50.4, buildYr:1965, pop:1000, units:6600},
-{ zip:'95039', name:'Moss Landing', fair:78.1, income:101, pre60:75.6, buildYr:1965, pop:8900, units:7900},
-{ zip:'95076', name:'Watsonville', fair:26.5, income:77, pre60:74, buildYr:1965, pop:1300, units:1900},
+      { zip:'93426', name:'Bradley',       fair:83,   income:91,  pre60:15.2, buildYr:1965, pop:500,   units:2100  },
+      { zip:'93450', name:'San Ardo',      fair:56.9, income:36,  pre60:53.4, buildYr:1970, pop:6800,  units:4600  },
+      { zip:'93451', name:'San Miguel',    fair:96.9, income:54,  pre60:78.3, buildYr:1965, pop:4500,  units:3900  },
+      { zip:'93901', name:'Salinas',       fair:92.3, income:23,  pre60:59.5, buildYr:1970, pop:4300,  units:800   },
+      { zip:'93905', name:'Salinas',       fair:9.3,  income:4,   pre60:65.2, buildYr:1965, pop:1900,  units:7500  },
+      { zip:'93906', name:'Salinas',       fair:26,   income:129, pre60:0,    buildYr:1970, pop:2800,  units:8700  },
+      { zip:'93907', name:'Salinas',       fair:15.3, income:61,  pre60:90.6, buildYr:1965, pop:6100,  units:8200  },
+      { zip:'93908', name:'Salinas',       fair:18.6, income:131, pre60:83.7, buildYr:1970, pop:3000,  units:8000  },
+      { zip:'93920', name:'Big Sur',       fair:14.7, income:33,  pre60:16.1, buildYr:1971, pop:9700,  units:300   },
+      { zip:'93923', name:'Carmel',        fair:4,    income:2,   pre60:38.7, buildYr:1965, pop:3800,  units:3700  },
+      { zip:'93924', name:'Carmel Valley', fair:81.8, income:109, pre60:4.6,  buildYr:1965, pop:3700,  units:4000  },
+      { zip:'93925', name:'Chualar',       fair:49.8, income:14,  pre60:30.3, buildYr:1965, pop:5100,  units:10000 },
+      { zip:'93926', name:'Gonzales',      fair:17.4, income:4,   pre60:80.7, buildYr:1965, pop:8800,  units:8700  },
+      { zip:'93927', name:'Greenfield',    fair:75.3, income:31,  pre60:42.7, buildYr:1965, pop:5300,  units:8800  },
+      { zip:'93930', name:'King City',     fair:11.1, income:58,  pre60:30,   buildYr:1965, pop:9700,  units:2900  },
+      { zip:'93932', name:'Lockwood',      fair:84.6, income:56,  pre60:56.5, buildYr:1965, pop:9400,  units:9800  },
+      { zip:'93933', name:'Marina',        fair:27.1, income:85,  pre60:11.9, buildYr:1965, pop:3700,  units:5400  },
+      { zip:'93940', name:'Monterey',      fair:59.9, income:51,  pre60:1.5,  buildYr:1965, pop:1200,  units:7500  },
+      { zip:'93950', name:'Pacific Grove', fair:13.7, income:68,  pre60:12.3, buildYr:1965, pop:100,   units:10000 },
+      { zip:'93953', name:'Pebble Beach',  fair:55.3, income:5,   pre60:19.3, buildYr:1965, pop:3600,  units:5500  },
+      { zip:'93954', name:'San Lucas',     fair:57.7, income:91,  pre60:26.7, buildYr:1965, pop:2000,  units:4500  },
+      { zip:'93955', name:'Seaside',       fair:19,   income:146, pre60:55.6, buildYr:1965, pop:1900,  units:9300  },
+      { zip:'93960', name:'Soledad',       fair:80.5, income:108, pre60:37,   buildYr:1965, pop:7600,  units:2100  },
+      { zip:'93962', name:'Spreckels',     fair:74.9, income:32,  pre60:37.2, buildYr:1965, pop:500,   units:5400  },
+      { zip:'95004', name:'Aromas',        fair:91,   income:13,  pre60:67.9, buildYr:1965, pop:3400,  units:1100  },
+      { zip:'95012', name:'Castroville',   fair:55.1, income:48,  pre60:50.4, buildYr:1965, pop:1000,  units:6600  },
+      { zip:'95039', name:'Moss Landing',  fair:78.1, income:101, pre60:75.6, buildYr:1965, pop:8900,  units:7900  },
+      { zip:'95076', name:'Watsonville',   fair:26.5, income:77,  pre60:74,   buildYr:1965, pop:1300,  units:1900  },
     ],
     san_benito: [
-{ zip:'95004', name:'Aromas', fair:66.9, income:5, pre60:16.1, buildYr:1965, pop:8700, units:9900},
-{ zip:'95023', name:'Hollister', fair:22.4, income:124, pre60:7, buildYr:1970, pop:6500, units:1000},
-{ zip:'95043', name:'Paicines', fair:88.5, income:53, pre60:76.2, buildYr:1965, pop:9900, units:4000},
-{ zip:'95045', name:'San Juan Bautista', fair:99.9, income:29, pre60:65.4, buildYr:1970, pop:2700, units:7900},
-{ zip:'95075', name:'Tres Pinos', fair:38.5, income:108, pre60:6.3, buildYr:1965, pop:400, units:5800},
+      { zip:'95004', name:'Aromas',              fair:66.9, income:5,   pre60:16.1, buildYr:1965, pop:8700, units:9900 },
+      { zip:'95023', name:'Hollister',           fair:22.4, income:124, pre60:7,    buildYr:1970, pop:6500, units:1000 },
+      { zip:'95043', name:'Paicines',            fair:88.5, income:53,  pre60:76.2, buildYr:1965, pop:9900, units:4000 },
+      { zip:'95045', name:'San Juan Bautista',   fair:99.9, income:29,  pre60:65.4, buildYr:1970, pop:2700, units:7900 },
+      { zip:'95075', name:'Tres Pinos',          fair:38.5, income:108, pre60:6.3,  buildYr:1965, pop:400,  units:5800 },
     ],
     san_diego: [
-      { zip:'91901', name:'Alpine', fair:13.6, income:98, pre60:36.1, buildYr:1965, pop:400, units:1400},
-{ zip:'91902', name:'Bonita', fair:81.2, income:79, pre60:0.1, buildYr:1970, pop:6900, units:3800},
-{ zip:'91905', name:'Boulevard', fair:78.5, income:68, pre60:78.1, buildYr:1965, pop:2600, units:8200},
-{ zip:'91906', name:'Campo', fair:0.3, income:4, pre60:76.1, buildYr:1970, pop:4700, units:7900},
-{ zip:'91910', name:'Chula Vista', fair:83.7, income:34, pre60:21, buildYr:1965, pop:8100, units:5300},
-{ zip:'91911', name:'Chula Vista', fair:73.4, income:125, pre60:19.3, buildYr:1970, pop:2200, units:2200},
-{ zip:'91913', name:'Chula Vista', fair:94.7, income:9, pre60:0.6, buildYr:1965, pop:3700, units:6200},
-{ zip:'91914', name:'Chula Vista', fair:58.5, income:68, pre60:66.4, buildYr:1970, pop:9800, units:3500},
-{ zip:'91915', name:'Chula Vista', fair:16.1, income:113, pre60:36.1, buildYr:1971, pop:5300, units:9800},
-{ zip:'91916', name:'Descanso', fair:80.3, income:16, pre60:68.8, buildYr:1965, pop:7100, units:6800},
-{ zip:'91917', name:'Dulzura', fair:59.2, income:137, pre60:12.4, buildYr:1965, pop:5800, units:2500},
-{ zip:'91931', name:'Guatay', fair:26.5, income:17, pre60:35.6, buildYr:1965, pop:4200, units:5600},
-{ zip:'91932', name:'Imperial Beach', fair:17.5, income:74, pre60:18.6, buildYr:1965, pop:8300, units:3400},
-{ zip:'91934', name:'Jacumba', fair:44.6, income:140, pre60:1.8, buildYr:1965, pop:7900, units:6900},
-{ zip:'91935', name:'Jamul', fair:54, income:105, pre60:87.8, buildYr:1965, pop:3800, units:3200},
-{ zip:'91941', name:'La Mesa', fair:95.1, income:6, pre60:11.1, buildYr:1965, pop:3400, units:3800},
-{ zip:'91942', name:'La Mesa', fair:2.7, income:67, pre60:77.9, buildYr:1965, pop:2400, units:800},
-{ zip:'91945', name:'Lemon Grove', fair:18.4, income:93, pre60:36.1, buildYr:1965, pop:800, units:5200},
-{ zip:'91950', name:'National City', fair:8.4, income:84, pre60:65, buildYr:1965, pop:9600, units:9400},
-{ zip:'91962', name:'Pine Valley', fair:25.6, income:128, pre60:1.6, buildYr:1965, pop:1700, units:6900},
-{ zip:'91963', name:'Potrero', fair:79.6, income:115, pre60:93.7, buildYr:1965, pop:3000, units:2200},
-{ zip:'91977', name:'Spring Valley', fair:88.8, income:6, pre60:31.1, buildYr:1965, pop:8100, units:4900},
-{ zip:'91978', name:'Spring Valley', fair:58.8, income:36, pre60:16.1, buildYr:1965, pop:2000, units:2400},
-{ zip:'91980', name:'Tecate', fair:40.6, income:144, pre60:36, buildYr:1965, pop:1100, units:6600},
-{ zip:'92003', name:'Bonsall', fair:66.8, income:87, pre60:83.4, buildYr:1965, pop:5800, units:4600},
-{ zip:'92004', name:'Borrego Springs', fair:6.4, income:12, pre60:63.4, buildYr:1965, pop:5500, units:2000},
-{ zip:'92007', name:'Cardiff By The Sea', fair:74, income:55, pre60:74.3, buildYr:1965, pop:7800, units:6700},
-{ zip:'92008', name:'Carlsbad', fair:56.1, income:6, pre60:42, buildYr:1965, pop:1700, units:5200},
-{ zip:'92009', name:'Carlsbad', fair:66.4, income:47, pre60:24.6, buildYr:1965, pop:7400, units:1200},
-{ zip:'92010', name:'Carlsbad', fair:30.8, income:56, pre60:33.1, buildYr:1965, pop:8300, units:9000},
-{ zip:'92011', name:'Carlsbad', fair:5.6, income:115, pre60:70, buildYr:1965, pop:6400, units:3900},
-{ zip:'92014', name:'Del Mar', fair:49.5, income:48, pre60:29.8, buildYr:1965, pop:4200, units:3900},
-{ zip:'92019', name:'El Cajon', fair:36.1, income:145, pre60:43, buildYr:1965, pop:3400, units:7400},
-{ zip:'92020', name:'El Cajon', fair:41.4, income:106, pre60:23.4, buildYr:1965, pop:9700, units:200},
-{ zip:'92021', name:'El Cajon', fair:43.2, income:58, pre60:47.6, buildYr:1965, pop:1500, units:8200},
-{ zip:'92024', name:'Encinitas', fair:57.2, income:3, pre60:2.4, buildYr:1965, pop:3600, units:6600},
-{ zip:'92025', name:'Escondido', fair:42.3, income:10, pre60:21.3, buildYr:1965, pop:5400, units:8600},
-{ zip:'92026', name:'Escondido', fair:54.2, income:84, pre60:88, buildYr:1965, pop:9300, units:800},
-{ zip:'92027', name:'Escondido', fair:44.7, income:143, pre60:37.2, buildYr:1965, pop:5300, units:200},
-{ zip:'92028', name:'Fallbrook', fair:0.6, income:8, pre60:77.5, buildYr:1965, pop:2500, units:7200},
-{ zip:'92029', name:'Escondido', fair:48.2, income:138, pre60:63.3, buildYr:1965, pop:4800, units:800},
-{ zip:'92036', name:'Julian', fair:26.9, income:19, pre60:33.3, buildYr:1965, pop:4500, units:7000},
-{ zip:'92037', name:'La Jolla', fair:83.6, income:101, pre60:31.2, buildYr:1965, pop:4300, units:6700},
-{ zip:'92040', name:'Lakeside', fair:45.3, income:146, pre60:64.2, buildYr:1965, pop:200, units:1900},
-{ zip:'92054', name:'Oceanside', fair:89.4, income:98, pre60:50.7, buildYr:1965, pop:4200, units:9700},
-{ zip:'92056', name:'Oceanside', fair:31.3, income:38, pre60:20.8, buildYr:1965, pop:4100, units:4900},
-{ zip:'92057', name:'Oceanside', fair:9.6, income:53, pre60:73.6, buildYr:1965, pop:8700, units:700},
-{ zip:'92058', name:'Oceanside', fair:10, income:18, pre60:11.1, buildYr:1965, pop:5400, units:6700},
-{ zip:'92059', name:'Pala', fair:15.3, income:147, pre60:65.9, buildYr:1965, pop:9500, units:4400},
-{ zip:'92060', name:'Palomar Mountain', fair:20.6, income:80, pre60:17.4, buildYr:1965, pop:7800, units:2000},
-{ zip:'92061', name:'Pauma Valley', fair:40.4, income:11, pre60:5.5, buildYr:1965, pop:4600, units:8200},
-{ zip:'92064', name:'Poway', fair:53, income:96, pre60:3.9, buildYr:1965, pop:7700, units:6200},
-{ zip:'92065', name:'Ramona', fair:31.2, income:5, pre60:10.3, buildYr:1965, pop:2800, units:400},
-{ zip:'92066', name:'Ranchita', fair:23.7, income:37, pre60:79.1, buildYr:1965, pop:3200, units:7500},
-{ zip:'92067', name:'Rancho Santa Fe', fair:15.7, income:42, pre60:18.6, buildYr:1965, pop:3600, units:1200},
-{ zip:'92069', name:'San Marcos', fair:83.2, income:31, pre60:71.6, buildYr:1965, pop:5700, units:1700},
-{ zip:'92070', name:'Santa Ysabel', fair:55.7, income:104, pre60:41.8, buildYr:1965, pop:4800, units:6400},
-{ zip:'92071', name:'Santee', fair:51.6, income:63, pre60:70.3, buildYr:1965, pop:7300, units:2800},
-{ zip:'92075', name:'Solana Beach', fair:24, income:49, pre60:65, buildYr:1965, pop:2600, units:7000},
-{ zip:'92078', name:'San Marcos', fair:59.7, income:20, pre60:29.4, buildYr:1965, pop:6300, units:7500},
-{ zip:'92081', name:'Vista', fair:23.2, income:109, pre60:69.3, buildYr:1965, pop:8600, units:10000},
-{ zip:'92082', name:'Valley Center', fair:10.3, income:125, pre60:79, buildYr:1965, pop:6200, units:8000},
-{ zip:'92083', name:'Vista', fair:77.1, income:132, pre60:35.5, buildYr:1965, pop:4100, units:9200},
-{ zip:'92084', name:'Vista', fair:68.5, income:89, pre60:70, buildYr:1965, pop:6600, units:3200},
-{ zip:'92086', name:'Warner Springs', fair:96.2, income:99, pre60:88.6, buildYr:1965, pop:9600, units:5100},
-{ zip:'92091', name:'Rancho Santa Fe', fair:79.2, income:112, pre60:12.8, buildYr:1965, pop:4700, units:5600},
-{ zip:'92101', name:'San Diego', fair:49, income:48, pre60:67.9, buildYr:1965, pop:800, units:2600},
-{ zip:'92102', name:'San Diego', fair:90, income:104, pre60:94.2, buildYr:1965, pop:2000, units:6500},
-{ zip:'92103', name:'San Diego', fair:24, income:149, pre60:16.8, buildYr:1965, pop:7000, units:9100},
-{ zip:'92104', name:'San Diego', fair:23.9, income:36, pre60:26.7, buildYr:1965, pop:4000, units:6400},
-{ zip:'92105', name:'San Diego', fair:12.8, income:32, pre60:72.9, buildYr:1965, pop:5400, units:7700},
-{ zip:'92106', name:'San Diego', fair:0.1, income:44, pre60:59.9, buildYr:1965, pop:5100, units:2300},
-{ zip:'92107', name:'San Diego', fair:73.8, income:30, pre60:85.8, buildYr:1965, pop:9200, units:900},
-{ zip:'92108', name:'San Diego', fair:85.2, income:75, pre60:61.1, buildYr:1965, pop:3600, units:9500},
-{ zip:'92109', name:'San Diego', fair:7.3, income:41, pre60:64.8, buildYr:1965, pop:200, units:400},
-{ zip:'92110', name:'San Diego', fair:79.9, income:68, pre60:13.2, buildYr:1965, pop:4100, units:2800},
-{ zip:'92111', name:'San Diego', fair:91, income:68, pre60:82.7, buildYr:1965, pop:1600, units:3200},
-{ zip:'92113', name:'San Diego', fair:4.2, income:60, pre60:45.7, buildYr:1965, pop:3400, units:4400},
-{ zip:'92114', name:'San Diego', fair:40.1, income:70, pre60:70.1, buildYr:1965, pop:6900, units:800},
-{ zip:'92115', name:'San Diego', fair:44, income:92, pre60:60.3, buildYr:1965, pop:5300, units:900},
-{ zip:'92116', name:'San Diego', fair:90, income:52, pre60:85, buildYr:1965, pop:700, units:9100},
-{ zip:'92117', name:'San Diego', fair:19.4, income:11, pre60:52.3, buildYr:1965, pop:5800, units:7800},
-{ zip:'92118', name:'Coronado', fair:86.9, income:42, pre60:42.2, buildYr:1965, pop:7900, units:4300},
-{ zip:'92119', name:'San Diego', fair:36.4, income:110, pre60:32.1, buildYr:1965, pop:5000, units:4500},
-{ zip:'92120', name:'San Diego', fair:63.1, income:136, pre60:23.4, buildYr:1965, pop:5400, units:2700},
-{ zip:'92121', name:'San Diego', fair:97.6, income:87, pre60:68.6, buildYr:1965, pop:3000, units:5700},
-{ zip:'92122', name:'San Diego', fair:77.5, income:90, pre60:52.6, buildYr:1965, pop:8000, units:8900},
-{ zip:'92123', name:'San Diego', fair:83.9, income:118, pre60:90.4, buildYr:1965, pop:500, units:2800},
-{ zip:'92124', name:'San Diego', fair:96.5, income:12, pre60:19.5, buildYr:1965, pop:1300, units:5200},
-{ zip:'92126', name:'San Diego', fair:43.2, income:141, pre60:96.6, buildYr:1965, pop:6200, units:8000},
-{ zip:'92127', name:'San Diego', fair:70.5, income:85, pre60:39.3, buildYr:1965, pop:2900, units:7700},
-{ zip:'92128', name:'San Diego', fair:41, income:57, pre60:26.1, buildYr:1965, pop:9200, units:2300},
-{ zip:'92129', name:'San Diego', fair:24.8, income:76, pre60:87.7, buildYr:1965, pop:6200, units:2500},
-{ zip:'92130', name:'San Diego', fair:61.3, income:50, pre60:73, buildYr:1965, pop:9400, units:8100},
-{ zip:'92131', name:'San Diego', fair:3.5, income:20, pre60:92.2, buildYr:1965, pop:7900, units:4100},
-{ zip:'92139', name:'San Diego', fair:10.7, income:39, pre60:5.7, buildYr:1965, pop:3400, units:8200},
-{ zip:'92154', name:'San Diego', fair:15.2, income:134, pre60:61.7, buildYr:1965, pop:2100, units:8800},
-{ zip:'92173', name:'San Ysidro', fair:39.6, income:76, pre60:49.4, buildYr:1965, pop:5200, units:1500},
-{ zip:'92536', name:'Aguanga', fair:73.4, income:22, pre60:23.9, buildYr:1965, pop:8500, units:5500},
-{ zip:'92672', name:'San Clemente', fair:71.8, income:10, pre60:25.6, buildYr:1965, pop:5400, units:9100},
+      { zip:'91901', name:'Alpine',          fair:13.6, income:98,  pre60:36.1, buildYr:1965, pop:400,  units:1400  },
+      { zip:'91902', name:'Bonita',          fair:81.2, income:79,  pre60:0.1,  buildYr:1970, pop:6900, units:3800  },
+      { zip:'91905', name:'Boulevard',       fair:78.5, income:68,  pre60:78.1, buildYr:1965, pop:2600, units:8200  },
+      { zip:'91910', name:'Chula Vista',     fair:83.7, income:34,  pre60:21,   buildYr:1965, pop:8100, units:5300  },
+      { zip:'91911', name:'Chula Vista',     fair:73.4, income:125, pre60:19.3, buildYr:1970, pop:2200, units:2200  },
+      { zip:'91913', name:'Chula Vista',     fair:94.7, income:9,   pre60:0.6,  buildYr:1965, pop:3700, units:6200  },
+      { zip:'91914', name:'Chula Vista',     fair:58.5, income:68,  pre60:66.4, buildYr:1970, pop:9800, units:3500  },
+      { zip:'91916', name:'Descanso',        fair:80.3, income:16,  pre60:68.8, buildYr:1965, pop:7100, units:6800  },
+      { zip:'91932', name:'Imperial Beach',  fair:17.5, income:74,  pre60:18.6, buildYr:1965, pop:8300, units:3400  },
+      { zip:'91935', name:'Jamul',           fair:54,   income:105, pre60:87.8, buildYr:1965, pop:3800, units:3200  },
+      { zip:'91941', name:'La Mesa',         fair:95.1, income:6,   pre60:11.1, buildYr:1965, pop:3400, units:3800  },
+      { zip:'91945', name:'Lemon Grove',     fair:18.4, income:93,  pre60:36.1, buildYr:1965, pop:800,  units:5200  },
+      { zip:'91950', name:'National City',   fair:8.4,  income:84,  pre60:65,   buildYr:1965, pop:9600, units:9400  },
+      { zip:'91963', name:'Potrero',         fair:79.6, income:115, pre60:93.7, buildYr:1965, pop:3000, units:2200  },
+      { zip:'91977', name:'Spring Valley',   fair:88.8, income:6,   pre60:31.1, buildYr:1965, pop:8100, units:4900  },
+      { zip:'92003', name:'Bonsall',         fair:66.8, income:87,  pre60:83.4, buildYr:1965, pop:5800, units:4600  },
+      { zip:'92007', name:'Cardiff By Sea',  fair:74,   income:55,  pre60:74.3, buildYr:1965, pop:7800, units:6700  },
+      { zip:'92008', name:'Carlsbad',        fair:56.1, income:6,   pre60:42,   buildYr:1965, pop:1700, units:5200  },
+      { zip:'92009', name:'Carlsbad',        fair:66.4, income:47,  pre60:24.6, buildYr:1965, pop:7400, units:1200  },
+      { zip:'92024', name:'Encinitas',       fair:57.2, income:3,   pre60:2.4,  buildYr:1965, pop:3600, units:6600  },
+      { zip:'92025', name:'Escondido',       fair:42.3, income:10,  pre60:21.3, buildYr:1965, pop:5400, units:8600  },
+      { zip:'92026', name:'Escondido',       fair:54.2, income:84,  pre60:88,   buildYr:1965, pop:9300, units:800   },
+      { zip:'92028', name:'Fallbrook',       fair:0.6,  income:8,   pre60:77.5, buildYr:1965, pop:2500, units:7200  },
+      { zip:'92037', name:'La Jolla',        fair:83.6, income:101, pre60:31.2, buildYr:1965, pop:4300, units:6700  },
+      { zip:'92054', name:'Oceanside',       fair:89.4, income:98,  pre60:50.7, buildYr:1965, pop:4200, units:9700  },
+      { zip:'92056', name:'Oceanside',       fair:31.3, income:38,  pre60:20.8, buildYr:1965, pop:4100, units:4900  },
+      { zip:'92064', name:'Poway',           fair:53,   income:96,  pre60:3.9,  buildYr:1965, pop:7700, units:6200  },
+      { zip:'92069', name:'San Marcos',      fair:83.2, income:31,  pre60:71.6, buildYr:1965, pop:5700, units:1700  },
+      { zip:'92071', name:'Santee',          fair:51.6, income:63,  pre60:70.3, buildYr:1965, pop:7300, units:2800  },
+      { zip:'92083', name:'Vista',           fair:77.1, income:132, pre60:35.5, buildYr:1965, pop:4100, units:9200  },
+      { zip:'92084', name:'Vista',           fair:68.5, income:89,  pre60:70,   buildYr:1965, pop:6600, units:3200  },
+      { zip:'92086', name:'Warner Springs',  fair:96.2, income:99,  pre60:88.6, buildYr:1965, pop:9600, units:5100  },
+      { zip:'92101', name:'San Diego',       fair:49,   income:48,  pre60:67.9, buildYr:1965, pop:800,  units:2600  },
+      { zip:'92102', name:'San Diego',       fair:90,   income:104, pre60:94.2, buildYr:1965, pop:2000, units:6500  },
+      { zip:'92107', name:'San Diego',       fair:73.8, income:30,  pre60:85.8, buildYr:1965, pop:9200, units:900   },
+      { zip:'92108', name:'San Diego',       fair:85.2, income:75,  pre60:61.1, buildYr:1965, pop:3600, units:9500  },
+      { zip:'92111', name:'San Diego',       fair:91,   income:68,  pre60:82.7, buildYr:1965, pop:1600, units:3200  },
+      { zip:'92118', name:'Coronado',        fair:86.9, income:42,  pre60:42.2, buildYr:1965, pop:7900, units:4300  },
+      { zip:'92121', name:'San Diego',       fair:97.6, income:87,  pre60:68.6, buildYr:1965, pop:3000, units:5700  },
+      { zip:'92122', name:'San Diego',       fair:77.5, income:90,  pre60:52.6, buildYr:1965, pop:8000, units:8900  },
+      { zip:'92123', name:'San Diego',       fair:83.9, income:118, pre60:90.4, buildYr:1965, pop:500,  units:2800  },
+      { zip:'92124', name:'San Diego',       fair:96.5, income:12,  pre60:19.5, buildYr:1965, pop:1300, units:5200  },
     ],
     santa_cruz: [
-{ zip:'94060', name:'Pescadero', fair:58.3, income:40, pre60:10.6, buildYr:1965, pop:1600, units:5100},
-{ zip:'95003', name:'Aptos', fair:96.4, income:76, pre60:74, buildYr:1970, pop:8000, units:8100},
-{ zip:'95005', name:'Ben Lomond', fair:52.7, income:99, pre60:46.9, buildYr:1965, pop:3800, units:700},
-{ zip:'95006', name:'Boulder Creek', fair:21.6, income:42, pre60:52.3, buildYr:1970, pop:7000, units:1200},
-{ zip:'95007', name:'Brookdale', fair:89.7, income:58, pre60:5.3, buildYr:1965, pop:1200, units:3400},
-{ zip:'95010', name:'Capitola', fair:67.5, income:23, pre60:50.1, buildYr:1970, pop:10000, units:7900},
-{ zip:'95017', name:'Davenport', fair:47.2, income:113, pre60:25.7, buildYr:1965, pop:5400, units:2500},
-{ zip:'95018', name:'Felton', fair:25.5, income:65, pre60:9.5, buildYr:1970, pop:6700, units:2100},
-{ zip:'95019', name:'Freedom', fair:24.2, income:33, pre60:19.4, buildYr:1971, pop:6900, units:4900},
-{ zip:'95033', name:'Los Gatos', fair:57.4, income:81, pre60:82, buildYr:1965, pop:6500, units:4900},
-{ zip:'95041', name:'Mount Hermon', fair:64.9, income:44, pre60:43.8, buildYr:1965, pop:300, units:2100},
-{ zip:'95060', name:'Santa Cruz', fair:67.9, income:57, pre60:19.9, buildYr:1965, pop:9300, units:9400},
-{ zip:'95062', name:'Santa Cruz', fair:83.3, income:33, pre60:62.5, buildYr:1965, pop:9900, units:9500},
-{ zip:'95064', name:'Santa Cruz', fair:64.2, income:149, pre60:6.9, buildYr:1965, pop:800, units:8100},
-{ zip:'95065', name:'Santa Cruz', fair:19.6, income:44, pre60:64.1, buildYr:1965, pop:1600, units:3700},
-{ zip:'95066', name:'Scotts Valley', fair:86.1, income:31, pre60:88.6, buildYr:1965, pop:5200, units:8900},
-{ zip:'95073', name:'Soquel', fair:2.8, income:99, pre60:84.3, buildYr:1965, pop:3500, units:5300},
-{ zip:'95076', name:'Watsonville', fair:66.9, income:86, pre60:10.8, buildYr:1965, pop:5700, units:1900},
+      { zip:'95003', name:'Aptos',         fair:96.4, income:76,  pre60:74,   buildYr:1970, pop:8000,  units:8100 },
+      { zip:'95005', name:'Ben Lomond',    fair:52.7, income:99,  pre60:46.9, buildYr:1965, pop:3800,  units:700  },
+      { zip:'95006', name:'Boulder Creek', fair:21.6, income:42,  pre60:52.3, buildYr:1970, pop:7000,  units:1200 },
+      { zip:'95007', name:'Brookdale',     fair:89.7, income:58,  pre60:5.3,  buildYr:1965, pop:1200,  units:3400 },
+      { zip:'95010', name:'Capitola',      fair:67.5, income:23,  pre60:50.1, buildYr:1970, pop:10000, units:7900 },
+      { zip:'95018', name:'Felton',        fair:25.5, income:65,  pre60:9.5,  buildYr:1970, pop:6700,  units:2100 },
+      { zip:'95060', name:'Santa Cruz',    fair:67.9, income:57,  pre60:19.9, buildYr:1965, pop:9300,  units:9400 },
+      { zip:'95062', name:'Santa Cruz',    fair:83.3, income:33,  pre60:62.5, buildYr:1965, pop:9900,  units:9500 },
+      { zip:'95065', name:'Santa Cruz',    fair:19.6, income:44,  pre60:64.1, buildYr:1965, pop:1600,  units:3700 },
+      { zip:'95066', name:'Scotts Valley', fair:86.1, income:31,  pre60:88.6, buildYr:1965, pop:5200,  units:8900 },
+      { zip:'95076', name:'Watsonville',   fair:66.9, income:86,  pre60:10.8, buildYr:1965, pop:5700,  units:1900 },
     ],
     tulare: [
-{ zip:'93201', name:'Alpaugh', fair:60.5, income:144, pre60:33, buildYr:1965, pop:5000, units:4200},
-{ zip:'93207', name:'California Hot Springs', fair:35.4, income:22, pre60:56.6, buildYr:1970, pop:500, units:9600},
-{ zip:'93208', name:'Camp Nelson', fair:12.2, income:65, pre60:24.8, buildYr:1965, pop:3900, units:4500},
-{ zip:'93212', name:'Corcoran', fair:66.7, income:9, pre60:61.5, buildYr:1970, pop:9900, units:8900},
-{ zip:'93215', name:'Delano', fair:38.3, income:101, pre60:86.4, buildYr:1965, pop:7200, units:5200},
-{ zip:'93218', name:'Ducor', fair:60, income:105, pre60:15.1, buildYr:1970, pop:1500, units:2300},
-{ zip:'93219', name:'Earlimart', fair:66.9, income:77, pre60:7.8, buildYr:1965, pop:4500, units:5100},
-{ zip:'93221', name:'Exeter', fair:18, income:32, pre60:30, buildYr:1970, pop:2500, units:4500},
-{ zip:'93223', name:'Farmersville', fair:39.9, income:52, pre60:42.4, buildYr:1971, pop:8300, units:900},
-{ zip:'93235', name:'Ivanhoe', fair:99.9, income:52, pre60:34.5, buildYr:1965, pop:9800, units:8800},
-{ zip:'93244', name:'Lemon Cove', fair:22.2, income:46, pre60:91, buildYr:1965, pop:6300, units:8600},
-{ zip:'93247', name:'Lindsay', fair:9.8, income:88, pre60:42, buildYr:1965, pop:1200, units:5500},
-{ zip:'93256', name:'Pixley', fair:51, income:79, pre60:46.7, buildYr:1965, pop:9300, units:1500},
-{ zip:'93257', name:'Porterville', fair:3.2, income:5, pre60:99.3, buildYr:1965, pop:100, units:9700},
-{ zip:'93260', name:'Posey', fair:3.8, income:98, pre60:74.1, buildYr:1965, pop:6100, units:5500},
-{ zip:'93262', name:'Sequoia National Park', fair:96.2, income:33, pre60:89.1, buildYr:1965, pop:2600, units:4900},
-{ zip:'93265', name:'Springville', fair:80.8, income:5, pre60:47.4, buildYr:1965, pop:1500, units:6400},
-{ zip:'93267', name:'Strathmore', fair:1.1, income:144, pre60:27.5, buildYr:1965, pop:900, units:3500},
-{ zip:'93270', name:'Terra Bella', fair:58.1, income:78, pre60:33.5, buildYr:1965, pop:6400, units:4000},
-{ zip:'93271', name:'Three Rivers', fair:85.7, income:59, pre60:6.7, buildYr:1965, pop:7500, units:3300},
-{ zip:'93272', name:'Tipton', fair:74.7, income:141, pre60:45.5, buildYr:1965, pop:6500, units:8100},
-{ zip:'93274', name:'Tulare', fair:67.4, income:81, pre60:93.3, buildYr:1965, pop:600, units:3300},
-{ zip:'93277', name:'Visalia', fair:19.6, income:130, pre60:50.1, buildYr:1965, pop:7600, units:5100},
-{ zip:'93286', name:'Woodlake', fair:21.7, income:63, pre60:96.7, buildYr:1965, pop:2900, units:6000},
-{ zip:'93291', name:'Visalia', fair:77, income:18, pre60:97.2, buildYr:1965, pop:10000, units:2200},
-{ zip:'93292', name:'Visalia', fair:23.6, income:17, pre60:35.8, buildYr:1965, pop:6000, units:3500},
-{ zip:'93527', name:'Inyokern', fair:62.2, income:36, pre60:71.7, buildYr:1965, pop:8700, units:2200},
-{ zip:'93603', name:'Badger', fair:33.6, income:109, pre60:59.7, buildYr:1965, pop:5500, units:3800},
-{ zip:'93615', name:'Cutler', fair:15.1, income:64, pre60:13, buildYr:1965, pop:8900, units:100},
-{ zip:'93618', name:'Dinuba', fair:15, income:54, pre60:68.3, buildYr:1965, pop:5000, units:5800},
-{ zip:'93631', name:'Kingsburg', fair:52.3, income:109, pre60:5.7, buildYr:1965, pop:2600, units:1700},
-{ zip:'93633', name:'Kings Canyon National Pk', fair:79.1, income:45, pre60:29.8, buildYr:1965, pop:5000, units:8500},
-{ zip:'93646', name:'Orange Cove', fair:79.8, income:97, pre60:18.3, buildYr:1965, pop:700, units:9000},
-{ zip:'93647', name:'Orosi', fair:41.1, income:111, pre60:33.1, buildYr:1965, pop:8900, units:9500},
-{ zip:'93654', name:'Reedley', fair:9.6, income:42, pre60:64.5, buildYr:1965, pop:9100, units:3300},
-{ zip:'93666', name:'Sultana', fair:51, income:108, pre60:54.8, buildYr:1965, pop:7000, units:6800},
-{ zip:'93673', name:'Traver', fair:76.2, income:40, pre60:4.5, buildYr:1965, pop:5900, units:7000},
+      { zip:'93201', name:'Alpaugh',          fair:60.5, income:144, pre60:33,   buildYr:1965, pop:5000, units:4200 },
+      { zip:'93212', name:'Corcoran',         fair:66.7, income:9,   pre60:61.5, buildYr:1970, pop:9900, units:8900 },
+      { zip:'93215', name:'Delano',           fair:38.3, income:101, pre60:86.4, buildYr:1965, pop:7200, units:5200 },
+      { zip:'93219', name:'Earlimart',        fair:66.9, income:77,  pre60:7.8,  buildYr:1965, pop:4500, units:5100 },
+      { zip:'93221', name:'Exeter',           fair:18,   income:32,  pre60:30,   buildYr:1970, pop:2500, units:4500 },
+      { zip:'93235', name:'Ivanhoe',          fair:99.9, income:52,  pre60:34.5, buildYr:1965, pop:9800, units:8800 },
+      { zip:'93247', name:'Lindsay',          fair:9.8,  income:88,  pre60:42,   buildYr:1965, pop:1200, units:5500 },
+      { zip:'93256', name:'Pixley',           fair:51,   income:79,  pre60:46.7, buildYr:1965, pop:9300, units:1500 },
+      { zip:'93257', name:'Porterville',      fair:3.2,  income:5,   pre60:99.3, buildYr:1965, pop:100,  units:9700 },
+      { zip:'93262', name:'Sequoia Natl Pk',  fair:96.2, income:33,  pre60:89.1, buildYr:1965, pop:2600, units:4900 },
+      { zip:'93265', name:'Springville',      fair:80.8, income:5,   pre60:47.4, buildYr:1965, pop:1500, units:6400 },
+      { zip:'93271', name:'Three Rivers',     fair:85.7, income:59,  pre60:6.7,  buildYr:1965, pop:7500, units:3300 },
+      { zip:'93274', name:'Tulare',           fair:67.4, income:81,  pre60:93.3, buildYr:1965, pop:600,  units:3300 },
+      { zip:'93277', name:'Visalia',          fair:19.6, income:130, pre60:50.1, buildYr:1965, pop:7600, units:5100 },
+      { zip:'93291', name:'Visalia',          fair:77,   income:18,  pre60:97.2, buildYr:1965, pop:10000,units:2200 },
+      { zip:'93603', name:'Badger',           fair:33.6, income:109, pre60:59.7, buildYr:1965, pop:5500, units:3800 },
+      { zip:'93618', name:'Dinuba',           fair:15,   income:54,  pre60:68.3, buildYr:1965, pop:5000, units:5800 },
+      { zip:'93646', name:'Orange Cove',      fair:79.8, income:97,  pre60:18.3, buildYr:1965, pop:700,  units:9000 },
+      { zip:'93673', name:'Traver',           fair:76.2, income:40,  pre60:4.5,  buildYr:1965, pop:5900, units:7000 },
     ],
     tuolumne: [
-{ zip:'95228', name:'Copperopolis', fair:10.7, income:89, pre60:14.4, buildYr:1965, pop:8500, units:4700},
-{ zip:'95305', name:'Big Oak Flat', fair:84.2, income:5, pre60:65, buildYr:1970, pop:3400, units:1900},
-{ zip:'95310', name:'Columbia', fair:63.2, income:46, pre60:53, buildYr:1965, pop:4100, units:5900},
-{ zip:'95311', name:'Coulterville', fair:57.3, income:124, pre60:7.5, buildYr:1970, pop:6800, units:2400},
-{ zip:'95321', name:'Groveland', fair:35.5, income:106, pre60:62.2, buildYr:1965, pop:5400, units:6400},
-{ zip:'95327', name:'Jamestown', fair:83.8, income:41, pre60:13.5, buildYr:1970, pop:2000, units:5500},
-{ zip:'95329', name:'La Grange', fair:30.6, income:37, pre60:50.6, buildYr:1965, pop:600, units:4800},
-{ zip:'95335', name:'Long Barn', fair:29.7, income:99, pre60:64.5, buildYr:1970, pop:2600, units:8800},
-{ zip:'95346', name:'MI Wuk Village', fair:13.1, income:139, pre60:89.5, buildYr:1971, pop:4000, units:8200},
-{ zip:'95364', name:'Pinecrest', fair:47.6, income:108, pre60:56.7, buildYr:1965, pop:3700, units:6200},
-{ zip:'95370', name:'Sonora', fair:27.4, income:129, pre60:78.9, buildYr:1965, pop:2600, units:4600},
-{ zip:'95372', name:'Soulsbyville', fair:58.6, income:117, pre60:51, buildYr:1965, pop:3800, units:9900},
-{ zip:'95379', name:'Tuolumne', fair:58.9, income:69, pre60:78.6, buildYr:1965, pop:5500, units:4000},
-{ zip:'95383', name:'Twain Harte', fair:4.9, income:43, pre60:98.7, buildYr:1965, pop:600, units:8800},
-{ zip:'95389', name:'Yosemite National Park', fair:28.3, income:113, pre60:61.6, buildYr:1965, pop:7900, units:2000},
+      { zip:'95305', name:'Big Oak Flat',     fair:84.2, income:5,   pre60:65,   buildYr:1970, pop:3400, units:1900 },
+      { zip:'95310', name:'Columbia',         fair:63.2, income:46,  pre60:53,   buildYr:1965, pop:4100, units:5900 },
+      { zip:'95311', name:'Coulterville',     fair:57.3, income:124, pre60:7.5,  buildYr:1970, pop:6800, units:2400 },
+      { zip:'95321', name:'Groveland',        fair:35.5, income:106, pre60:62.2, buildYr:1965, pop:5400, units:6400 },
+      { zip:'95327', name:'Jamestown',        fair:83.8, income:41,  pre60:13.5, buildYr:1970, pop:2000, units:5500 },
+      { zip:'95335', name:'Long Barn',        fair:29.7, income:99,  pre60:64.5, buildYr:1970, pop:2600, units:8800 },
+      { zip:'95346', name:'MI Wuk Village',   fair:13.1, income:139, pre60:89.5, buildYr:1971, pop:4000, units:8200 },
+      { zip:'95364', name:'Pinecrest',        fair:47.6, income:108, pre60:56.7, buildYr:1965, pop:3700, units:6200 },
+      { zip:'95370', name:'Sonora',           fair:27.4, income:129, pre60:78.9, buildYr:1965, pop:2600, units:4600 },
+      { zip:'95372', name:'Soulsbyville',     fair:58.6, income:117, pre60:51,   buildYr:1965, pop:3800, units:9900 },
+      { zip:'95379', name:'Tuolumne',         fair:58.9, income:69,  pre60:78.6, buildYr:1965, pop:5500, units:4000 },
+      { zip:'95383', name:'Twain Harte',      fair:4.9,  income:43,  pre60:98.7, buildYr:1965, pop:600,  units:8800 },
+      { zip:'95389', name:'Yosemite Natl Pk', fair:28.3, income:113, pre60:61.6, buildYr:1965, pop:7900, units:2000 },
     ],
     hoopa: [
-      { zip:'95546', name:'Hoopa Valley',       fair:38.2, income:72, pre60:54, buildYr:1958, pop:2600,  units:900   },
-      { zip:'95526', name:'Burnt Ranch',        fair:29.4, income:58, pre60:46, buildYr:1964, pop:350,   units:200   },
-      { zip:'95511', name:'Alderpoint',         fair:26.8, income:61, pre60:48, buildYr:1963, pop:400,   units:220   },
-      { zip:'95514', name:'Blocksburg',         fair:24.2, income:55, pre60:42, buildYr:1966, pop:280,   units:160   },
+      { zip:'95546', name:'Hoopa Valley', fair:38.2, income:72, pre60:54, buildYr:1958, pop:2600, units:900 },
+      { zip:'95526', name:'Burnt Ranch',  fair:29.4, income:58, pre60:46, buildYr:1964, pop:350,  units:200 },
+      { zip:'95511', name:'Alderpoint',   fair:26.8, income:61, pre60:48, buildYr:1963, pop:400,  units:220 },
+      { zip:'95514', name:'Blocksburg',   fair:24.2, income:55, pre60:42, buildYr:1966, pop:280,  units:160 },
     ],
   };
   return seeds[community] || [];
@@ -898,7 +785,6 @@ function generateZIPs(community) {
 /* ════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════ */
-  let currentBoundary = null;
 let layers = { income:true, age:true, outline:true, labels:true };
 let thresholds = { fair:15, income:40, age:30 };
 let hlMode = 3;
@@ -906,19 +792,22 @@ let choroMetric = 'fair';
 let currentCommunity = '';
 let currentZipData = [];
 let selectedZip = null;
-let geoFeatures = null;
-  let leafletMap = null;
-let allCountyFeatures = null;
+let geoFeatures = null; // Array of GeoJSON features with _data attached
+let currentView = 'map';
 let sortCol = 'score';
-let sortDir = -1; // -1 = desc
+let sortDir = -1;
+let chartInstances = [];
+
+/* Leaflet map (initialized once) */
+let leafletMap = null;
 
 /* ════════════════════════════════════════════
    HELPERS
 ════════════════════════════════════════════ */
 function getVal(d, metric) {
-  if (metric === 'score') return getRiskScore(d);
+  if (metric === 'score')  return getRiskScore(d);
   if (metric === 'income') return d.income;
-  if (metric === 'pre60') return d.pre60;
+  if (metric === 'pre60')  return d.pre60;
   return d.fair;
 }
 function getRiskFactors(d) {
@@ -933,23 +822,23 @@ function getRiskScore(d) {
 }
 function pct(v) { return v.toFixed(1) + '%'; }
 function fmt(n) {
-  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0)+'K';
   return n.toLocaleString();
 }
 
 /* Color scales */
 const SCHEMES = {
-fair:  ["#FDECEA", "#F9CCC8", "#F5ACA6", "#EF8B84", "#E86A62", "#DC5249", "#CC4438", "#B83528", "#992620", "#7B1818"],
-income: ["#E4F4F4", "#BEE8E8", "#98DDDD", "#6DCBCB", "#40B6B6", "#259E9E", "#1C8282", "#146767", "#0E4E4E", "#083535"],
-pre60:  ["#FEF3E6", "#FCE1BA", "#FBCF8F", "#F4B764", "#EC9C38", "#DB831C", "#C26D10", "#A85707", "#894405", "#6B3204"],
-score:   ["#E6F0FA", "#CADFF4", "#AECFEE", "#8CB9E4", "#67A1D9", "#4789C9", "#2D71B4", "#185B9F", "#114D8A", "#0B3F75"],
+  fair:   ["#FDECEA","#F9CCC8","#F5ACA6","#EF8B84","#E86A62","#DC5249","#CC4438","#B83528","#992620","#7B1818"],
+  income: ["#E4F4F4","#BEE8E8","#98DDDD","#6DCBCB","#40B6B6","#259E9E","#1C8282","#146767","#0E4E4E","#083535"],
+  pre60:  ["#FEF3E6","#FCE1BA","#FBCF8F","#F4B764","#EC9C38","#DB831C","#C26D10","#A85707","#894405","#6B3204"],
+  score:  ["#E6F0FA","#CADFF4","#AECFEE","#8CB9E4","#67A1D9","#4789C9","#2D71B4","#185B9F","#114D8A","#0B3F75"],
 };
 function makeColorScale(metric, data) {
   if (!data.length) return () => '#ccc';
   const vals = data.map(d => getVal(d, metric));
   const [lo, hi] = [d3.min(vals), d3.max(vals)];
-  return d3.scaleQuantize([lo, hi], SCHEMES[metric] || SCHEMES.fair);
+  return d3.scaleQuantize([lo === hi ? 0 : lo, hi || 1], SCHEMES[metric] || SCHEMES.fair);
 }
 function gradCSS(metric) {
   const s = SCHEMES[metric] || SCHEMES.fair;
@@ -960,205 +849,232 @@ function metricLabel(m) {
 }
 
 /* ════════════════════════════════════════════
-   MAP DRAWING — ZIP codes within county
+   LEAFLET MAP INITIALIZATION
 ════════════════════════════════════════════ */
-function drawZipMap(features, boundaryFeature) {
-  geoFeatures = features;
-  const wrap = document.getElementById('map-container');
-  const W = wrap.clientWidth || 700;
-  const H = wrap.clientHeight || 500;
+function initLeafletMap() {
+  if (leafletMap) return;
 
-// Add Leaflet's own SVG layer so it auto-transforms with pan/zoom
-  if (!leafletMap) {
-  console.error('leafletMap is null — cannot add SVG layer');
-  return;
+  leafletMap = L.map('leaflet-map', {
+    center: [36.7, -119.4],
+    zoom: 6,
+    zoomControl: true,
+    attributionControl: true,
+  });
+
+  // CartoDB Positron — clean light basemap with roads and labels
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(leafletMap);
+
+  // Re-draw SVG overlay whenever map moves or zooms
+  leafletMap.on('move zoom resize', redrawOverlay);
+  leafletMap.on('moveend zoomend', redrawOverlay);
 }
-const leafletSvgLayer = L.svg({ clickable: true }).addTo(leafletMap);
-const svg = d3.select(leafletSvgLayer._container)
-  .style('z-index', '400')
-  .style('pointer-events', 'none');
-svg.selectAll('*').remove();
-const g = svg.append('g')
-  .attr('id', 'map-g')
-  .attr('class', 'leaflet-zoom-animated');
-  console.log('SVG container:', leafletSvgLayer._container);
-console.log('SVG selection:', svg.node());
-console.log('G element:', g.node());
-console.log('Features count:', features.length);
-console.log('First feature:', features[0]);
-  
-  if (!currentZipData.length || !features.length) return;
 
-  /* Build a lookup of ZIP → data, matching by zipCode property */
-  const zipLookup = {};
-  currentZipData.forEach(d => { zipLookup[d.zip] = d; });
-
-/* ── Initialize or reuse Leaflet ── */
-
-
-// Fit bounds from features to find center
-const allCoords = [];
-features.forEach(f => {
-  const b = d3.geoPath().bounds(f);  // using identity bounds
-  // Instead derive from Leaflet-style: use feature centroids
-});
-
-// Use the GeoJSON bbox to set initial view
-const collection = { type: 'FeatureCollection', features };
-
-
-// Fit map to the ZIP features' bounding box
-const tempLayer = L.geoJSON(collection);
-leafletMap.fitBounds(tempLayer.getBounds(), { padding: [20, 20] });
-
-/* ── D3 overlay that re-projects on every map move ── */
-
-
-
-function projectPoint(lon, lat) {
-  const pt = leafletMap.latLngToLayerPoint(L.latLng(lat, lon));
+/* ════════════════════════════════════════════
+   SVG OVERLAY — synchronized with Leaflet
+   Converts GeoJSON coordinates → pixel positions on every redraw
+════════════════════════════════════════════ */
+function projectCoord(coord) {
+  // coord = [lon, lat]
+  const pt = leafletMap.latLngToLayerPoint([coord[1], coord[0]]);
   return [pt.x, pt.y];
 }
 
-function projectFeature(d) {
-  if (!d || !d.geometry) return '';
-  const type = d.geometry.type;
-  function ringToPath(ring) {
-    return ring.map((pt, i) => {
-      const p = leafletMap.latLngToLayerPoint(L.latLng(pt[1], pt[0]));
-      return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1);
-    }).join(' ') + 'Z';
+function coordsToPathD(coords) {
+  // coords is an array of [lon,lat] pairs (ring)
+  return coords.map((c, i) => {
+    const [x, y] = projectCoord(c);
+    return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ') + ' Z';
+}
+
+function featureToPathD(geometry) {
+  // Handle Polygon and MultiPolygon
+  if (!geometry) return '';
+  if (geometry.type === 'Polygon') {
+    return geometry.coordinates.map(ring => coordsToPathD(ring)).join(' ');
   }
-  if (type === 'Polygon') {
-    return d.geometry.coordinates.map(ringToPath).join(' ');
-  } else if (type === 'MultiPolygon') {
-    return d.geometry.coordinates.map(poly => poly.map(ringToPath).join(' ')).join(' ');
+  if (geometry.type === 'MultiPolygon') {
+    return geometry.coordinates.map(poly =>
+      poly.map(ring => coordsToPathD(ring)).join(' ')
+    ).join(' ');
   }
   return '';
 }
 
-const colorScale = makeColorScale(choroMetric, currentZipData);
+function featureCentroid(geometry) {
+  // Simple centroid from first ring's average
+  let coords = [];
+  if (geometry.type === 'Polygon') coords = geometry.coordinates[0];
+  else if (geometry.type === 'MultiPolygon') coords = geometry.coordinates[0][0];
+  if (!coords.length) return null;
+  const lons = coords.map(c => c[0]);
+  const lats = coords.map(c => c[1]);
+  return projectCoord([
+    (Math.min(...lons)+Math.max(...lons))/2,
+    (Math.min(...lats)+Math.max(...lats))/2
+  ]);
+}
 
-function redraw() {
+function featureBBoxWidth(geometry) {
+  let coords = [];
+  if (geometry.type === 'Polygon') coords = geometry.coordinates[0];
+  else if (geometry.type === 'MultiPolygon') coords = geometry.coordinates[0][0];
+  if (!coords.length) return 0;
+  const lons = coords.map(c => c[0]);
+  const [west, east] = [Math.min(...lons), Math.max(...lons)];
+  const [px0] = projectCoord([west, coords[0][1]]);
+  const [px1] = projectCoord([east, coords[0][1]]);
+  return Math.abs(px1 - px0);
+}
 
-  // ZIP fills
-  g.selectAll('.zip-path')
-    .data(features, (d, i) => i)
-    .join('path')
-    .attr('class', 'zip-path')
-    .attr('d', projectFeature)
-    .attr('fill', d => d._data ? colorScale(getVal(d._data, choroMetric)) : '#ccc')
-    .attr('fill-opacity', 0.65)   // semi-transparent so basemap shows through
-    .on('mouseover', function(event, d) { if (d._data) showTooltip(event, d._data); })
-    .on('mousemove', moveTooltip)
-    .on('mouseout', hideTooltip)
-    .on('click', function(event, d) {
-      if (!d._data) return;
-      selectedZip = d._data.zip;
-      g.selectAll('.zip-path').classed('selected', false);
-      d3.select(this).classed('selected', true);
-      selectZip(d._data);
+function redrawOverlay() {
+  if (!leafletMap || !geoFeatures) return;
+
+  const svg = document.getElementById('overlay-svg');
+  const colorScale = makeColorScale(choroMetric, currentZipData);
+
+  // Clear existing content
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+  const mapSize = leafletMap.getSize();
+  svg.setAttribute('width',  mapSize.x);
+  svg.setAttribute('height', mapSize.y);
+
+  // Offset SVG to account for Leaflet's layer pane transform
+  const panePos = leafletMap.getPixelOrigin();
+  const mapPanePos = leafletMap._getMapPanePos();
+  svg.style.left = '0px';
+  svg.style.top  = '0px';
+
+  // Draw ZIP fills
+  geoFeatures.forEach(feat => {
+    if (!feat._data || !feat.geometry) return;
+    const d = feat._data;
+    const pathD = featureToPathD(feat.geometry);
+    if (!pathD) return;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', pathD);
+    path.setAttribute('fill', colorScale(getVal(d, choroMetric)));
+    path.setAttribute('fill-opacity', '0.72');
+    path.setAttribute('stroke', 'rgba(255,255,255,0.7)');
+    path.setAttribute('stroke-width', '0.8');
+    path.classList.add('zip-path');
+    if (selectedZip === d.zip) path.classList.add('selected');
+
+    path.addEventListener('mouseover', e => showTooltip(e, d));
+    path.addEventListener('mousemove', moveTooltip);
+    path.addEventListener('mouseout', hideTooltip);
+    path.addEventListener('click', () => {
+      selectedZip = d.zip;
+      redrawOverlay();
+      selectZip(d);
       updateTopZips();
     });
 
+    svg.appendChild(path);
+  });
+
   // High-risk outlines
   if (layers.outline) {
-    g.selectAll('.risk-outline')
-      .data(features.filter(d => d._data && getRiskFactors(d._data) >= hlMode))
-      .join('path')
-      .attr('class', 'risk-outline')
-      .attr('d', projectFeature);
-  } else {
-    g.selectAll('.risk-outline').remove();
+    geoFeatures.forEach(feat => {
+      if (!feat._data || !feat.geometry) return;
+      if (getRiskFactors(feat._data) < hlMode) return;
+      const pathD = featureToPathD(feat.geometry);
+      if (!pathD) return;
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', pathD);
+      path.classList.add('risk-outline');
+      svg.appendChild(path);
+    });
+  }
+
+  // Community boundary outline
+  if (geoFeatures._boundary) {
+    const pathD = featureToPathD(geoFeatures._boundary.geometry);
+    if (pathD) {
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', pathD);
+      path.classList.add('boundary-path');
+      svg.appendChild(path);
+    }
   }
 
   // Income dots
-  g.selectAll('.inc-dot').remove();
   if (layers.income) {
-    features.forEach(d => {
-      if (!d._data || d._data.income < thresholds.income) return;
-      const c = d3.geoCentroid(d);
+    geoFeatures.forEach(feat => {
+      if (!feat._data || !feat.geometry) return;
+      if (feat._data.income < thresholds.income) return;
+      const c = featureCentroid(feat.geometry);
       if (!c) return;
-      const [x, y] = projectPoint(c[0], c[1]);
-      g.append('circle').attr('class','inc-dot')
-        .attr('cx', x - 5).attr('cy', y)
-        .attr('r', 3.5).attr('fill','#1B8E8E').attr('stroke','white').attr('stroke-width',0.8)
-        .style('pointer-events','none');
+      const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circle.setAttribute('cx', c[0] - 5);
+      circle.setAttribute('cy', c[1]);
+      circle.setAttribute('r', '3.5');
+      circle.setAttribute('fill', '#1B8E8E');
+      circle.setAttribute('stroke', 'white');
+      circle.setAttribute('stroke-width', '0.8');
+      circle.style.pointerEvents = 'none';
+      svg.appendChild(circle);
     });
   }
 
   // Age dots
-  g.selectAll('.age-dot').remove();
   if (layers.age) {
-    features.forEach(d => {
-      if (!d._data || d._data.pre60 < thresholds.age) return;
-      const c = d3.geoCentroid(d);
+    geoFeatures.forEach(feat => {
+      if (!feat._data || !feat.geometry) return;
+      if (feat._data.pre60 < thresholds.age) return;
+      const c = featureCentroid(feat.geometry);
       if (!c) return;
-      const [x, y] = projectPoint(c[0], c[1]);
-      g.append('circle').attr('class','age-dot')
-        .attr('cx', x + 5).attr('cy', y)
-        .attr('r', 3.5).attr('fill','#E07B2A').attr('stroke','white').attr('stroke-width',0.8)
-        .style('pointer-events','none');
+      const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circle.setAttribute('cx', c[0] + 5);
+      circle.setAttribute('cy', c[1]);
+      circle.setAttribute('r', '3.5');
+      circle.setAttribute('fill', '#E07B2A');
+      circle.setAttribute('stroke', 'white');
+      circle.setAttribute('stroke-width', '0.8');
+      circle.style.pointerEvents = 'none';
+      svg.appendChild(circle);
     });
   }
 
   // ZIP labels
-  g.selectAll('.zip-label').remove();
   if (layers.labels) {
-    features.forEach(d => {
-      const cd = d._data;
-      if (!cd) return;
-      const c = d3.geoCentroid(d);
+    geoFeatures.forEach(feat => {
+      if (!feat._data || !feat.geometry) return;
+      const c = featureCentroid(feat.geometry);
       if (!c) return;
-      const [x, y] = projectPoint(c[0], c[1]);
-      g.append('text').attr('class','zip-label')
-        .attr('x', x).attr('y', y + 3)
-        .attr('font-size', 9)
-        .text(cd.zip);
+      const bw = featureBBoxWidth(feat.geometry);
+      if (bw < 20) return; // skip tiny polygons
+      const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+      text.setAttribute('x', c[0]);
+      text.setAttribute('y', c[1] + 3);
+      text.setAttribute('font-size', Math.min(10, Math.max(7, bw/10)));
+      text.classList.add('zip-label');
+      text.textContent = feat._data.zip;
+      svg.appendChild(text);
     });
   }
 
-  // Community boundary
-  if (boundaryFeature) {
-    g.selectAll('.community-boundary').remove();
-    g.append('path')
-      .attr('class','community-boundary')
-      .attr('d', projectFeature.call(null, boundaryFeature))
-      .attr('fill', 'none')
-      .attr('stroke', '#0F1F3C')
-      .attr('stroke-width', 3)
-      .style('pointer-events','none');
-  }
+  // Update legend
+  const grad = gradCSS(choroMetric);
+  document.getElementById('legend-grad').style.background = grad;
+  document.getElementById('legend-title').textContent = metricLabel(choroMetric);
+  document.getElementById('sidebar-legend-ramp').style.background = grad;
+  document.getElementById('sidebar-legend-label').textContent = metricLabel(choroMetric);
+  document.getElementById('choro-legend').style.display = 'block';
+  document.getElementById('leg-income').style.display = layers.income ? 'flex' : 'none';
+  document.getElementById('leg-age').style.display    = layers.age    ? 'flex' : 'none';
+  document.getElementById('leg-outline').style.display= layers.outline? 'flex' : 'none';
 }
 
-leafletMap.on('zoomend', redraw);
-leafletMap.on('moveend', redraw);
-redraw();
-
-// Wire zoom buttons to Leaflet instead of D3
-document.getElementById('zoom-in').onclick  = () => leafletMap.zoomIn();
-document.getElementById('zoom-out').onclick = () => leafletMap.zoomOut();
-document.getElementById('zoom-reset').onclick = () => {
-  leafletMap.fitBounds(tempLayer.getBounds(), { padding:[20,20] });
-};
-
-// Legend
-const grad = gradCSS(choroMetric);
-document.getElementById('legend-grad').style.background = grad;
-document.getElementById('legend-title').textContent = metricLabel(choroMetric);
-document.getElementById('sidebar-legend-ramp').style.background = grad;
-document.getElementById('sidebar-legend-label').textContent = metricLabel(choroMetric);
-document.getElementById('choro-legend').style.display = 'block';
-document.getElementById('leg-income').style.display = layers.income ? 'flex' : 'none';
-document.getElementById('leg-age').style.display    = layers.age    ? 'flex' : 'none';
-document.getElementById('leg-outline').style.display= layers.outline? 'flex' : 'none';
-
-updateMetrics();
-updateTopZips();
-document.getElementById('map-loading').style.display = 'none';
-
-}
-
+/* ════════════════════════════════════════════
+   TOOLTIP
+════════════════════════════════════════════ */
 function showTooltip(event, cd) {
   const tt = document.getElementById('tooltip');
   document.getElementById('tt-name').textContent   = 'ZIP ' + cd.zip + ' · ' + cd.name;
@@ -1176,15 +1092,19 @@ function moveTooltip(event) {
   const wrap = document.getElementById('map-container');
   const rect = wrap.getBoundingClientRect();
   let x = event.clientX - rect.left + 16;
-  let y = event.clientY - rect.top + 16;
+  let y = event.clientY - rect.top  + 16;
   if (x + 185 > wrap.clientWidth)  x -= 200;
   if (y + 160 > wrap.clientHeight) y -= 170;
-  tt.style.left = x + 'px'; tt.style.top = y + 'px';
+  tt.style.left = x + 'px';
+  tt.style.top  = y + 'px';
 }
 function hideTooltip() { document.getElementById('tooltip').style.display = 'none'; }
 
+/* ════════════════════════════════════════════
+   ZIP SPOTLIGHT
+════════════════════════════════════════════ */
 function selectZip(cd) {
-  document.getElementById('spotlight-empty').style.display = 'none';
+  document.getElementById('spotlight-empty').style.display   = 'none';
   document.getElementById('spotlight-content').style.display = 'block';
   const factors = getRiskFactors(cd);
   const score   = getRiskScore(cd);
@@ -1209,6 +1129,9 @@ function selectZip(cd) {
     : `<span class="risk-badge risk-low">✓ Lower risk</span>`;
 }
 
+/* ════════════════════════════════════════════
+   METRICS + TOP ZIPs
+════════════════════════════════════════════ */
 function updateMetrics() {
   const high = currentZipData.filter(d => getRiskFactors(d) >= 3);
   document.getElementById('m-high').textContent = currentZipData.length ? high.length : '—';
@@ -1222,6 +1145,7 @@ function updateMetrics() {
 
 function updateTopZips() {
   const container = document.getElementById('top-zips');
+  if (!container) return;
   if (!currentZipData.length) {
     container.innerHTML = '<div class="empty-state"><div class="es-icon">📊</div><span>Select a community</span></div>';
     return;
@@ -1233,172 +1157,109 @@ function updateTopZips() {
     const factors = getRiskFactors(cd);
     const cls     = factors===3?'score-red':factors===2?'score-amber':'score-green';
     const div = document.createElement('div');
-    div.className = 'zip-item';
+    div.className = 'zip-item' + (selectedZip===cd.zip ? ' selected' : '');
     div.innerHTML = `<span class="zip-rank">#${i+1}</span><span class="zip-code">${cd.zip}<br><span style="font-size:10px;font-weight:400;color:var(--text2);">${cd.name}</span></span><span class="zip-score ${cls}">${score}</span>`;
     div.onclick = () => {
-      document.querySelectorAll('.zip-item').forEach(el => el.classList.remove('selected'));
-      div.classList.add('selected');
+      selectedZip = cd.zip;
+      redrawOverlay();
       selectZip(cd);
+      updateTopZips();
     };
     container.appendChild(div);
   });
 }
 
+/* ════════════════════════════════════════════
+   LAYER TOGGLE
+════════════════════════════════════════════ */
 function toggleLayer(name) {
   layers[name] = !layers[name];
   const colorMap = { income:'on-teal', age:'on-amber', outline:'on-red', labels:'on-forest' };
   const tog = document.getElementById('tog-'+name);
-  tog.className = 'toggle' + (layers[name] ? ' ' + colorMap[name] : '');
-  if (geoFeatures && currentCommunity) drawZipMap(geoFeatures, currentBoundary);
+  if (tog) tog.className = 'toggle' + (layers[name] ? ' ' + colorMap[name] : '');
+  redrawOverlay();
 }
 
 /* ════════════════════════════════════════════
-   LOAD GEOGRAPHY  —  we use the us-atlas counties topojson
-   and filter to the selected county's FIPS, then split into
-   a grid of sub-polygons to simulate ZIP code shapes.
-   (A real integration would use the CA zip code GeoJSON from
-   https://gis.data.ca.gov/datasets/California::ca-zip-code-boundaries)
+   LOAD GEOGRAPHY from CA_ZIP_simple.json
 ════════════════════════════════════════════ */
 function loadCommunityMap(communityKey) {
   const meta = COMMUNITY_META[communityKey];
   if (!meta) return;
 
-  document.getElementById('no-community').style.display = 'none';
-  document.getElementById('map-loading').style.display = 'flex';
+  document.getElementById('no-community').classList.add('hidden');
+  document.getElementById('map-loading').classList.add('show');
   document.getElementById('choro-legend').style.display = 'none';
 
   currentZipData = generateZIPs(communityKey);
 
-  /* We'll split the county polygon into a grid approximating ZIP codes */
-  if (!allCountyFeatures) {
-    fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json')
-      .then(r => r.json())
-      .then(us => {
-        allCountyFeatures = topojson.feature(us, us.objects.counties).features;
-        renderCommunityFromFeatures(meta);
-      })
-      .catch(() => {
-        document.getElementById('map-loading').innerHTML =
-          '<span style="color:var(--red);font-size:12px;text-align:center;padding:20px;">Could not load geography.<br>Check network access.</span>';
-      });
-  } else {
-    renderCommunityFromFeatures(meta);
-  }
-}
+  // Fly Leaflet map to the community
+  leafletMap.flyTo(meta.center, meta.zoom, { duration: 1.0 });
 
-function renderCommunityFromFeatures(meta) {
+  // Load ZIP GeoJSON
   Promise.all([
     fetch('./CA_ZIP_simple.json').then(r => r.json()),
-    fetch('./Community_Outline.json').then(r => r.json())  // ← replace with your actual filename
+    fetch('./Community_Outline.json').then(r => r.json()).catch(() => null)
   ])
   .then(([zipData, boundaryData]) => {
-    // Filter ZIPs to just this community
     const zipSet = new Set(currentZipData.map(d => d.zip));
-    const features = zipData.features.filter(f => zipSet.has(f.properties.ZIP_CODE));
+    const features = zipData.features.filter(f => {
+      const z = f.properties.ZIP_CODE || f.properties.zip || f.properties.ZCTA5CE10;
+      return zipSet.has(z);
+    });
+
     const zipLookup = {};
     currentZipData.forEach(d => { zipLookup[d.zip] = d; });
-    features.forEach(f => { f._data = zipLookup[f.properties.ZIP_CODE]; });
 
-    // Find the matching boundary polygon
-    const boundaryFeature = boundaryData.features.find(
-      f => String(f.properties.fips) === String(meta.fips)  // ← adjust property name if needed
-    );
-    currentBoundary = boundaryFeature;
-
-    // ── ADD THIS BLOCK RIGHT HERE, before drawZipMap ──
-    const leafletContainer = document.getElementById('leaflet-map');
-    if (!leafletContainer) {
-      document.getElementById('map-loading').innerHTML =
-        '<span style="color:var(--red);font-size:12px;">Map container not found.</span>';
-      return;
-    }
-    if (leafletMap) {
-      leafletMap.off();
-      leafletMap.remove();
-      leafletMap = null;
-    }
-    leafletMap = L.map('leaflet-map', {
-      zoomControl: false,
-      preferCanvas: false
+    features.forEach(f => {
+      const z = f.properties.ZIP_CODE || f.properties.zip || f.properties.ZCTA5CE10;
+      f._data = zipLookup[z];
     });
-    // ── END OF NEW BLOCK ──
-    
-    drawZipMap(features, boundaryFeature);
+
+    geoFeatures = features;
+
+    // Attach boundary as a property on the array
+    if (boundaryData) {
+      const boundary = boundaryData.features
+        ? boundaryData.features.find(f => String(f.properties.fips) === String(meta.fips))
+        : null;
+      geoFeatures._boundary = boundary || null;
+    }
+
+    document.getElementById('map-loading').classList.remove('show');
+    redrawOverlay();
+    updateMetrics();
+    updateTopZips();
   })
   .catch(err => {
+    // If external files aren't present, show placeholder message
     document.getElementById('map-loading').innerHTML =
-      `<span style="color:var(--red);font-size:12px;text-align:center;padding:20px;">
-      Could not load boundaries.<br>${err.message}</span>`;
+      `<div style="text-align:center;padding:20px;">
+        <p style="color:var(--red);font-size:12px;margin-bottom:8px;">Could not load ZIP boundaries.</p>
+        <p style="color:var(--text2);font-size:11px;">Host CA_ZIP_simple.json alongside this file.<br>Data and metrics are still available in Table / Charts views.</p>
+      </div>`;
+    // Still load data for table/chart views
+    currentZipData = generateZIPs(communityKey);
+    updateMetrics();
+    updateTopZips();
   });
 }
 
-/* 
-  Subdivide a GeoJSON polygon feature into ~n grid cells
-  clipped to the original polygon using a simple grid approach.
-  This approximates ZIP code shapes for demo purposes.
-  In production, replace with actual ZIP code GeoJSON from CA Open Data.
-*/
-function subdivideFeature(feat, n) {
-  /* Get bounding box */
-  const coords = flatCoords(feat.geometry);
-  const lons = coords.map(c=>c[0]), lats = coords.map(c=>c[1]);
-  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-
-  const cols = Math.ceil(Math.sqrt(n * 1.5));
-  const rows = Math.ceil(n / cols);
-  const dLon = (maxLon - minLon) / cols;
-  const dLat = (maxLat - minLat) / rows;
-
-  const cells = [];
-  for (let r = 0; r < rows && cells.length < n; r++) {
-    for (let c = 0; c < cols && cells.length < n; c++) {
-      const cell = {
-        type: 'Feature',
-        id: `cell-${r}-${c}`,
-        geometry: {
-          type: 'Polygon',
-          coordinates: [[
-            [minLon + c*dLon,     minLat + r*dLat],
-            [minLon + (c+1)*dLon, minLat + r*dLat],
-            [minLon + (c+1)*dLon, minLat + (r+1)*dLat],
-            [minLon + c*dLon,     minLat + (r+1)*dLat],
-            [minLon + c*dLon,     minLat + r*dLat],
-          ]]
-        },
-        properties: {}
-      };
-      cells.push(cell);
-    }
-  }
-  return cells;
-}
-
-function flatCoords(geometry) {
-  let out = [];
-  function walk(c) {
-    if (!c) return;
-    if (typeof c[0] === 'number') { out.push(c); return; }
-    c.forEach(walk);
-  }
-  walk(geometry.coordinates);
-  return out;
-}
-
 /* ════════════════════════════════════════════
-   COMMUNITY CHANGE HANDLER
+   COMMUNITY CHANGE
 ════════════════════════════════════════════ */
 document.getElementById('community-select').addEventListener('change', function() {
   currentCommunity = this.value;
   selectedZip = null;
   geoFeatures = null;
-  document.getElementById('spotlight-empty').style.display = 'flex';
+  document.getElementById('spotlight-empty').style.display   = 'flex';
   document.getElementById('spotlight-content').style.display = 'none';
 
   const meta = COMMUNITY_META[currentCommunity];
   if (!meta) {
     document.getElementById('community-info').style.display = 'none';
-    document.getElementById('no-community').style.display = 'flex';
+    document.getElementById('no-community').classList.remove('hidden');
+    document.getElementById('choro-legend').style.display   = 'none';
     currentZipData = [];
     updateMetrics();
     updateTopZips();
@@ -1409,121 +1270,77 @@ document.getElementById('community-select').addEventListener('change', function(
   document.getElementById('ci-detail').textContent = meta.detail;
   document.getElementById('community-info').style.display = 'block';
 
+  currentZipData = generateZIPs(currentCommunity);
+
   if (currentView === 'map') {
     loadCommunityMap(currentCommunity);
-  } else if (currentView === 'table') {
-    currentZipData = generateZIPs(currentCommunity);
-    renderTableView();
+  } else {
+    // Pre-load data; map will load when user switches back
     updateMetrics();
-  } else if (currentView === 'chart') {
-    currentZipData = generateZIPs(currentCommunity);
-    renderChartView();
-    updateMetrics();
+    renderCurrentNonMapView();
   }
 });
 
 /* ════════════════════════════════════════════
-   CONTROLS
+   VIEW SWITCHING — uses display:none/block
+   Map is NEVER destroyed
 ════════════════════════════════════════════ */
-document.getElementById('choro-metric').addEventListener('change', function() {
-  choroMetric = this.value;
-  if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-});
-document.getElementById('sl-fair').addEventListener('input', function() {
-  thresholds.fair = +this.value;
-  document.getElementById('sv-fair').textContent = this.value + '%';
-  if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-});
-document.getElementById('sl-income').addEventListener('input', function() {
-  thresholds.income = +this.value;
-  document.getElementById('sv-income').textContent = this.value + '%';
-  if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-});
-document.getElementById('sl-age').addEventListener('input', function() {
-  thresholds.age = +this.value;
-  document.getElementById('sv-age').textContent = this.value + '%';
-  if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-});
-document.querySelectorAll('input[name=hl]').forEach(r => {
-  r.addEventListener('change', function() {
-    hlMode = +this.value;
-    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-  });
-});
-
-/* ════════════════════════════════════════════
-   VIEW SWITCHING
-════════════════════════════════════════════ */
-let currentView = 'map';
-let chartInstances = [];
-
 function setView(v) {
   currentView = v;
-  ['map','table','chart'].forEach(n => document.getElementById('btn-'+n).classList.toggle('active', n===v));
 
-  const mainBody = document.getElementById('main-body');
+  // Update tab buttons
+  ['map','table','chart'].forEach(n =>
+    document.getElementById('btn-'+n).classList.toggle('active', n===v)
+  );
+
+  const viewArea = document.getElementById('view-area');
 
   if (v === 'map') {
-    /* Restore original layout */
-    mainBody.innerHTML = `
-      <aside class="sidebar" id="left-sidebar-restored"></aside>
-      <main class="map-wrap" id="map-container">
-        <div class="no-community-msg" id="no-community" style="${currentCommunity?'display:none':''}">
-          <div class="big-icon">🏘</div>
-          <h3>Select a Community</h3>
-          <p>Choose a community from the left panel to load its ZIP code map and risk analysis.</p>
-        </div>
-        <div class="map-loading" id="map-loading" style="display:none;"><div class="spinner"></div><span>Loading geography…</span></div>
-        <div class="choro-legend" id="choro-legend" style="display:none;">
-          <div class="legend-title" id="legend-title">FAIR plan rate</div>
-          <div class="legend-grad" id="legend-grad"></div>
-          <div class="legend-ends-row"><span>Low</span><span>High</span></div>
-        </div>
-        <div class="map-tooltip" id="tooltip">
-          <div class="tt-name" id="tt-name"></div>
-          <div class="tt-row"><span class="tt-key">FAIR plan rate</span><span class="tt-val" id="tt-fair"></span></div>
-          <div class="tt-row"><span class="tt-key">Low-income pop.</span><span class="tt-val" id="tt-income"></span></div>
-          <div class="tt-row"><span class="tt-key">Pre-1960 units</span><span class="tt-val" id="tt-age"></span></div>
-          <div class="tt-row"><span class="tt-key">Median build yr</span><span class="tt-val" id="tt-year"></span></div>
-          <div class="tt-row"><span class="tt-key">Population</span><span class="tt-val" id="tt-pop"></span></div>
-          <div class="tt-row"><span class="tt-key">Risk score</span><span class="tt-val" id="tt-score"></span></div>
-        </div>
-        <div class="map-controls">
-          <button class="map-btn" id="zoom-in">+</button>
-          <button class="map-btn" id="zoom-out">−</button>
-          <button class="map-btn" id="zoom-reset">↺</button>
-        </div>
-        <div class="map-source">Sample data · wire to CA DOI + ACS 5-yr + HUD CHAS</div>
-      </main>
-      <aside class="sidebar-right" id="right-sidebar-restored"></aside>`;
-    mainBody.style.gridTemplateColumns = '226px 1fr 280px';
-    rebuildSidebars();
-    rebuildRightSidebar();
-    if (currentCommunity) loadCommunityMap(currentCommunity);
-    return;
-  }
+    document.getElementById('view-map').style.display   = 'contents';
+    document.getElementById('view-table').style.display = 'none';
+    document.getElementById('view-table').classList.remove('active');
+    document.getElementById('view-chart').style.display = 'none';
+    document.getElementById('view-chart').classList.remove('active');
+    viewArea.style.gridTemplateColumns = '1fr 280px';
 
-  /* Destroy chart instances */
-  chartInstances.forEach(c => { try { c.destroy(); } catch(e){} });
-  chartInstances = [];
+    // Tell Leaflet to re-measure its container size
+    if (leafletMap) {
+      setTimeout(() => {
+        leafletMap.invalidateSize();
+        redrawOverlay();
+        // If community was changed while in another view, load map now
+        if (currentCommunity && !geoFeatures) {
+          loadCommunityMap(currentCommunity);
+        }
+      }, 50);
+    }
+  } else {
+    document.getElementById('view-map').style.display   = 'none';
+    viewArea.style.gridTemplateColumns = '1fr';
 
-  if (v === 'table') {
-    mainBody.style.gridTemplateColumns = '226px 1fr';
-    if (!currentZipData.length && currentCommunity) currentZipData = generateZIPs(currentCommunity);
-    if (leafletMap) { leafletMap.remove(); leafletMap = null; }
-    mainBody.innerHTML = `<aside class="sidebar" id="left-sidebar-restored"></aside><div class="table-view" id="table-area"></div>`;
-    rebuildSidebars();
-    renderTableView();
-  }
+    if (v === 'table') {
+      document.getElementById('view-chart').style.display = 'none';
+      document.getElementById('view-chart').classList.remove('active');
+      document.getElementById('view-table').style.display = 'flex';
+      document.getElementById('view-table').classList.add('active');
+    } else {
+      document.getElementById('view-table').style.display = 'none';
+      document.getElementById('view-table').classList.remove('active');
+      document.getElementById('view-chart').style.display = 'grid';
+      document.getElementById('view-chart').classList.add('active');
+    }
 
-  if (v === 'chart') {
-    mainBody.style.gridTemplateColumns = '226px 1fr';
-    if (!currentZipData.length && currentCommunity) currentZipData = generateZIPs(currentCommunity);
-    if (leafletMap) { leafletMap.remove(); leafletMap = null; }
-    mainBody.innerHTML = `<aside class="sidebar" id="left-sidebar-restored"></aside><div style="overflow:auto;flex:1;background:var(--slate);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;" id="chart-area"></div>`;
-    rebuildSidebars();
-    renderChartView();
+    // Destroy old chart instances before re-rendering
+    chartInstances.forEach(c => { try { c.destroy(); } catch(e){} });
+    chartInstances = [];
+
+    renderCurrentNonMapView();
   }
+}
+
+function renderCurrentNonMapView() {
+  if (currentView === 'table') renderTableView();
+  else if (currentView === 'chart') renderChartView();
 }
 
 ['map','table','chart'].forEach(v => {
@@ -1531,201 +1348,39 @@ function setView(v) {
 });
 
 /* ════════════════════════════════════════════
-   SIDEBAR REBUILD after view switch
+   CONTROLS
 ════════════════════════════════════════════ */
-function rebuildSidebars() {
-  const lb = document.getElementById('left-sidebar-restored');
-  if (!lb) return;
-  lb.innerHTML = buildLeftSidebarHTML();
-  wireLeftSidebar();
-}
-function rebuildRightSidebar() {
-  const rs = document.getElementById('right-sidebar-restored');
-  if (!rs) return;
-  rs.innerHTML = `
-    <div class="sidebar-section">
-      <div class="sec-label">ZIP Code Spotlight</div>
-      <div id="spotlight-empty" class="empty-state">
-        <div class="es-icon">📍</div>
-        <span>Click a ZIP code on the map</span>
-      </div>
-      <div id="spotlight-content" style="display:none;">
-        <div class="spot-name" id="sp-name"></div>
-        <div class="spot-sub" id="sp-sub"></div>
-        <div class="spot-card">
-          <div class="spot-row"><span class="spot-key">FAIR plan rate</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
-          <div class="spot-row"><span class="spot-key">Low-income pop.</span><span class="spot-val" id="sp-income"></span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
-          <div class="spot-row"><span class="spot-key">Pre-1960 units</span><span class="spot-val" id="sp-age"></span></div>
-          <div class="bar-track"><div class="bar-fill" id="bar-age" style="background:var(--amber);"></div></div>
-          <div class="spot-row"><span class="spot-key">Median build yr</span><span class="spot-val" id="sp-year"></span></div>
-          <div class="spot-row"><span class="spot-key">Population</span><span class="spot-val" id="sp-pop"></span></div>
-          <div class="spot-row"><span class="spot-key">Housing units</span><span class="spot-val" id="sp-units"></span></div>
-        </div>
-        <div id="sp-badge"></div>
-      </div>
-    </div>
-    <div class="sidebar-section">
-      <div class="sec-label">Map Legend</div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:3px;" id="sidebar-legend-label">FAIR plan concentration</div>
-      <div class="legend-ramp" id="sidebar-legend-ramp"></div>
-      <div class="legend-ends"><span>Low</span><span>High</span></div>
-      <div class="legend-items">
-        <div class="legend-item" id="leg-income"><div class="legend-swatch" style="background:var(--teal)"></div>Low-income overlay dot</div>
-        <div class="legend-item" id="leg-age"><div class="legend-swatch" style="background:var(--amber)"></div>Pre-1960 building dot</div>
-        <div class="legend-item" id="leg-outline"><div class="legend-outline-sym"></div>High-risk ZIP border</div>
-      </div>
-    </div>
-    <div class="sidebar-section" style="flex:1;">
-      <div class="sec-label">Top At-Risk ZIP Codes</div>
-      <div class="zip-list" id="top-zips"></div>
-    </div>`;
-  updateTopZips();
-}
-function buildLeftSidebarHTML() {
-  const sel = currentCommunity;
-  const communities = [
-    ['','— Select a community —'],
-    ['monterey','Monterey County'],
-    ['san_benito','San Benito County'],
-    ['san_diego','San Diego County'],
-    ['santa_cruz','Santa Cruz County'],
-    ['tulare','Tulare County'],
-    ['tuolumne','Tuolumne County'],
-    ['hoopa','Hoopa Valley Tribe'],
-  ];
-  const meta = COMMUNITY_META[sel];
-  return `
-    <div class="sidebar-section">
-      <div class="sec-label">Community</div>
-      <div class="community-select-wrap">
-        <select class="community-sel" id="community-select">
-          ${communities.map(([v,l]) => `<option value="${v}"${v===sel?' selected':''}>${l}</option>`).join('')}
-        </select>
-      </div>
-      ${meta ? `<div class="community-info" style="margin-top:8px;padding:8px 10px;background:var(--amber-pale);border-radius:var(--radius);border-left:3px solid var(--amber);">
-        <div class="community-info-name" style="font-size:11px;font-weight:600;color:var(--amber);margin-bottom:2px;">${meta.label}</div>
-        <div class="community-info-detail" style="font-size:10px;color:var(--text2);">${meta.detail}</div>
-      </div>` : ''}
-    </div>
-    <div class="sidebar-section">
-      <div class="sec-label">Choropleth metric</div>
-      <select class="ctrl-select" id="choro-metric">
-        ${['fair','income','pre60','score'].map(m => `<option value="${m}"${m===choroMetric?' selected':''}>${metricLabel(m)}</option>`).join('')}
-      </select>
-    </div>
-    <div class="sidebar-section">
-      <div class="sec-label">Overlay layers</div>
-      <div class="layer-row" onclick="toggleLayer('income')">
-        <div class="toggle ${layers.income?'on-teal':''}" id="tog-income"><div class="toggle-knob"></div></div>
-        <div class="layer-dot" style="background:var(--teal)"></div>
-        <span class="layer-name">Low-income overlay</span>
-      </div>
-      <div class="layer-row" onclick="toggleLayer('age')">
-        <div class="toggle ${layers.age?'on-amber':''}" id="tog-age"><div class="toggle-knob"></div></div>
-        <div class="layer-dot" style="background:var(--amber)"></div>
-        <span class="layer-name">Pre-1960 overlay</span>
-      </div>
-      <hr class="layer-divider">
-      <div class="layer-row" onclick="toggleLayer('outline')">
-        <div class="toggle ${layers.outline?'on-red':''}" id="tog-outline"><div class="toggle-knob"></div></div>
-        <div class="layer-dot" style="border:2px dashed var(--red);background:transparent;border-radius:2px;width:9px;height:9px;"></div>
-        <span class="layer-name">High-risk border</span>
-      </div>
-      <div class="layer-row" onclick="toggleLayer('labels')">
-        <div class="toggle ${layers.labels?'on-forest':''}" id="tog-labels"><div class="toggle-knob"></div></div>
-        <div class="layer-dot" style="background:var(--forest)"></div>
-        <span class="layer-name">ZIP code labels</span>
-      </div>
-    </div>
-    <div class="sidebar-section">
-      <div class="sec-label">Risk thresholds</div>
-      <div class="slider-wrap">
-        <div class="slider-meta"><span class="slider-name">FAIR plan rate ≥</span><span class="slider-val" id="sv-fair">${thresholds.fair}%</span></div>
-        <input type="range" id="sl-fair" min="0" max="50" step="1" value="${thresholds.fair}">
-        <div class="slider-bounds"><span>0%</span><span>50%</span></div>
-      </div>
-      <div class="slider-wrap">
-        <div class="slider-meta"><span class="slider-name">Low income ≥</span><span class="slider-val" id="sv-income">${thresholds.income}%</span></div>
-        <input type="range" id="sl-income" min="0" max="80" step="1" value="${thresholds.income}">
-        <div class="slider-bounds"><span>0%</span><span>80%</span></div>
-      </div>
-      <div class="slider-wrap">
-        <div class="slider-meta"><span class="slider-name">Pre-1960 units ≥</span><span class="slider-val" id="sv-age">${thresholds.age}%</span></div>
-        <input type="range" id="sl-age" min="0" max="80" step="1" value="${thresholds.age}">
-        <div class="slider-bounds"><span>0%</span><span>80%</span></div>
-      </div>
-    </div>
-    <div class="sidebar-section">
-      <div class="sec-label">High-risk when</div>
-      <div class="radio-group">
-        <label class="radio-row"><input type="radio" name="hl" value="3"${hlMode===3?' checked':''}> All 3 factors exceeded</label>
-        <label class="radio-row"><input type="radio" name="hl" value="2"${hlMode===2?' checked':''}> Any 2 factors exceeded</label>
-        <label class="radio-row"><input type="radio" name="hl" value="1"${hlMode===1?' checked':''}> Any 1 factor exceeded</label>
-      </div>
-    </div>`;
-}
-
-function wireLeftSidebar() {
-  const cs = document.getElementById('community-select');
-  if (cs) cs.addEventListener('change', function() {
-    currentCommunity = this.value;
-    selectedZip = null;
-    geoFeatures = null;
-    const meta = COMMUNITY_META[currentCommunity];
-    if (currentCommunity && meta) {
-      currentZipData = generateZIPs(currentCommunity);
-      if (currentView === 'map') loadCommunityMap(currentCommunity);
-      else if (currentView === 'table') renderTableView();
-      else if (currentView === 'chart') renderChartView();
-      updateMetrics();
-      rebuildSidebars();
-    } else {
-      currentZipData = [];
-      updateMetrics();
-      rebuildSidebars();
-    }
+document.getElementById('choro-metric').addEventListener('change', function() {
+  choroMetric = this.value;
+  redrawOverlay();
+});
+document.getElementById('sl-fair').addEventListener('input', function() {
+  thresholds.fair = +this.value;
+  document.getElementById('sv-fair').textContent = this.value + '%';
+  redrawOverlay(); updateMetrics(); updateTopZips();
+});
+document.getElementById('sl-income').addEventListener('input', function() {
+  thresholds.income = +this.value;
+  document.getElementById('sv-income').textContent = this.value + '%';
+  redrawOverlay(); updateMetrics(); updateTopZips();
+});
+document.getElementById('sl-age').addEventListener('input', function() {
+  thresholds.age = +this.value;
+  document.getElementById('sv-age').textContent = this.value + '%';
+  redrawOverlay(); updateMetrics(); updateTopZips();
+});
+document.querySelectorAll('input[name=hl]').forEach(r => {
+  r.addEventListener('change', function() {
+    hlMode = +this.value;
+    redrawOverlay();
   });
-  const cm = document.getElementById('choro-metric');
-  if (cm) cm.addEventListener('change', function() {
-    choroMetric = this.value;
-    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-  });
-  const slFair = document.getElementById('sl-fair');
-  if (slFair) slFair.addEventListener('input', function() {
-    thresholds.fair = +this.value;
-    document.getElementById('sv-fair').textContent = this.value + '%';
-    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-    updateMetrics(); updateTopZips();
-  });
-  const slInc = document.getElementById('sl-income');
-  if (slInc) slInc.addEventListener('input', function() {
-    thresholds.income = +this.value;
-    document.getElementById('sv-income').textContent = this.value + '%';
-    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-    updateMetrics(); updateTopZips();
-  });
-  const slAge = document.getElementById('sl-age');
-  if (slAge) slAge.addEventListener('input', function() {
-    thresholds.age = +this.value;
-    document.getElementById('sv-age').textContent = this.value + '%';
-    if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-    updateMetrics(); updateTopZips();
-  });
-  document.querySelectorAll('input[name=hl]').forEach(r => {
-    r.addEventListener('change', function() {
-      hlMode = +this.value;
-      if (geoFeatures) drawZipMap(geoFeatures, currentBoundary);
-    });
-  });
-}
+});
 
 /* ════════════════════════════════════════════
    TABLE VIEW
 ════════════════════════════════════════════ */
 function renderTableView() {
-  const area = document.getElementById('table-area');
+  const area = document.getElementById('view-table');
   if (!area) return;
   const meta = COMMUNITY_META[currentCommunity];
   const title = meta ? meta.label : 'No community selected';
@@ -1750,11 +1405,9 @@ function renderTableView() {
 
   function sortData(data) {
     return [...data].sort((a,b) => {
-      let va = sortCol === 'score'   ? getRiskScore(a)   :
-               sortCol === 'factors' ? getRiskFactors(a) : a[sortCol];
-      let vb = sortCol === 'score'   ? getRiskScore(b)   :
-               sortCol === 'factors' ? getRiskFactors(b) : b[sortCol];
-      if (typeof va === 'string') va = va.toLowerCase(), vb = vb.toLowerCase();
+      let va = sortCol==='score'   ? getRiskScore(a)   : sortCol==='factors' ? getRiskFactors(a) : a[sortCol];
+      let vb = sortCol==='score'   ? getRiskScore(b)   : sortCol==='factors' ? getRiskFactors(b) : b[sortCol];
+      if (typeof va==='string') { va=va.toLowerCase(); vb=vb.toLowerCase(); }
       return va < vb ? sortDir : va > vb ? -sortDir : 0;
     });
   }
@@ -1762,7 +1415,7 @@ function renderTableView() {
   function render() {
     const sorted = sortData(currentZipData);
     const th = cols.map(c => {
-      const cls = sortCol === c.key ? (sortDir === -1 ? 'sort-desc' : 'sort-asc') : '';
+      const cls = sortCol===c.key ? (sortDir===-1?'sort-desc':'sort-asc') : '';
       return `<th class="${cls}" data-key="${c.key}">${c.label}</th>`;
     }).join('');
     const rows = sorted.map(d => {
@@ -1771,9 +1424,9 @@ function renderTableView() {
       const rowCls  = factors===3?'high-risk':factors===2?'med-risk':'';
       const badgeCls= factors===3?'tbl-high':factors===2?'tbl-med':'tbl-low';
       const badgeLbl= factors===3?'High':factors===2?'Medium':'Low';
-      const fairCls = d.fair   >= thresholds.fair   ? 'flag'       : '';
-      const incCls  = d.income >= thresholds.income ? 'flag-amber'  : '';
-      const ageCls  = d.pre60  >= thresholds.age    ? 'flag-amber'  : '';
+      const fairCls = d.fair>=thresholds.fair   ? 'flag'       : '';
+      const incCls  = d.income>=thresholds.income? 'flag-amber' : '';
+      const ageCls  = d.pre60>=thresholds.age    ? 'flag-amber' : '';
       return `<tr class="${rowCls}">
         <td class="mono" style="font-weight:700;color:var(--forest);">${d.zip}</td>
         <td>${d.name}</td>
@@ -1805,13 +1458,12 @@ function renderTableView() {
     area.querySelectorAll('th[data-key]').forEach(th => {
       th.addEventListener('click', () => {
         const k = th.dataset.key;
-        if (sortCol === k) sortDir *= -1;
-        else { sortCol = k; sortDir = k === 'zip' || k === 'name' ? 1 : -1; }
+        if (sortCol===k) sortDir*=-1;
+        else { sortCol=k; sortDir=k==='zip'||k==='name'?1:-1; }
         render();
       });
     });
   }
-
   render();
 }
 
@@ -1819,7 +1471,7 @@ function renderTableView() {
    CHART VIEW
 ════════════════════════════════════════════ */
 function renderChartView() {
-  const area = document.getElementById('chart-area');
+  const area = document.getElementById('view-chart');
   if (!area) return;
   const meta = COMMUNITY_META[currentCommunity];
   const title = meta ? meta.label : '';
@@ -1831,82 +1483,71 @@ function renderChartView() {
   }
 
   area.style.gridTemplateColumns = '1fr 1fr';
+  const barH = d => `${Math.max(200, d.length * 26)}px`;
+
   area.innerHTML = `
-    <div class="chart-panel" style="border-bottom:1px solid var(--border);">
+    <div class="chart-panel">
       <div class="chart-title">FAIR Plan Rate by ZIP Code</div>
       <div class="chart-subtitle">${title} · sorted by rate</div>
-      <div class="chart-box" style="height:${Math.max(220, currentZipData.length * 26)}px;">
-        <canvas id="ch1"></canvas>
-      </div>
+      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch1"></canvas></div>
     </div>
-    <div class="chart-panel" style="border-bottom:1px solid var(--border);">
+    <div class="chart-panel">
       <div class="chart-title">Risk Score vs Low-Income Population</div>
       <div class="chart-subtitle">Bubble size = pre-1960 share</div>
-      <div class="chart-box" style="height:280px;">
-        <canvas id="ch2"></canvas>
-      </div>
+      <div style="height:240px;position:relative;"><canvas id="ch2"></canvas></div>
       <div class="chart-title" style="margin-top:22px;">ZIP Codes by Risk Level</div>
       <div class="chart-subtitle">Based on current threshold settings</div>
-      <div class="chart-box" style="height:160px;">
-        <canvas id="ch3"></canvas>
-      </div>
+      <div style="height:150px;position:relative;"><canvas id="ch3"></canvas></div>
     </div>
-    <div class="chart-panel" style="border-right:none;border-bottom:0;">
+    <div class="chart-panel">
       <div class="chart-title">Low-Income Population by ZIP</div>
-      <div class="chart-subtitle">${title} · threshold line at ${thresholds.income}%</div>
-      <div class="chart-box" style="height:${Math.max(200, currentZipData.length * 26)}px;">
-        <canvas id="ch4"></canvas>
-      </div>
+      <div class="chart-subtitle">${title} · threshold at ${thresholds.income}%</div>
+      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch4"></canvas></div>
     </div>
-    <div class="chart-panel" style="border-bottom:0;">
+    <div class="chart-panel">
       <div class="chart-title">Pre-1960 Building Stock by ZIP</div>
-      <div class="chart-subtitle">${title} · threshold line at ${thresholds.age}%</div>
-      <div class="chart-box" style="height:${Math.max(200, currentZipData.length * 26)}px;">
-        <canvas id="ch5"></canvas>
-      </div>
+      <div class="chart-subtitle">${title} · threshold at ${thresholds.age}%</div>
+      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch5"></canvas></div>
     </div>`;
 
-  const isDark = matchMedia('(prefers-color-scheme:dark)').matches;
-  const tc = isDark ? '#9BA9BC' : '#4B5563';
-  const gc = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  const tc = '#4B5563';
+  const gc = 'rgba(0,0,0,0.05)';
 
-  const sorted = [...currentZipData].sort((a,b) => b.fair - a.fair);
+  const sorted = [...currentZipData].sort((a,b) => b.fair-a.fair);
   const labels = sorted.map(d => d.zip);
 
-  /* Chart 1 — FAIR rate bars */
   const c1 = new Chart(document.getElementById('ch1'), {
-    type: 'bar',
-    data: {
+    type:'bar',
+    data:{
       labels,
-      datasets: [{ 
-        data: sorted.map(d => d.fair),
-        backgroundColor: sorted.map(d => getRiskFactors(d)>=3?'rgba(192,57,43,0.80)':getRiskFactors(d)>=2?'rgba(224,123,42,0.75)':'rgba(26,95,165,0.65)'),
-        borderRadius: 4, borderWidth: 0
+      datasets:[{
+        data:sorted.map(d=>d.fair),
+        backgroundColor:sorted.map(d=>getRiskFactors(d)>=3?'rgba(192,57,43,0.80)':getRiskFactors(d)>=2?'rgba(224,123,42,0.75)':'rgba(26,95,165,0.65)'),
+        borderRadius:4,borderWidth:0
       }]
     },
-    options: {
-      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'%'}} },
-      scales: {
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'%'}}},
+      scales:{
         x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'FAIR plan rate',color:tc}},
         y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}
       }
     }
   });
 
-  /* Chart 2 — bubble */
   const c2 = new Chart(document.getElementById('ch2'), {
-    type: 'bubble',
-    data: {
-      datasets: [{
-        data: currentZipData.map(d => ({ x:d.income, y:getRiskScore(d), r:Math.sqrt(d.pre60)*0.9, label:d.zip+' '+d.name })),
-        backgroundColor: currentZipData.map(d => getRiskFactors(d)>=3?'rgba(192,57,43,0.7)':getRiskFactors(d)>=2?'rgba(224,123,42,0.65)':'rgba(27,142,142,0.55)'),
-        borderWidth: 0
+    type:'bubble',
+    data:{
+      datasets:[{
+        data:currentZipData.map(d=>({x:d.income,y:getRiskScore(d),r:Math.sqrt(d.pre60)*0.9,label:d.zip+' '+d.name})),
+        backgroundColor:currentZipData.map(d=>getRiskFactors(d)>=3?'rgba(192,57,43,0.7)':getRiskFactors(d)>=2?'rgba(224,123,42,0.65)':'rgba(27,142,142,0.55)'),
+        borderWidth:0
       }]
     },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const d=currentZipData[c.dataIndex];return [d.zip+' '+d.name,`Low income: ${d.income}%`,`FAIR rate: ${d.fair.toFixed(1)}%`,`Score: ${getRiskScore(d)}`];}}}},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const d=currentZipData[c.dataIndex];return[d.zip+' '+d.name,`Low income: ${d.income}%`,`FAIR rate: ${d.fair.toFixed(1)}%`,`Score: ${getRiskScore(d)}`];}}}},
       scales:{
         x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'Low-income population %',color:tc}},
         y:{grid:{color:gc},ticks:{color:tc},title:{display:true,text:'Risk score',color:tc}}
@@ -1914,69 +1555,41 @@ function renderChartView() {
     }
   });
 
-  /* Chart 3 — doughnut */
-  const counts = [0,1,2,3].map(n => currentZipData.filter(d=>getRiskFactors(d)===n).length);
+  const counts = [0,1,2,3].map(n=>currentZipData.filter(d=>getRiskFactors(d)===n).length);
   const c3 = new Chart(document.getElementById('ch3'), {
-    type: 'doughnut',
-    data: {
+    type:'doughnut',
+    data:{
       labels:['0 factors','1 factor','2 factors','All 3 factors'],
-      datasets:[{
-        data:counts,
-        backgroundColor:['#B4B2A9','#1B8E8E','#E07B2A','#C0392B'],
-        borderWidth:2, borderColor: isDark?'#1A2540':'#fff'
-      }]
+      datasets:[{data:counts,backgroundColor:['#B4B2A9','#1B8E8E','#E07B2A','#C0392B'],borderWidth:2,borderColor:'#fff'}]
     },
-    options: {
-      responsive:true, maintainAspectRatio:false, cutout:'62%',
-      plugins:{legend:{position:'right',labels:{color:tc,font:{size:10},boxWidth:12}}}
-    }
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:tc,font:{size:10},boxWidth:12}}}}
   });
 
-  /* Chart 4 — low income */
   const sorted2 = [...currentZipData].sort((a,b)=>b.income-a.income);
   const c4 = new Chart(document.getElementById('ch4'), {
     type:'bar',
     data:{
       labels:sorted2.map(d=>d.zip),
-      datasets:[{
-        data:sorted2.map(d=>d.income),
-        backgroundColor:sorted2.map(d=>d.income>=thresholds.income?'rgba(27,142,142,0.80)':'rgba(27,142,142,0.30)'),
-        borderRadius:4,borderWidth:0
-      }]
+      datasets:[{data:sorted2.map(d=>d.income),backgroundColor:sorted2.map(d=>d.income>=thresholds.income?'rgba(27,142,142,0.80)':'rgba(27,142,142,0.30)'),borderRadius:4,borderWidth:0}]
     },
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:c=>c.parsed.x+'%'}},
-        annotation:{annotations:{threshold:{type:'line',xMin:thresholds.income,xMax:thresholds.income,borderColor:'rgba(224,123,42,0.8)',borderWidth:2,borderDash:[4,3]}}}
-      },
-      scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},max:100},
-        y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}
-      }
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},
+      scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},max:100},y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}}
     }
   });
 
-  /* Chart 5 — pre-1960 */
   const sorted3 = [...currentZipData].sort((a,b)=>b.pre60-a.pre60);
   const c5 = new Chart(document.getElementById('ch5'), {
     type:'bar',
     data:{
       labels:sorted3.map(d=>d.zip),
-      datasets:[{
-        data:sorted3.map(d=>d.pre60),
-        backgroundColor:sorted3.map(d=>d.pre60>=thresholds.age?'rgba(224,123,42,0.80)':'rgba(224,123,42,0.30)'),
-        borderRadius:4,borderWidth:0
-      }]
+      datasets:[{data:sorted3.map(d=>d.pre60),backgroundColor:sorted3.map(d=>d.pre60>=thresholds.age?'rgba(224,123,42,0.80)':'rgba(224,123,42,0.30)'),borderRadius:4,borderWidth:0}]
     },
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},
-      scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},max:100},
-        y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}
-      }
+      scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},max:100},y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}}
     }
   });
 
@@ -1994,32 +1607,32 @@ document.getElementById('export-csv').addEventListener('click', () => {
   ).join('\n');
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([header+rows],{type:'text/csv'})),
-    download: `fair-plan-${currentCommunity || 'data'}.csv`
+    download: `fair-plan-${currentCommunity||'data'}.csv`
   });
   a.click();
 });
+
 document.getElementById('export-svg').addEventListener('click', () => {
-  const svg = document.getElementById('map-svg');
+  const svg = document.getElementById('overlay-svg');
   if (!svg) return;
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([svg.outerHTML],{type:'image/svg+xml'})),
-    download: `fair-plan-map-${currentCommunity || 'map'}.svg`
+    download: `fair-plan-overlay-${currentCommunity||'map'}.svg`
   });
   a.click();
 });
 
-window.addEventListener('resize', () => { if (geoFeatures && currentCommunity) drawZipMap(geoFeatures, currentBoundary); });
-
 /* ════════════════════════════════════════════
-   INITIAL STATE — pre-load county topology silently
+   INIT — run on page load
 ════════════════════════════════════════════ */
-fetch('./CA_ZIP_simple.json')
-  .then(r => r.json())
-  .then(us => {
-    allCountyFeatures = topojson.feature(us, us.objects.counties).features;
-  })
-  .catch(() => { /* will retry on community select */ });
+window.addEventListener('DOMContentLoaded', () => {
+  initLeafletMap();
+});
 
+window.addEventListener('resize', () => {
+  if (leafletMap) leafletMap.invalidateSize();
+  if (geoFeatures) redrawOverlay();
+});
 </script>
 </body>
 </html>
