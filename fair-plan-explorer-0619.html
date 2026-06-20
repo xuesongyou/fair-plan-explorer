@@ -981,6 +981,11 @@ svg.selectAll('*').remove();
 const g = svg.append('g')
   .attr('id', 'map-g')
   .attr('class', 'leaflet-zoom-animated');
+  console.log('SVG container:', leafletSvgLayer._container);
+console.log('SVG selection:', svg.node());
+console.log('G element:', g.node());
+console.log('Features count:', features.length);
+console.log('First feature:', features[0]);
   
   if (!currentZipData.length || !features.length) return;
 
