@@ -192,14 +192,7 @@ input[type=range]:focus { outline: none; }
   height: 100%;
   z-index: 0;
 }
-#map-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;  /* let clicks pass through to Leaflet for panning */
-}
+
 /* Re-enable pointer events just on the ZIP paths so hovering/clicking still works */
 .zip-path {
   pointer-events: all;
@@ -534,7 +527,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     <!-- MAP CENTER -->
     <main class="map-wrap" id="map-container">
       <div id="leaflet-map"></div>
-      <svg id="map-svg" role="img" aria-label="ZIP code choropleth map"></svg>
       <div class="no-community-msg" id="no-community">
         <div class="big-icon">🏘</div>
         <h3>Select a Community</h3>
@@ -976,16 +968,15 @@ function drawZipMap(features, boundaryFeature) {
   const W = wrap.clientWidth || 700;
   const H = wrap.clientHeight || 500;
 
-const svg = d3.select('#map-svg')
-  .style('position', 'absolute')
-  .style('top', '0')
-  .style('left', '0')
-  .style('width', '100%')
-  .style('height', '100%')
-  .style('pointer-events', 'none')
-  .style('z-index', '400');
+// Add Leaflet's own SVG layer so it auto-transforms with pan/zoom
+const leafletSvgLayer = L.svg({ clickable: true }).addTo(leafletMap);
+const svg = d3.select(leafletSvgLayer._container)
+  .style('z-index', '400')
+  .style('pointer-events', 'none');
 svg.selectAll('*').remove();
-const g = svg.append('g').attr('id', 'map-g');
+const g = svg.append('g')
+  .attr('id', 'map-g')
+  .attr('class', 'leaflet-zoom-animated');
   
   if (!currentZipData.length || !features.length) return;
 
@@ -1029,12 +1020,12 @@ function projectPoint(lon, lat) {
 }
 
 function projectFeature(d) {
-  // Build SVG path string from GeoJSON coordinates using Leaflet projection
+  if (!d || !d.geometry) return '';
   const type = d.geometry.type;
   function ringToPath(ring) {
     return ring.map((pt, i) => {
-      const [x, y] = projectPoint(pt[0], pt[1]);
-      return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+      const p = leafletMap.latLngToLayerPoint(L.latLng(pt[1], pt[0]));
+      return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1);
     }).join(' ') + 'Z';
   }
   if (type === 'Polygon') {
@@ -1048,12 +1039,6 @@ function projectFeature(d) {
 const colorScale = makeColorScale(choroMetric, currentZipData);
 
 function redraw() {
-  const W = wrap.clientWidth || 800;
-  const H = wrap.clientHeight || 600;
-  svg
-    .attr('width', W)
-    .attr('height', H)
-    .attr('viewBox', `0 0 ${W} ${H}`);
 
   // ZIP fills
   g.selectAll('.zip-path')
@@ -1145,12 +1130,8 @@ function redraw() {
   }
 }
 
-leafletMap.off('move zoom moveend zoomend viewreset');
-leafletMap.on('move',      redraw);
-leafletMap.on('zoom',      redraw);
-leafletMap.on('moveend',   redraw);
-leafletMap.on('zoomend',   redraw);
-leafletMap.on('viewreset', redraw);
+leafletMap.on('zoomend', redraw);
+leafletMap.on('moveend', redraw);
 redraw();
 
 // Wire zoom buttons to Leaflet instead of D3
@@ -1467,7 +1448,6 @@ function setView(v) {
     mainBody.innerHTML = `
       <aside class="sidebar" id="left-sidebar-restored"></aside>
       <main class="map-wrap" id="map-container">
-        <svg id="map-svg"></svg>
         <div class="no-community-msg" id="no-community" style="${currentCommunity?'display:none':''}">
           <div class="big-icon">🏘</div>
           <h3>Select a Community</h3>
