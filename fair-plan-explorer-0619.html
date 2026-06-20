@@ -1012,8 +1012,7 @@ const tempLayer = L.geoJSON(collection);
 leafletMap.fitBounds(tempLayer.getBounds(), { padding: [20, 20] });
 
 /* ── D3 overlay that re-projects on every map move ── */
-const svg = d3.select('#map-svg');
-svg.selectAll('*').remove();
+
 const g = svg.append('g').attr('id', 'map-g');
 
 function projectPoint(lon, lat) {
