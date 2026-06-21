@@ -1187,10 +1187,7 @@ function loadCommunityMap(communityKey) {
     const zipLookup = {};
     currentZipData.forEach(d => { zipLookup[d.zip] = d; });
 
-    features.forEach(f => {
-      const z = f.properties.ZIP_CODE || f.properties.zip || f.properties.ZCTA5CE10;
-      f._data = zipLookup[z];
-    });
+    features.forEach(f => { f._data = zipLookup[f.properties.ZIP_CODE]; });
 
     geoFeatures = features;
 
