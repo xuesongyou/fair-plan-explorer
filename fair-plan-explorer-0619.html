@@ -1182,10 +1182,7 @@ function loadCommunityMap(communityKey) {
   ])
   .then(([zipData, boundaryData]) => {
     const zipSet = new Set(currentZipData.map(d => d.zip));
-    const features = zipData.features.filter(f => {
-      const z = f.properties.ZIP_CODE || f.properties.zip || f.properties.ZCTA5CE10;
-      return zipSet.has(z);
-    });
+    const features = zipData.features.filter(f => zipSet.has(f.properties.ZIP_CODE));
 
     const zipLookup = {};
     currentZipData.forEach(d => { zipLookup[d.zip] = d; });
