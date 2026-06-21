@@ -1407,12 +1407,20 @@ function updateTopZips() {
     const div = document.createElement('div');
     div.className = 'zip-item' + (selectedZip===cd.zip ? ' selected' : '');
     div.innerHTML = `<span class="zip-rank">#${i+1}</span><span class="zip-code">${cd.zip}<br><span style="font-size:10px;font-weight:400;color:var(--text2);">${cd.name}</span></span><span class="zip-score ${cls}">${score}</span>`;
-    div.onclick = () => {
-      selectedZip = cd.zip;
-      redrawOverlay();
-      selectZip(cd);
-      updateTopZips();
-    };
+div.onclick = () => {
+  selectedZip = cd.zip;
+  refreshZipStyles();
+  selectZip(cd);
+  updateTopZips();
+  // Pan map to the selected ZIP
+  if (zipLayer) {
+    zipLayer.eachLayer(layer => {
+      if (layer.feature && layer.feature._data && layer.feature._data.zip === cd.zip) {
+        leafletMap.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 13 });
+      }
+    });
+  }
+};
     container.appendChild(div);
   });
 }
