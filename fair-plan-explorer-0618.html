@@ -575,7 +575,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
           <span class="layer-name">High-risk border</span>
         </div>
         <div class="layer-row" onclick="toggleLayer('labels')">
-          <div class="toggle on-forest" id="tog-labels"><div class="toggle-knob"></div></div>
+          <div class="toggle" id="tog-labels"><div class="toggle-knob"></div></div>
           <div class="layer-dot" style="background:var(--forest)"></div>
           <span class="layer-name">ZIP code labels</span>
         </div>
@@ -1024,7 +1024,7 @@ function generateZIPs(community) {
 /* ════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════ */
-let layers = { income:true, age:true, outline:true, labels:true };
+let layers = { income:true, age:true, outline:true, labels:false };
 let thresholds = { fair:15, income:40, age:30 };
 let hlMode = 3;
 let choroMetric = 'fair';
