@@ -528,7 +528,6 @@ select.county-sel option {
   <div class="tooltip" id="tooltip">
     <div class="tt-head">
       <div class="tt-zip" id="tt-zip">—</div>
-      <div class="tt-county" id="tt-county">—</div>
     </div>
     <div class="tt-body">
       <div class="tt-rate-label">As of 03/31/2026:</div>
@@ -2552,12 +2551,6 @@ function showTooltip(event, zip, d) {
   const tt = document.getElementById('tooltip');
 
   document.getElementById('tt-zip').textContent = 'ZIP ' + zip;
-
-  let countyName = '';
-  for (const [cn, fn] of Object.entries(COUNTY_ZIP_MAP)) {
-    if (fn(zip)) { countyName = cn + ' County'; break; }
-  }
-  document.getElementById('tt-county').textContent = countyName;
 
   const rateEl = document.getElementById('tt-rate');
   rateEl.textContent = rate.toFixed(1) + '%';
