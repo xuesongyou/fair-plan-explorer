@@ -583,6 +583,68 @@ select.county-sel option {
 ═══════════════════════════════════════════════════════ */
 const DATA_DATE = "03/31/2026";
 
+const AREA_STATS = {
+"All California": "6.0%",
+"Alameda":"2.8%",
+"Alpine":"49.1%",
+"Amador":"37.6%",
+"Butte":"12.8%",
+"Calaveras":"40.8%",
+"Colusa":"1%",
+"Contra Costa":"4.2%",
+"Del Norte":"6.8%",
+"El Dorado":"33.9%",
+"Fresno":"2.1%",
+"Glenn":"0.7%",
+"Humboldt":"6.3%",
+"Imperial":"1.7%",
+"Inyo":"3.5%",
+"Kern":"4.4%",
+"Kings":"0.4%",
+"Lake":"16.4%",
+"Lassen":"9.5%",
+"Los Angeles":"6.4%",
+"Madera":"12.3%",
+"Marin":"5.3%",
+"Mariposa":"42.1%",
+"Mendocino":"14.4%",
+"Merced":"0.4%",
+"Modoc":"5.3%",
+"Mono":"15%",
+"Monterey":"4.6%",
+"Napa":"6%",
+"Nevada":"45.6%",
+"Orange":"2.8%",
+"Placer":"12.5%",
+"Plumas":"25.1%",
+"Riverside":"8.4%",
+"Sacramento":"0.4%",
+"San Benito":"2.9%",
+"San Bernardino":"10.8%",
+"San Diego":"6.4%",
+"San Francisco":"1%",
+"San Joaquin":"0.6%",
+"San Luis Obispo":"4.7%",
+"San Mateo":"2%",
+"Santa Barbara":"5.4%",
+"Santa Clara":"1.4%",
+"Santa Cruz":"14%",
+"Shasta":"10.3%",
+"Sierra":"27.3%",
+"Siskiyou":"13.7%",
+"Solano":"1%",
+"Sonoma":"5.1%",
+"Stanislaus":"0.4%",
+"Sutter":"0.4%",
+"Tehama":"5.7%",
+"Trinity":"18.1%",
+"Tulare":"2.3%",
+"Tuolumne":"50.5%",
+"Ventura":"6.2%",
+"Yolo":"0.4%",
+"Yuba":"6.3%"
+};
+  
 const ZIP_DATA = {
 "90001":[20.40582726,1961,1961,0,0],
 "90002":[15.47645866,1374,1374,0,0],
@@ -2617,7 +2679,8 @@ function updateStats() {
   const highCount = allZips.filter(z => ZIP_DATA[z][0] >= 25).length;
 
   document.getElementById('stat-zips').textContent = total.toLocaleString();
-  document.getElementById('stat-avg').textContent = avgRate.toFixed(1) + '%';
+  const areaKey = currentFilter || "All California";
+document.getElementById('stat-avg').textContent = AREA_STATS[areaKey] ?? '—';
   document.getElementById('stat-high').textContent = highCount.toLocaleString();
   document.getElementById('stats-pill').style.display = 'flex';
 }
