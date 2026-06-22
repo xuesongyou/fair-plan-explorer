@@ -11,24 +11,26 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --navy: #0f1923;
-  --navy2: #182637;
-  --steel: #2a3d52;
-  --accent: #e8503a;
-  --accent2: #f4875c;
-  --text: #f0f4f8;
-  --text2: #8fa3b8;
-  --text3: #4d6070;
-  --border: rgba(255,255,255,0.08);
-  --font: 'Inter', -apple-system, sans-serif;
-  --mono: 'DM Mono', monospace;
+  --bg:        #f4f6f9;
+  --bg2:       #ffffff;
+  --panel:     rgba(255,255,255,0.92);
+  --border:    rgba(0,0,0,0.10);
+  --accent:    #c0392b;
+  --accent2:   #e67e22;
+  --text:      #1a2533;
+  --text2:     #4a5a6a;
+  --text3:     #8a9aaa;
+  --font:      'Inter', -apple-system, sans-serif;
+  --mono:      'DM Mono', monospace;
+  --shadow:    0 2px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 6px 28px rgba(0,0,0,0.14);
 }
 
 html, body { height: 100%; }
 
 body {
   font-family: var(--font);
-  background: var(--navy);
+  background: var(--bg);
   color: var(--text);
   display: flex;
   flex-direction: column;
@@ -38,10 +40,10 @@ body {
 
 /* ── Header ── */
 .header {
-  background: var(--navy);
+  background: var(--bg2);
   border-bottom: 1px solid var(--border);
   padding: 0 24px;
-  height: 64px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -49,6 +51,7 @@ body {
   gap: 20px;
   z-index: 10;
   position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
 .header-left {
@@ -106,18 +109,19 @@ body {
 select.county-sel {
   appearance: none;
   -webkit-appearance: none;
-  background: var(--navy2);
-  border: 1.5px solid var(--steel);
+  background: var(--bg2);
+  border: 1.5px solid #d0d8e0;
   border-radius: 8px;
   color: var(--text);
   font-family: var(--font);
   font-size: 13px;
   font-weight: 500;
-  padding: 8px 32px 8px 13px;
+  padding: 7px 32px 7px 13px;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
   min-width: 200px;
   outline: none;
+  box-shadow: var(--shadow);
 }
 
 select.county-sel:hover {
@@ -126,11 +130,12 @@ select.county-sel:hover {
 
 select.county-sel:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(232, 80, 58, 0.15);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
 }
 
 select.county-sel option {
-  background: #1a2940;
+  background: #ffffff;
+  color: var(--text);
 }
 
 /* ── Map container ── */
@@ -152,12 +157,13 @@ select.county-sel option {
   bottom: 36px;
   left: 20px;
   z-index: 500;
-  background: rgba(15, 25, 35, 0.92);
+  background: var(--panel);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px 16px;
-  min-width: 160px;
+  min-width: 170px;
+  box-shadow: var(--shadow-lg);
 }
 
 .legend-title {
@@ -170,10 +176,11 @@ select.county-sel option {
 }
 
 .legend-ramp {
-  height: 7px;
+  height: 8px;
   border-radius: 4px;
-  background: linear-gradient(to right, #fef9c3, #fde68a, #fbbf24, #f97316, #ef4444, #991b1b);
+  background: linear-gradient(to right, #fff7b2, #fec97c, #f97346, #d93d56, #8b2180, #3d1260);
   margin-bottom: 5px;
+  border: 1px solid rgba(0,0,0,0.08);
 }
 
 .legend-ends {
@@ -188,7 +195,7 @@ select.county-sel option {
   font-size: 10px;
   color: var(--text3);
   margin-top: 8px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 /* ── Tooltip ── */
@@ -198,31 +205,30 @@ select.county-sel option {
   z-index: 900;
   pointer-events: none;
   background: #ffffff;
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(15,31,60,0.14);
+  border: 1px solid rgba(0,0,0,0.10);
   border-radius: 12px;
   overflow: hidden;
   min-width: 230px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-lg);
 }
 
 .tt-head {
-  background: #0A2816;
+  background: #1a2e1e;
   color: #fff;
   padding: 10px 14px 9px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .tt-zip {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text);
+  color: #ffffff;
   letter-spacing: -0.01em;
 }
 
 .tt-county {
   font-size: 10px;
-  color: var(--text2);
+  color: rgba(255,255,255,0.60);
   margin-top: 1px;
 }
 
@@ -239,7 +245,6 @@ select.county-sel option {
 .tt-rate-value {
   font-size: 28px;
   font-weight: 700;
-  color: #C0392B;
   font-family: var(--mono);
   line-height: 1;
   margin-bottom: 2px;
@@ -253,7 +258,7 @@ select.county-sel option {
 
 .tt-divider {
   border: none;
-  border-top: 1px solid rgba(15,31,60,0.1);
+  border-top: 1px solid rgba(0,0,0,0.08);
   margin: 10px 0;
 }
 
@@ -272,7 +277,7 @@ select.county-sel option {
 .tt-val {
   font-family: var(--mono);
   font-weight: 500;
-  color: var(--text2);
+  color: var(--text);
 }
 
 /* Risk bar visualization */
@@ -282,7 +287,7 @@ select.county-sel option {
 
 .tt-bar-label {
   font-size: 10px;
-  color: #374151;
+  color: var(--text2);
   margin-bottom: 6px;
 }
 
@@ -303,7 +308,7 @@ select.county-sel option {
 .tt-bar-track {
   flex: 1;
   height: 14px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(0,0,0,0.06);
   border-radius: 3px;
   overflow: hidden;
   position: relative;
@@ -328,7 +333,7 @@ select.county-sel option {
 .loading {
   position: absolute;
   inset: 0;
-  background: var(--navy);
+  background: var(--bg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -346,7 +351,7 @@ select.county-sel option {
 .spinner {
   width: 28px;
   height: 28px;
-  border: 2.5px solid rgba(255,255,255,0.1);
+  border: 2.5px solid rgba(0,0,0,0.10);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -365,13 +370,14 @@ select.county-sel option {
   top: 16px;
   right: 16px;
   z-index: 500;
-  background: rgba(15, 25, 35, 0.92);
+  background: var(--panel);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
   gap: 20px;
+  box-shadow: var(--shadow-lg);
 }
 
 .stat-item {
@@ -388,7 +394,7 @@ select.county-sel option {
   color: var(--text);
 }
 
-.stat-value.accent { color: var(--accent2); }
+.stat-value.accent { color: var(--accent); }
 
 .stat-label {
   font-size: 9px;
@@ -405,14 +411,34 @@ select.county-sel option {
   align-self: stretch;
 }
 
-/* Leaflet overrides */
-.leaflet-control-attribution {
-  background: rgba(10,18,28,0.75) !important;
-  color: #4d6070 !important;
-  font-size: 9px !important;
+/* ── County highlight badge ── */
+.county-badge {
+  display: none;
+  position: absolute;
+  bottom: 36px;
+  right: 16px;
+  z-index: 500;
+  background: var(--panel);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid var(--accent);
+  border-radius: 10px;
+  padding: 8px 14px;
+  box-shadow: var(--shadow-lg);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.01em;
 }
 
-.leaflet-control-attribution a { color: #4d6070 !important; }
+/* Leaflet overrides */
+.leaflet-control-attribution {
+  background: rgba(255,255,255,0.80) !important;
+  color: #8a9aaa !important;
+  font-size: 9px !important;
+  border-radius: 4px 0 0 0 !important;
+}
+
+.leaflet-control-attribution a { color: #8a9aaa !important; }
 
 .leaflet-control-zoom {
   border: none !important;
@@ -421,7 +447,7 @@ select.county-sel option {
 }
 
 .leaflet-control-zoom a {
-  background: rgba(15,25,35,0.92) !important;
+  background: var(--panel) !important;
   backdrop-filter: blur(12px);
   border: 1px solid var(--border) !important;
   color: var(--text2) !important;
@@ -429,10 +455,11 @@ select.county-sel option {
   width: 32px !important;
   height: 32px !important;
   line-height: 30px !important;
+  box-shadow: var(--shadow) !important;
 }
 
 .leaflet-control-zoom a:hover {
-  background: var(--steel) !important;
+  background: var(--bg) !important;
   color: var(--text) !important;
 }
 </style>
@@ -494,6 +521,9 @@ select.county-sel option {
     <div class="legend-note">Share of residential structures<br>with an active FAIR Plan policy</div>
   </div>
 
+  <!-- County highlight badge -->
+  <div class="county-badge" id="county-badge"></div>
+
   <!-- Tooltip -->
   <div class="tooltip" id="tooltip">
     <div class="tt-head">
@@ -549,9 +579,7 @@ select.county-sel option {
 <script>
 /* ═══════════════════════════════════════════════════════
    DATA — UPDATE EACH QUARTER
-   To update: replace the values in ZIP_DATA below.
    Format: "ZIPCODE": [fair_rate_pct, totalPolicies, lowRisk, medRisk, highRisk]
-   fair_rate_pct is the percentage (e.g. 20.4 means 20.4%)
    Data as of: 03/31/2026
 ═══════════════════════════════════════════════════════ */
 const DATA_DATE = "03/31/2026";
@@ -2213,9 +2241,6 @@ const ZIP_DATA = {
 
 /* ═══════════════════════════════════════════════════════
    COUNTY DEFINITIONS
-   Map from county name → array of ZIP prefixes/ranges it contains
-   Used to filter ZIPs when a county is selected.
-   Source: CA county FIPS / ZIP prefix lookup
 ═══════════════════════════════════════════════════════ */
 const COUNTY_ZIP_MAP = {
   "Alameda":       z => (z>="94501"&&z<="94560")||(z>="94577"&&z<="94588")||(z>="94601"&&z<="94621"),
@@ -2279,16 +2304,17 @@ const COUNTY_ZIP_MAP = {
 };
 
 /* ═══════════════════════════════════════════════════════
-   COLOR SCALE — yellow → red, capped at 50%
+   COLOR SCALE — adjusted for light background
+   Softer at low end, still vivid at high end
 ═══════════════════════════════════════════════════════ */
 const COLOR_STOPS = [
-  [0,    '#fcfcbe'],
-  [5,    '#fdc78d'],
-  [10,   '#fb8d67'],
-  [20,   '#e45563'],
-  [35,   '#ac337b'],
-  [50,   '#6b1f7b'],
-  [100,  '#2c1160'],
+  [0,    '#fffde7'],  // very pale yellow
+  [5,    '#ffe082'],  // soft amber
+  [10,   '#ffb347'],  // warm orange
+  [20,   '#e8614a'],  // coral-red
+  [35,   '#b5244e'],  // deep crimson
+  [50,   '#6b1460'],  // dark purple
+  [100,  '#2d0a3f'],  // near-black purple
 ];
 
 function getColor(rate) {
@@ -2318,8 +2344,9 @@ function lerpColor(hex1, hex2, t) {
 ═══════════════════════════════════════════════════════ */
 let map = null;
 let zipLayer = null;
-let countyLayer = null;
-let currentFilter = null; // county name or null for all CA
+let countyGeoData = null;        // raw county GeoJSON, stored for lookup
+let countyHighlightLayer = null; // single highlighted county boundary
+let currentFilter = null;
 
 function initMap() {
   map = L.map('leaflet-map', {
@@ -2330,14 +2357,13 @@ function initMap() {
     preferCanvas: false,
   });
 
-  // Dark/muted basemap that complements our color scheme
+  // Light basemap — CartoDB Positron works well with a light theme
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
     subdomains: 'abcd',
     maxZoom: 19,
   }).addTo(map);
 
-  // Load data
   loadData();
 }
 
@@ -2347,17 +2373,21 @@ function loadData() {
     fetch('./CA_county_boundaries.json').then(r => r.json()).catch(() => null),
   ]).then(([zipGeo, countyGeo]) => {
     buildZipLayer(zipGeo);
-    if (countyGeo) buildCountyLayer(countyGeo);
+    if (countyGeo) {
+      countyGeoData = countyGeo; // store for on-demand highlight
+    }
     document.getElementById('loading').classList.add('hidden');
     updateStats();
   }).catch(err => {
-    // Fallback: try without county layer
     fetch('./CA_ZIP_simple.json').then(r => r.json()).then(zipGeo => {
       buildZipLayer(zipGeo);
       document.getElementById('loading').classList.add('hidden');
       updateStats();
     }).catch(() => {
-      document.getElementById('loading').innerHTML = '<div style="text-align:center;padding:40px;color:#8fa3b8;"><p style="font-size:13px;margin-bottom:6px;">Place <strong>CA_ZIP_simple.json</strong> in the same folder as this file.</p><p style="font-size:11px;opacity:.6;">County data will render once the boundary file is available.</p></div>';
+      document.getElementById('loading').innerHTML =
+        '<div style="text-align:center;padding:40px;color:#4a5a6a;">' +
+        '<p style="font-size:13px;margin-bottom:6px;">Place <strong>CA_ZIP_simple.json</strong> in the same folder as this file.</p>' +
+        '<p style="font-size:11px;opacity:.6;">County boundary file (CA_county_boundaries.json) is optional.</p></div>';
     });
   });
 }
@@ -2367,7 +2397,7 @@ function buildZipLayer(geoData) {
   const features = geoData.features.filter(f => zipSet.has(f.properties.ZIP_CODE));
 
   zipLayer = L.geoJSON({ type:'FeatureCollection', features }, {
-    style: feat => styleZip(feat, false),
+    style: feat => styleZip(feat),
     onEachFeature: (feat, layer) => {
       const zip = feat.properties.ZIP_CODE;
       const d = ZIP_DATA[zip];
@@ -2376,7 +2406,7 @@ function buildZipLayer(geoData) {
       layer.on({
         mouseover: e => {
           showTooltip(e.originalEvent, zip, d);
-          layer.setStyle({ fillOpacity: 0.95, weight: 1.5, color: '#ffffff' });
+          layer.setStyle({ fillOpacity: 0.95, weight: 2, color: '#1a2533' });
         },
         mousemove: e => moveTooltip(e.originalEvent),
         mouseout: e => {
@@ -2390,19 +2420,58 @@ function buildZipLayer(geoData) {
   applyFilter(currentFilter);
 }
 
-function buildCountyLayer(geoData) {
-  countyLayer = L.geoJSON(geoData, {
-    style: {
-      fill: false,
-      color: 'rgba(255,255,255,0.35)',
-      weight: 1,
-      opacity: 1,
-    },
-    interactive: false,
-  }).addTo(map);
+/* ═══════════════════════════════════════════════════════
+   COUNTY BOUNDARY HIGHLIGHT
+   Reads the NAME field from your county GeoJSON:
+   "San Luis Obispo County, California" → strips ", California"
+   then matches against the dropdown county name.
+═══════════════════════════════════════════════════════ */
+function highlightCountyBoundary(countyName) {
+  // Remove any existing highlight layer
+  if (countyHighlightLayer) {
+    map.removeLayer(countyHighlightLayer);
+    countyHighlightLayer = null;
+  }
+
+  if (!countyName || !countyGeoData) return;
+
+  // Your NAME field is like "San Luis Obispo County, California"
+  // Match by normalizing: strip ", California" and " County" suffix
+  const normalize = s => s
+    .replace(/,\s*California$/i, '')
+    .replace(/\s+County$/i, '')
+    .trim()
+    .toLowerCase();
+
+  const targetName = normalize(countyName);
+
+  const matchingFeatures = countyGeoData.features.filter(f => {
+    const name = f.properties.NAME || '';
+    return normalize(name) === targetName;
+  });
+
+  if (!matchingFeatures.length) return;
+
+  countyHighlightLayer = L.geoJSON(
+    { type: 'FeatureCollection', features: matchingFeatures },
+    {
+      style: {
+        fill: false,          // transparent fill — let ZIP colors show through
+        color: '#1a2533',     // dark navy border, clearly visible on light map
+        weight: 3,
+        opacity: 1,
+        dashArray: null,
+      },
+      interactive: false,
+      pane: 'overlayPane',
+    }
+  ).addTo(map);
+
+  // Bring the highlight on top so it isn't hidden under ZIP fills
+  countyHighlightLayer.bringToFront();
 }
 
-function styleZip(feat, selected) {
+function styleZip(feat) {
   const zip = feat.properties.ZIP_CODE;
   const d = ZIP_DATA[zip];
   if (!d) return { fillOpacity: 0, stroke: false };
@@ -2412,9 +2481,10 @@ function styleZip(feat, selected) {
 
   return {
     fillColor: getColor(rate),
-    fillOpacity: visible ? 0.78 : 0,
-    color: 'rgba(0,0,0,0.3)',
-    weight: visible ? 0.5 : 0,
+    // Slightly more opaque on light background — colors read better
+    fillOpacity: visible ? 0.72 : 0,
+    color: visible ? 'rgba(0,0,0,0.18)' : 'transparent',
+    weight: visible ? 0.6 : 0,
     opacity: 1,
   };
 }
@@ -2432,10 +2502,22 @@ function applyFilter(countyName) {
   zipLayer.eachLayer(layer => {
     const zip = layer.feature && layer.feature.properties.ZIP_CODE;
     if (!zip) return;
-    layer.setStyle(styleZip(layer.feature, false));
+    layer.setStyle(styleZip(layer.feature));
   });
 
-  // Zoom to county if selected
+  // Update county boundary highlight
+  highlightCountyBoundary(currentFilter);
+
+  // Update county badge
+  const badge = document.getElementById('county-badge');
+  if (currentFilter) {
+    badge.textContent = currentFilter + ' County';
+    badge.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Zoom to county or reset
   if (currentFilter) {
     const visibleBounds = [];
     zipLayer.eachLayer(layer => {
@@ -2447,6 +2529,10 @@ function applyFilter(countyName) {
     if (visibleBounds.length) {
       const combined = visibleBounds.reduce((acc, b) => acc.extend(b), visibleBounds[0]);
       map.fitBounds(combined, { padding: [40, 40], maxZoom: 12 });
+    }
+    // Re-bring county outline to front after zoom/layer ordering settles
+    if (countyHighlightLayer) {
+      setTimeout(() => countyHighlightLayer && countyHighlightLayer.bringToFront(), 300);
     }
   } else {
     map.flyTo([37.5, -119.5], 6, { duration: 0.8 });
@@ -2464,21 +2550,18 @@ function showTooltip(event, zip, d) {
 
   document.getElementById('tt-zip').textContent = 'ZIP ' + zip;
 
-  // Figure out what county this zip is in
   let countyName = '';
   for (const [cn, fn] of Object.entries(COUNTY_ZIP_MAP)) {
     if (fn(zip)) { countyName = cn + ' County'; break; }
   }
   document.getElementById('tt-county').textContent = countyName;
 
-  // Rate color
   const rateEl = document.getElementById('tt-rate');
   rateEl.textContent = rate.toFixed(1) + '%';
   rateEl.style.color = getColor(rate);
 
   document.getElementById('tt-total').textContent = total.toLocaleString();
 
-  // Bars
   function setBar(fillId, countId, count, maxCount) {
     const pct = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
     document.getElementById(fillId).style.width = pct + '%';
