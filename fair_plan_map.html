@@ -2375,9 +2375,10 @@ function loadData() {
     fetch('./CA_county_boundaries.json').then(r => r.json()).catch(() => null),
   ]).then(([zipGeo, countyGeo]) => {
     buildZipLayer(zipGeo);
-    if (countyGeo) {
-      countyGeoData = countyGeo; // store for on-demand highlight
-    }
+if (countyGeo) {
+  countyGeoData = countyGeo;
+  buildAllCountyBoundaries();
+}
     document.getElementById('loading').classList.add('hidden');
     updateStats();
   }).catch(err => {
@@ -2428,7 +2429,19 @@ function buildZipLayer(geoData) {
    "San Luis Obispo County, California" → strips ", California"
    then matches against the dropdown county name.
 ═══════════════════════════════════════════════════════ */
-function highlightCountyBoundary(countyName) {
+function buildAllCountyBoundaries() {
+  if (!countyGeoData) return;
+  L.geoJSON(countyGeoData, {
+    style: {
+      fill: false,
+      color: '#ffffff',
+      weight: 2,
+      opacity: 0.9,
+    },
+    interactive: false,
+  }).addTo(map);
+}
+  function highlightCountyBoundary(countyName) {
   // Remove any existing highlight layer
   if (countyHighlightLayer) {
     map.removeLayer(countyHighlightLayer);
