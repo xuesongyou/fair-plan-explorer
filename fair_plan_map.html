@@ -2561,7 +2561,9 @@ function showTooltip(event, zip, d) {
 
   const rateEl = document.getElementById('tt-rate');
   rateEl.textContent = rate.toFixed(1) + '%';
-  rateEl.style.color = getColor(rate);
+  // Use the map color for higher rates, but fall back to a dark neutral for very low rates
+// Adjust the threshold (5) up or down to taste
+rateEl.style.color = rate < 5 ? '#92400e' : getColor(rate);
 
   document.getElementById('tt-total').textContent = total.toLocaleString();
 
