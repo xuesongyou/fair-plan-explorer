@@ -35,7 +35,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;
+  overflow: hidden auto;
 }
 
 /* ── Header ── */
@@ -430,6 +430,20 @@ select.county-sel option {
   letter-spacing: 0.01em;
 }
 
+/* ── Footnotes ── */
+.footnotes {
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 6px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 24px;
+  font-size: 10px;
+  color: var(--text3);
+  line-height: 1.5;
+}  
+  
 /* Leaflet overrides */
 .leaflet-control-attribution {
   background: rgba(255,255,255,0.80) !important;
@@ -572,6 +586,11 @@ select.county-sel option {
   </div>
 </div>
 
+<footer class="footnotes">
+  <span>¹ FAIR Plan policies reflect residential structures only and exclude commercial properties. Policies for renters and condo unit owners are excluded. Measure of wildfire risk is based on the average fire risk scores at the ZIP code level from CDI’s Wildfire Risk Report, measured as of the 2018 estimates. Very high-wildfire-risk ZIP codes are those with an average fire risk score exceeding the 80th percentile across all California ZIP codes.</span>
+  <span>² California FAIR Plan residential policy data from California FAIR Plan Key Statistics & Data. Residential structure data from the National Structure Inventory (NSI).</span>
+</footer>
+  
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
