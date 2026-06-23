@@ -2644,7 +2644,7 @@ function showTooltip(event, zip, d) {
   const [rate, total, low, med, high] = d;
   const tt = document.getElementById('tooltip');
 
-  document.getElementById('tt-zip').textContent = 'ZIP Code' + zip;
+  document.getElementById('tt-zip').textContent = 'ZIP Code ' + zip;
 
   const rateEl = document.getElementById('tt-rate');
   rateEl.textContent = rate.toFixed(1) + '%';
