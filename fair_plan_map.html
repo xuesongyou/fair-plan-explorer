@@ -226,6 +226,14 @@ select.county-sel option {
   letter-spacing: -0.01em;
 }
 
+.tt-po-name {
+  font-size: 11px;
+  color: rgba(255,255,255,0.75);
+  margin-top: 2px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+  
 .tt-county {
   font-size: 10px;
   color: rgba(255,255,255,0.60);
@@ -542,6 +550,7 @@ select.county-sel option {
   <div class="tooltip" id="tooltip">
     <div class="tt-head">
       <div class="tt-zip" id="tt-zip">—</div>
+      <div class="tt-po-name" id="tt-po-name"></div>
     </div>
     <div class="tt-body">
       <div class="tt-rate-label">As of 03/31/2026:</div>
@@ -602,6 +611,8 @@ select.county-sel option {
 ═══════════════════════════════════════════════════════ */
 const DATA_DATE = "03/31/2026";
 
+const ZIP_NAMES = {}; // will be populated from GeoJSON
+  
 const AREA_STATS = {
 "All California": "6.0%",
 "Alameda":"2.8%",
@@ -2489,6 +2500,9 @@ if (countyGeo) {
 function buildZipLayer(geoData) {
   const zipSet = new Set(Object.keys(ZIP_DATA));
   const features = geoData.features.filter(f => zipSet.has(f.properties.ZIP_CODE));
+  features.forEach(f => {
+  ZIP_NAMES[f.properties.ZIP_CODE] = f.properties.PO_NAME || '';
+  });
 
   zipLayer = L.geoJSON({ type:'FeatureCollection', features }, {
     style: feat => styleZip(feat),
@@ -2654,7 +2668,7 @@ function showTooltip(event, zip, d) {
   const [rate, total, low, med, high] = d;
   const tt = document.getElementById('tooltip');
 
-  document.getElementById('tt-zip').textContent = 'ZIP Code ' + zip;
+  document.getElementById('tt-zip').textContent = 'ZIP ' + zip + ' · ' + ZIP_NAMES[zip];
 
   const rateEl = document.getElementById('tt-rate');
   rateEl.textContent = rate.toFixed(1) + '%';
