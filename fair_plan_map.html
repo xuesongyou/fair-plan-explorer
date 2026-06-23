@@ -587,8 +587,8 @@ select.county-sel option {
 </div>
 
 <footer class="footnotes">
-  <span>¹ FAIR Plan policies reflect residential structures only and exclude commercial properties. Policies for renters and condo unit owners are excluded. Measure of wildfire risk is based on the average fire risk scores at the ZIP code level from CDI’s Wildfire Risk Report, measured as of the 2018 estimates. Very high-wildfire-risk ZIP codes are those with an average fire risk score exceeding the 80th percentile across all California ZIP codes.</span>
-  <span>² California FAIR Plan residential policy data from California FAIR Plan Key Statistics & Data. Residential structure data from the National Structure Inventory (NSI).</span>
+  <span> Note: FAIR Plan policies reflect residential structures only and exclude commercial properties. Policies for renters and condo unit owners are excluded.</span>
+  <span> Source: California FAIR Plan residential policy data from California FAIR Plan Key Statistics & Data. Residential structure data from the National Structure Inventory (NSI).</span>
 </footer>
   
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2644,7 +2644,7 @@ function showTooltip(event, zip, d) {
   const [rate, total, low, med, high] = d;
   const tt = document.getElementById('tooltip');
 
-  document.getElementById('tt-zip').textContent = 'ZIP ' + zip;
+  document.getElementById('tt-zip').textContent = 'ZIP Code' + zip;
 
   const rateEl = document.getElementById('tt-rate');
   rateEl.textContent = rate.toFixed(1) + '%';
