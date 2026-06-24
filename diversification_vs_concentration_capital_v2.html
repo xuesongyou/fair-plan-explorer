@@ -1,0 +1,254 @@
+
+<h2 class="sr-only">Interactive demo: diversified vs concentrated insurance portfolio — capital buffer comparison using simulated loss distributions</h2>
+
+<style>
+  .ctrl { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .ctrl label { font-size:13px; color:var(--color-text-secondary); min-width:170px; }
+  .ctrl span { font-size:13px; font-weight:500; min-width:40px; }
+  .sec-label { font-size:11px; font-weight:500; color:var(--color-text-secondary); text-transform:uppercase; letter-spacing:.06em; margin:18px 0 10px; }
+  .compare-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .panel { border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-lg); padding:14px; }
+  .panel-title { font-size:13px; font-weight:500; margin:0 0 10px; display:flex; align-items:center; gap:6px; }
+  .stat { background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:10px 12px; margin-bottom:8px; }
+  .stat .lbl { font-size:11px; color:var(--color-text-secondary); margin-bottom:3px; }
+  .stat .val { font-size:20px; font-weight:500; }
+  .stat .sub { font-size:11px; color:var(--color-text-secondary); margin-top:2px; }
+  .teal { color:#0F6E56; }
+  .coral { color:#993C1D; }
+  .bar-wrap { position:relative; height:160px; margin-top:8px; }
+  .note { font-size:11px; color:var(--color-text-secondary); line-height:1.6; margin-top:12px; }
+  .pill { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; margin-left:6px; }
+  .pill-teal { background:#E1F5EE; color:#085041; }
+  .pill-coral { background:#FAECE7; color:#712B13; }
+</style>
+
+<div style="padding:1rem 0 0;">
+
+  <div class="ctrl">
+    <label>Loss probability per policy</label>
+    <input type="range" min="1" max="40" value="10" id="prob" step="1" style="flex:1">
+    <span id="probOut">10%</span>
+  </div>
+
+  <div class="ctrl">
+    <label>Loss per policy — diversified ($)</label>
+    <input type="range" min="10" max="500" value="100" id="lossD" step="10" style="flex:1">
+    <span id="lossDOut">$100</span>
+  </div>
+
+  <div class="ctrl">
+    <label>Policies — diversified</label>
+    <input type="range" min="10" max="400" value="100" id="nD" step="10" style="flex:1">
+    <span id="nDOut">100</span>
+  </div>
+
+  <div class="ctrl">
+    <label>Policies — concentrated</label>
+    <input type="range" min="1" max="30" value="5" id="nC" step="1" style="flex:1">
+    <span id="nCOut">5</span>
+  </div>
+
+  <div class="ctrl">
+    <label>Correlation — concentrated only</label>
+    <input type="range" min="0" max="95" value="0" id="corr" step="5" style="flex:1">
+    <span id="corrOut">0%</span>
+  </div>
+
+  <div id="expNote" style="font-size:12px; color:var(--color-text-secondary); padding:8px 10px; background:var(--color-background-secondary); border-radius:var(--border-radius-md); margin-bottom:4px;"></div>
+
+  <div style="border-top:0.5px solid var(--color-border-tertiary); margin:14px 0;"></div>
+
+  <div class="compare-row">
+    <div class="panel">
+      <p class="panel-title teal"><i class="ti ti-arrows-split" aria-hidden="true" style="font-size:15px;"></i>Diversified portfolio <span class="pill pill-teal" id="pillD">100 × $100</span></p>
+      <div class="stat"><div class="lbl">Expected total loss</div><div class="val" id="expLossD">—</div></div>
+      <div class="stat"><div class="lbl">99th-percentile loss (VaR 99)</div><div class="val teal" id="var99D">—</div></div>
+      <div class="stat"><div class="lbl">Capital buffer needed</div><div class="val teal" id="capD">—</div><div class="sub" id="capDpct"></div></div>
+    </div>
+    <div class="panel">
+      <p class="panel-title coral"><i class="ti ti-arrows-join" aria-hidden="true" style="font-size:15px;"></i>Concentrated portfolio <span class="pill pill-coral" id="pillC">5 × $2,000</span></p>
+      <div class="stat"><div class="lbl">Expected total loss</div><div class="val" id="expLossC">—</div></div>
+      <div class="stat"><div class="lbl">99th-percentile loss (VaR 99)</div><div class="val coral" id="var99C">—</div></div>
+      <div class="stat"><div class="lbl">Capital buffer needed</div><div class="val coral" id="capC">—</div><div class="sub" id="capCpct"></div></div>
+    </div>
+  </div>
+
+  <div class="sec-label">Loss distribution — 50,000 simulated scenarios</div>
+  <div class="compare-row">
+    <div class="bar-wrap"><canvas id="chartD" role="img" aria-label="Histogram of diversified portfolio losses with 99th percentile marker"></canvas></div>
+    <div class="bar-wrap"><canvas id="chartC" role="img" aria-label="Histogram of concentrated portfolio losses with 99th percentile marker"></canvas></div>
+  </div>
+
+  <div style="display:flex; gap:16px; margin-top:8px; font-size:11px; color:var(--color-text-secondary);">
+    <span style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:18px;height:2px;border-top:2px dashed #555;"></span>VaR 99 line</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(15,110,86,0.55);"></span>Diversified tail</span>
+    <span style="display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(153,60,29,0.55);"></span>Concentrated tail</span>
+  </div>
+
+  <p class="note">The <strong>capital buffer</strong> is extra money the insurer must hold above expected losses to survive a 1-in-100 bad year. Concentrated portfolios hold fewer, larger policies — even with zero correlation the binomial variance is far higher relative to the mean, forcing a much wider loss distribution and larger buffer. Adding correlation amplifies this further.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const N_SIM = 50000;
+const BINS = 35;
+
+function fmt(v) { return '$' + Math.round(v).toLocaleString(); }
+
+function lognormalSample(median, sigma) {
+  const mu = Math.log(median);
+  const u1 = Math.random(), u2 = Math.random();
+  const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  return Math.exp(mu + sigma * z);
+}
+
+function simulate(n, p, lossMedian, corr) {
+  const sigma = 0.7;
+  const results = new Float32Array(N_SIM);
+  for (let s = 0; s < N_SIM; s++) {
+    const commonShock = Math.random();
+    let total = 0;
+    for (let i = 0; i < n; i++) {
+      const raw = corr > 0
+        ? (Math.sqrt(corr) * commonShock + Math.sqrt(1 - corr) * Math.random())
+        : Math.random();
+      const u = Math.max(0, Math.min(1, raw));
+      if (u < p) total += lognormalSample(lossMedian, sigma);
+    }
+    results[s] = total;
+  }
+  results.sort();
+  return results;
+}
+
+function percentile(sorted, q) {
+  return sorted[Math.min(Math.floor(q * sorted.length), sorted.length - 1)];
+}
+
+function makeHistogram(data, lo, hi) {
+  const binW = (hi - lo) / BINS;
+  const counts = new Array(BINS).fill(0);
+  for (const v of data) {
+    const b = Math.min(Math.floor((v - lo) / binW), BINS - 1);
+    if (b >= 0) counts[b]++;
+  }
+  const labels = counts.map((_, i) => fmt(lo + i * binW + binW / 2));
+  return { labels, counts, binW };
+}
+
+const vLinePlugin = (varVal, lo, hi, color) => ({
+  id: 'vline_' + color,
+  afterDraw(chart) {
+    const binW = (hi - lo) / BINS;
+    const binIdx = Math.min(Math.floor((varVal - lo) / binW), BINS - 1);
+    if (binIdx < 0) return;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta.data[binIdx]) return;
+    const x = meta.data[binIdx].x;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, chart.chartArea.top);
+    ctx.lineTo(x, chart.chartArea.bottom);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.stroke();
+    ctx.restore();
+  }
+});
+
+let chartD, chartC;
+
+function update() {
+  const p    = +document.getElementById('prob').value / 100;
+  const lossD = +document.getElementById('lossD').value;
+  const nD   = +document.getElementById('nD').value;
+  const nC   = +document.getElementById('nC').value;
+  const corr  = +document.getElementById('corr').value / 100;
+
+  document.getElementById('probOut').textContent = Math.round(p * 100) + '%';
+  document.getElementById('lossDOut').textContent = '$' + lossD;
+  document.getElementById('nDOut').textContent = nD;
+  document.getElementById('nCOut').textContent = nC;
+  document.getElementById('corrOut').textContent = Math.round(corr * 100) + '%';
+
+  const lossMedianD = lossD;
+  const sigma = 0.7;
+  const lognormalMean = Math.exp(Math.log(lossMedianD) + sigma * sigma / 2);
+  const expLossD = nD * p * lognormalMean;
+  const lossC = (nD * lossD) / nC;
+  const expLossC = nC * p * (Math.exp(Math.log(lossC) + sigma * sigma / 2));
+
+  document.getElementById('pillD').textContent = nD + ' × $' + lossD;
+  document.getElementById('pillC').textContent = nC + ' × $' + Math.round(lossC).toLocaleString();
+  document.getElementById('expNote').textContent =
+    'Concentrated policy size auto-set to $' + Math.round(lossC).toLocaleString() +
+    ' so both portfolios share the same expected total loss (~' + fmt(expLossD) + ').';
+
+  const simD = simulate(nD, p, lossMedianD, 0);
+  const simC = simulate(nC, p, lossC, corr);
+
+  const allMax = Math.max(simD[simD.length - 1], simC[simC.length - 1]) * 1.02;
+  const lo = 0;
+  const hi = allMax || 1;
+
+  const var99D = percentile(simD, 0.99);
+  const var99C = percentile(simC, 0.99);
+  const capD = Math.max(0, var99D - expLossD);
+  const capC = Math.max(0, var99C - expLossC);
+
+  document.getElementById('expLossD').textContent = fmt(expLossD);
+  document.getElementById('expLossC').textContent = fmt(expLossC);
+  document.getElementById('var99D').textContent = fmt(var99D);
+  document.getElementById('var99C').textContent = fmt(var99C);
+  document.getElementById('capD').textContent = fmt(capD);
+  document.getElementById('capC').textContent = fmt(capC);
+  document.getElementById('capDpct').textContent = expLossD > 0 ? Math.round(capD / expLossD * 100) + '% above expected loss' : '';
+  document.getElementById('capCpct').textContent = expLossC > 0 ? Math.round(capC / expLossC * 100) + '% above expected loss' : '';
+
+  const histD = makeHistogram(simD, lo, hi);
+  const histC = makeHistogram(simC, lo, hi);
+
+  const binW = (hi - lo) / BINS;
+  const var99IdxD = Math.min(Math.floor((var99D - lo) / binW), BINS - 1);
+  const var99IdxC = Math.min(Math.floor((var99C - lo) / binW), BINS - 1);
+
+  const colD = histD.counts.map((_, i) => i >= var99IdxD ? 'rgba(15,110,86,0.55)' : 'rgba(15,110,86,0.2)');
+  const colC = histC.counts.map((_, i) => i >= var99IdxC ? 'rgba(153,60,29,0.6)' : 'rgba(153,60,29,0.2)');
+
+  const commonOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: { ticks: { display: false }, grid: { display: false }, border: { display: false } },
+      y: { ticks: { display: false }, grid: { display: false }, border: { display: false } }
+    },
+    animation: false
+  };
+
+  if (chartD) chartD.destroy();
+  if (chartC) chartC.destroy();
+
+  chartD = new Chart(document.getElementById('chartD'), {
+    type: 'bar',
+    data: { labels: histD.labels, datasets: [{ data: histD.counts, backgroundColor: colD, borderWidth: 0 }] },
+    options: { ...commonOpts, scales: { ...commonOpts.scales } },
+    plugins: [vLinePlugin(var99D, lo, hi, '#0F6E56')]
+  });
+
+  chartC = new Chart(document.getElementById('chartC'), {
+    type: 'bar',
+    data: { labels: histC.labels, datasets: [{ data: histC.counts, backgroundColor: colC, borderWidth: 0 }] },
+    options: { ...commonOpts },
+    plugins: [vLinePlugin(var99C, lo, hi, '#993C1D')]
+  });
+}
+
+['prob','lossD','nD','nC','corr'].forEach(id => {
+  document.getElementById(id).addEventListener('input', update);
+});
+
+update();
+</script>
