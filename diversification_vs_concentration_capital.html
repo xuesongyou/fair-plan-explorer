@@ -109,7 +109,13 @@ function simulate(n, p, lossAmt, corr) {
       const u = corr > 0
         ? (Math.sqrt(corr) * commonShock + Math.sqrt(1 - corr) * Math.random())
         : Math.random();
-      if (u < p) total += lossAmt;
+      if (u < p) {
+  // Lognormal with median = lossAmt, moderate spread (sigma=0.7)
+  const sigma = 0.7;
+  const mu = Math.log(lossAmt);
+  const z = Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random());
+  total += Math.exp(mu + sigma * z);
+}
     }
     results.push(total);
   }
@@ -147,11 +153,11 @@ function update() {
   document.getElementById('lossOut').textContent = '$' + lossAmt;
   document.getElementById('corrOut').textContent = (+document.getElementById('corr').value) + '%';
 
-  const maxLoss = n * lossAmt;
-  const expLoss = n * p * lossAmt;
+const simD = simulate(n, p, lossAmt, 0);
+const simC = simulate(n, p, lossAmt, corrFrac);
 
-  const simD = simulate(n, p, lossAmt, 0);
-  const simC = simulate(n, p, lossAmt, corrFrac);
+const maxLoss = Math.max(...simD, ...simC, 1) * 1.05;
+const expLoss = n * p * lossAmt;  // expected loss stays the same analytically
 
   const var99D = percentile(simD, 0.99);
   const var99C = percentile(simC, 0.99);
