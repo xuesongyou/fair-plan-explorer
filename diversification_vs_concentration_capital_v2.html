@@ -113,7 +113,8 @@ function simulate(n, p, lossMedian, corr) {
         ? (Math.sqrt(corr) * commonShock + Math.sqrt(1 - corr) * Math.random())
         : Math.random();
       const u = Math.max(0, Math.min(1, raw));
-      if (u < p) total += lognormalSample(lossMedian, sigma);
+
+      if (u < p) total += lossAmt;
     }
     results[s] = total;
   }
