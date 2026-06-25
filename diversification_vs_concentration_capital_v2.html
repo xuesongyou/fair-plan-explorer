@@ -114,7 +114,7 @@ function simulate(n, p, lossMedian, corr) {
         : Math.random();
       const u = Math.max(0, Math.min(1, raw));
 
-      if (u < p) total += lossAmt;
+      if (u < p) total += lognormalSample(lossMedian, sigma);
     }
     results[s] = total;
   }
