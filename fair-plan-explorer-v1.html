@@ -120,33 +120,13 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 
 /* ── Map view ── */
 #view-map {
-  display: flex;
-  flex-direction: column;
-  grid-column: 1 / 3;
-  grid-row: 1;
-  min-height: 0;
-  overflow: hidden;
+  display: contents; /* children participate in view-area grid */
 }
 #view-map.hidden { display: none; }
 
-  #map-row {
-  display: flex;
-  flex-direction: row;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-#map-row .map-wrap {
-  flex: 1;
-  min-width: 0;
-}
-
-#map-row .sidebar-right {
-  flex: 0 0 280px;
-}
 .map-wrap {
   position: relative; overflow: hidden; background: #e8e0d8;
+  grid-column: 1; grid-row: 1;
 }
 
 /* Leaflet map fills container */
@@ -402,6 +382,7 @@ input[type=range]:focus { outline: none; }
 .sidebar-right {
   background: var(--white); border-left: 1px solid var(--border);
   overflow-y: auto; padding: 0; display: flex; flex-direction: column;
+  grid-column: 2; grid-row: 1;
 }
 .spot-card { background: var(--slate); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 10px; }
 .spot-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); }
@@ -492,38 +473,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
 /* Leaflet attribution positioning */
 .leaflet-control-attribution { font-size: 9px !important; }
-
-/* ── Bottom block ── */
-#bottom-block {
-  display: flex;
-  flex-direction: row;
-  gap: 0;
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-#spotlight-panel {
-  flex: 0 0 320px;
-  padding: 14px 16px;
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-}
-
-#custom-text-panel {
-  flex: 1;
-  padding: 14px 20px;
-  font-size: 12px;
-  color: var(--text2);
-  line-height: 1.6;
-  overflow-y: auto;
-}
-
-#custom-text-panel .sec-label {
-  margin-bottom: 8px;
-}
 </style>
 </head>
 <body>
@@ -577,6 +526,25 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     <!-- LEFT SIDEBAR (always visible) -->
     <aside class="sidebar" aria-label="Community and filters">
 
+      <div class="sidebar-section">
+        <div class="sec-label">Community</div>
+        <div class="community-select-wrap">
+          <select class="community-sel" id="community-select">
+            <option value="">— Select a community —</option>
+            <option value="monterey">Monterey County</option>
+            <option value="san_benito">San Benito County</option>
+            <option value="san_diego">San Diego County</option>
+            <option value="santa_cruz">Santa Cruz County</option>
+            <option value="tulare">Tulare County</option>
+            <option value="tuolumne">Tuolumne County</option>
+            <option value="hoopa">Hoopa Valley Tribe</option>
+          </select>
+        </div>
+        <div class="community-info" id="community-info" style="display:none;">
+          <div class="community-info-name" id="ci-name"></div>
+          <div class="community-info-detail" id="ci-detail"></div>
+        </div>
+      </div>
 
       <div class="sidebar-section">
         <div class="sec-label">Choropleth metric</div>
@@ -657,9 +625,8 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
       <!-- MAP VIEW (persistent, never destroyed) -->
       <div id="view-map">
-        <div id="map-row">
-          <div class="map-wrap" id="map-container">
-            
+        <!-- Map fills the left column of view-area -->
+        <div class="map-wrap" id="map-container">
           <!-- Leaflet base map (overlay drawn natively inside Leaflet SVG pane) -->
           <div id="leaflet-map"></div>
           <!-- States -->
@@ -778,40 +745,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
             </div>
           </div>
         </aside>
-        <!-- BOTTOM INFO BLOCK -->
-      <div id="bottom-block">
-        <!-- ZIP Spotlight moves here -->
-        <div id="spotlight-panel">
-          <div class="sec-label">ZIP Code Spotlight</div>
-          <div id="spotlight-empty" class="empty-state">
-            <div class="es-icon">📍</div>
-            <span>Click a ZIP code on the map or list</span>
-          </div>
-          <div id="spotlight-content" style="display:none;">
-            <div class="spot-name" id="sp-name"></div>
-            <div class="spot-sub" id="sp-sub"></div>
-            <div class="spot-card">
-              <div class="spot-row"><span class="spot-key">FAIR plan rate</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
-              <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
-              <div class="spot-row"><span class="spot-key">Low-income pop.</span><span class="spot-val" id="sp-income"></span></div>
-              <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
-              <div class="spot-row"><span class="spot-key">Pre-1960 units</span><span class="spot-val" id="sp-age"></span></div>
-              <div class="bar-track"><div class="bar-fill" id="bar-age" style="background:var(--amber);"></div></div>
-              <div class="spot-row"><span class="spot-key">Median build yr</span><span class="spot-val" id="sp-year"></span></div>
-              <div class="spot-row"><span class="spot-key">Population</span><span class="spot-val" id="sp-pop"></span></div>
-              <div class="spot-row"><span class="spot-key">Housing units</span><span class="spot-val" id="sp-units"></span></div>
-            </div>
-            <div id="sp-badge"></div>
-          </div>
-        </div>
-
-        <!-- Custom text panel — edit freely -->
-        <div id="custom-text-panel">
-          <div class="sec-label">About This Data</div>
-          <p>Add your customized text here. You can include methodology notes, data sources, disclaimers, or any other context you'd like to surface below the map.</p>
-          <p style="margin-top:8px;">A second paragraph can go here.</p>
-        </div>
-      </div>
       </div><!-- #view-map -->
 
       <!-- TABLE VIEW (hidden until activated) -->
@@ -1079,6 +1012,9 @@ function generateZIPs(community) {
     ],
     hoopa: [
       { zip:'95546', name:'Hoopa Valley', fair:38.2, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:72, pre60:54, buildYr:1958, pop:2600, units:900 },
+      { zip:'95526', name:'Burnt Ranch',  fair:29.4, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:58, pre60:46, buildYr:1964, pop:350,  units:200 },
+      { zip:'95511', name:'Alderpoint',   fair:26.8, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:61, pre60:48, buildYr:1963, pop:400,  units:220 },
+      { zip:'95514', name:'Blocksburg',   fair:24.2, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:55, pre60:42, buildYr:1966, pop:280,  units:160 },
     ],
   };
   return seeds[community] || [];
