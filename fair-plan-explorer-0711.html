@@ -301,7 +301,11 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   flex-direction: row;
   border-top: 1px solid rgba(15,31,60,0.1);
 }
-.tt-extra-col {
+.tt-extra-col:first-child {
+  flex: 0 0 260px;
+  padding: 11px 14px;
+}
+.tt-extra-col:last-child {
   flex: 1;
   padding: 11px 14px;
 }
