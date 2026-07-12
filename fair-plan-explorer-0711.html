@@ -644,6 +644,12 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
           <div class="layer-dot" style="background:var(--amber)"></div>
           <span class="layer-name">Pre-1960 overlay</span>
         </div>
+        <div class="layer-row" onclick="toggleLayer('firewise')">
+          <div class="toggle on-fire" id="tog-firewise"><div class="toggle-knob"></div></div>
+          <div class="layer-dot" style="background:#8E44AD"></div>
+          <span class="layer-name">Firewise sites (Good Standing)</span>
+        </div>
+        <div class="layer-note" id="firewise-note"></div>
         <hr class="layer-divider">
         <div class="layer-row" onclick="toggleLayer('outline')">
           <div class="toggle on-red" id="tog-outline"><div class="toggle-knob"></div></div>
@@ -655,13 +661,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
           <div class="layer-dot" style="background:var(--forest)"></div>
           <span class="layer-name">ZIP code labels</span>
         </div>
-        <hr class="layer-divider">
-        <div class="layer-row" onclick="toggleLayer('firewise')">
-          <div class="toggle on-fire" id="tog-firewise"><div class="toggle-knob"></div></div>
-          <div class="layer-dot" style="background:#8E44AD"></div>
-          <span class="layer-name">Firewise sites (Good Standing)</span>
-        </div>
-        <div class="layer-note" id="firewise-note"></div>
       </div>
 
       <div class="sidebar-section">
