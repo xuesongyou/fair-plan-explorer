@@ -590,7 +590,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       <div class="metric-sub">All 3 factors flagged</div>
     </div>
     <div class="metric">
-      <div class="metric-label">Avg FAIR Plan Rate</div>
+      <div class="metric-label">Avg FAIR Plan Concentration</div>
       <div class="metric-value mv-amber" id="m-rate">—</div>
       <div class="metric-sub">Selected community</div>
     </div>
@@ -668,7 +668,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         <div class="sec-label">Risk thresholds</div>
         <div class="slider-wrap">
           <div class="slider-meta">
-            <span class="slider-name">FAIR plan rate ≥</span>
+            <span class="slider-name">FAIR plan concentration ≥</span>
             <span class="slider-val" id="sv-fair">15%</span>
           </div>
           <input type="range" id="sl-fair" min="0" max="50" step="1" value="15">
@@ -716,7 +716,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
           </div>
           <!-- Legend -->
           <div class="choro-legend" id="choro-legend" style="display:none;">
-            <div class="legend-title" id="legend-title">FAIR plan rate</div>
+            <div class="legend-title" id="legend-title">FAIR plan concentration</div>
             <div class="legend-grad" id="legend-grad"></div>
             <div class="legend-ends-row"><span>Low</span><span>High</span></div>
           </div>
@@ -798,7 +798,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
               <div class="spot-name" id="sp-name"></div>
               <div class="spot-sub" id="sp-sub"></div>
               <div class="spot-card">
-                <div class="spot-row"><span class="spot-key">FAIR plan rate</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
+                <div class="spot-row"><span class="spot-key">FAIR plan concentration</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
                 <div class="spot-row"><span class="spot-key">Low-income pop.</span><span class="spot-val" id="sp-income"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
@@ -1486,7 +1486,7 @@ function gradCSS(metric) {
   return `linear-gradient(to right, ${s[0]}, ${s[s.length-1]})`;
 }
 function metricLabel(m) {
-  return { fair:'FAIR plan rate', income:'Low-income pop.', pre60:'Pre-1960 units', score:'Combined risk score' }[m] || m;
+  return { fair:'FAIR plan concentration', income:'Low-income pop.', pre60:'Pre-1960 units', score:'Combined risk score' }[m] || m;
 }
 
 /* ════════════════════════════════════════════
@@ -2204,7 +2204,7 @@ function renderChartView() {
 
   area.innerHTML = `
     <div class="chart-panel">
-      <div class="chart-title">FAIR Plan Rate by ZIP Code</div>
+      <div class="chart-title">FAIR Plan Concentration by ZIP Code</div>
       <div class="chart-subtitle">${title} · sorted by rate</div>
       <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch1"></canvas></div>
     </div>
@@ -2247,7 +2247,7 @@ function renderChartView() {
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'%'}}},
       scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'FAIR plan rate',color:tc}},
+        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'FAIR plan concentration',color:tc}},
         y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}
       }
     }
@@ -2318,7 +2318,7 @@ function renderChartView() {
 ════════════════════════════════════════════ */
 document.getElementById('export-csv').addEventListener('click', () => {
   if (!currentZipData.length) { alert('Select a community first.'); return; }
-  const header = 'ZIP,Area Name,FAIR Plan Rate,Low Income %,Pre-1960 %,Build Year,Population,Housing Units,Risk Score,Risk Factors\n';
+  const header = 'ZIP,Area Name,FAIR Plan Concentration,Low Income %,Pre-1960 %,Build Year,Population,Housing Units,Risk Score,Risk Factors\n';
   const rows = currentZipData.map(d =>
     `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre60},${d.buildYr},${d.pop},${d.units},${getRiskScore(d)},${getRiskFactors(d)}`
   ).join('\n');
