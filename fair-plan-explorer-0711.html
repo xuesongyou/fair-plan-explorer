@@ -422,6 +422,8 @@ select.ctrl-select:focus { outline: none; border-color: var(--amber); }
 .toggle.on-forest .toggle-knob { background: white; left: 16px; }
 .toggle.on-fire { background: #8E44AD; border-color: #8E44AD; }
 .toggle.on-fire .toggle-knob { background: white; left: 16px; }
+.toggle.on-dins { background: #3A3A3A; border-color: #3A3A3A; }
+.toggle.on-dins .toggle-knob { background: white; left: 16px; }
 .layer-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .layer-name { font-size: 12px; color: var(--text); }
 .layer-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
@@ -590,7 +592,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       <div class="metric-sub">All 3 factors flagged</div>
     </div>
     <div class="metric">
-      <div class="metric-label">Avg FAIR Plan Concentration</div>
+      <div class="metric-label">Avg FAIR Plan Rate</div>
       <div class="metric-value mv-amber" id="m-rate">—</div>
       <div class="metric-sub">Selected community</div>
     </div>
@@ -645,11 +647,15 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
           <span class="layer-name">Pre-1960 overlay</span>
         </div>
         <div class="layer-row" onclick="toggleLayer('firewise')">
-          <div class="toggle on-fire" id="tog-firewise"><div class="toggle-knob"></div></div>
+          <div class="toggle" id="tog-firewise"><div class="toggle-knob"></div></div>
           <div class="layer-dot" style="background:#8E44AD"></div>
           <span class="layer-name">Firewise sites (Good Standing)</span>
         </div>
-        <div class="layer-note" id="firewise-note"></div>
+        <div class="layer-row" onclick="toggleLayer('dins')">
+          <div class="toggle" id="tog-dins"><div class="toggle-knob"></div></div>
+          <div class="layer-dot" style="background:#3A3A3A"></div>
+          <span class="layer-name">Fire-damaged structures (DINS)</span>
+        </div>
         <hr class="layer-divider">
         <div class="layer-row" onclick="toggleLayer('outline')">
           <div class="toggle on-red" id="tog-outline"><div class="toggle-knob"></div></div>
@@ -667,7 +673,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         <div class="sec-label">Risk thresholds</div>
         <div class="slider-wrap">
           <div class="slider-meta">
-            <span class="slider-name">FAIR plan concentration ≥</span>
+            <span class="slider-name">FAIR plan rate ≥</span>
             <span class="slider-val" id="sv-fair">15%</span>
           </div>
           <input type="range" id="sl-fair" min="0" max="50" step="1" value="15">
@@ -715,7 +721,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
           </div>
           <!-- Legend -->
           <div class="choro-legend" id="choro-legend" style="display:none;">
-            <div class="legend-title" id="legend-title">FAIR plan concentration</div>
+            <div class="legend-title" id="legend-title">FAIR plan rate</div>
             <div class="legend-grad" id="legend-grad"></div>
             <div class="legend-ends-row"><span>Low</span><span>High</span></div>
           </div>
@@ -797,7 +803,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
               <div class="spot-name" id="sp-name"></div>
               <div class="spot-sub" id="sp-sub"></div>
               <div class="spot-card">
-                <div class="spot-row"><span class="spot-key">FAIR plan concentration</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
+                <div class="spot-row"><span class="spot-key">FAIR plan rate</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
                 <div class="spot-row"><span class="spot-key">Low-income pop.</span><span class="spot-val" id="sp-income"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
@@ -826,6 +832,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
               <div class="legend-item" id="leg-age"><div class="legend-swatch" style="background:var(--amber)"></div>Pre-1960 building dot</div>
               <div class="legend-item" id="leg-outline"><div class="legend-outline-sym"></div>High-risk ZIP border</div>
               <div class="legend-item" id="leg-firewise"><span style="font-size:12px;">🔥</span>Firewise site (Good Standing)</div>
+              <div class="legend-item" id="leg-dins"><div class="legend-swatch" style="background:#7B1818"></div>Fire-damaged structure (DINS)</div>
             </div>
           </div>
           <div class="sidebar-section" style="flex:1;">
@@ -855,7 +862,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     <a href="https://www.cfpnet.com/key-statistics-data/" target="_blank">CA FAIR Plan</a>
     <a href="https://www.hec.usace.army.mil/confluence/nsi" target="_blank">National Structure Inventory</a>
     <a href="https://data.census.gov" target="_blank">ACS 5-yr</a>
-    <a href="https://34c031f8-c9fd-4018-8c5a-4159cdff6b0d-cdn-endpoint.azureedge.net/-/media/bof-website/projects-and-programs/fire-risk-reduction-community-list/07-01-2026-frrcl-and-bof-resolution-of-approval.pdf?rev=3428690de0414895a06fe75c4de609b7&hash=3B29D082C5B6ADEB36048F2EDB7C6D79" target="_blank">Fire Risk Reduction Communities</a>
     <a href="https://www.arcgis.com/apps/mapviewer/index.html?webmap=c2260105797847b4bf5edf8f9cfc1f8f" target="_blank">Firewise Sites</a>
     <div class="footer-right">
       <button class="export-btn" id="export-csv">⬇ Export CSV</button>
@@ -893,7 +899,7 @@ const COMMUNITY_META = {
 };
 
 /* ════════════════════════════════════════════
-   ADMITTED INSURER LIST
+   ADMITTED INSURER SEED LIST
 ════════════════════════════════════════════ */
 const INSURER_DATA_BY_ZIP = {
   '91901': [ { name: 'State Farm', share: 13.2 }, { name: 'Pacific Specialty', share: 3.8 }, { name: 'Auto Club Southern California', share: 3.6 }, { name: 'USAA', share: 2.7 }, { name: 'Assurant', share: 2.6 } ],
@@ -1182,6 +1188,50 @@ function pointInGeometry(lat, lng, geometry) {
   return false;
 }
 
+/* ════════════════════════════════════════════
+   DINS — Damage Inspection (DINS) points
+   Structures damaged by wildland fire, 2013–2025.
+   Loaded once from ./DINS.json (same folder as this file) and filtered
+   to whichever ZIP codes belong to the currently selected community.
+════════════════════════════════════════════ */
+let dinsData = null;        // flat array of {year, damage, incident, zip, lat, lng}
+let dinsLoadPromise = null;
+
+function loadDinsData() {
+  if (dinsData) return Promise.resolve(dinsData);
+  if (dinsLoadPromise) return dinsLoadPromise;
+  dinsLoadPromise = fetch('./DINS.json')
+    .then(r => r.json())
+    .then(gj => {
+      dinsData = (gj.features || []).map(f => ({
+        year:     f.properties.Event_Year,
+        damage:   f.properties.DAMAGE,
+        incident: f.properties.INCIDENTNAME,
+        zip:      String(f.properties.ZIP_CODE),
+        lat:      f.geometry.coordinates[1],
+        lng:      f.geometry.coordinates[0],
+      }));
+      return dinsData;
+    })
+    .catch(err => {
+      console.warn('Could not load DINS.json', err);
+      dinsData = [];
+      return dinsData;
+    });
+  return dinsLoadPromise;
+}
+
+// Color-code points by damage severity (adjust strings to match your DAMAGE values if needed)
+function dinsColor(damage) {
+  const d = (damage || '').toLowerCase();
+  if (d.includes('destroy'))              return '#7B1818'; // Destroyed (>50%)
+  if (d.includes('major'))                return '#C0392B'; // Major (26-50%)
+  if (d.includes('minor'))                return '#E07B2A'; // Minor (10-25%)
+  if (d.includes('affected'))             return '#F5A44A'; // Affected (1-9%)
+  if (d.includes('no damage') || d.includes('inaccessible')) return '#9CA3AF';
+  return '#3A3A3A';
+}
+
 function firewiseSitesForZip(cd) {
   const sites = firewiseCache[currentCommunity] || [];
   // Prefer explicit zip tag on placeholder data if present
@@ -1417,6 +1467,9 @@ function generateZIPs(community) {
     ],
     hoopa: [
       { zip:'95546', name:'Hoopa Valley', fair:38.2, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:72, pre60:54, buildYr:1958, pop:2600, units:900 },
+      { zip:'95526', name:'Burnt Ranch',  fair:29.4, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:58, pre60:46, buildYr:1964, pop:350,  units:200 },
+      { zip:'95511', name:'Alderpoint',   fair:26.8, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:61, pre60:48, buildYr:1963, pop:400,  units:220 },
+      { zip:'95514', name:'Blocksburg',   fair:24.2, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:55, pre60:42, buildYr:1966, pop:280,  units:160 },
     ],
   };
   return seeds[community] || [];
@@ -1425,7 +1478,7 @@ function generateZIPs(community) {
 /* ════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════ */
-let layers = { income:true, age:true, outline:true, labels:false, firewise:false };
+let layers = { income:true, age:true, outline:true, labels:false, firewise:false, dins:false };
 let thresholds = { fair:15, income:40, age:30 };
 const hlMode = 3; // High-risk = all 3 thresholds exceeded (driven entirely by Risk Thresholds panel)
 let choroMetric = 'fair'; // Fixed to FAIR plan concentration
@@ -1485,7 +1538,7 @@ function gradCSS(metric) {
   return `linear-gradient(to right, ${s[0]}, ${s[s.length-1]})`;
 }
 function metricLabel(m) {
-  return { fair:'FAIR plan concentration', income:'Low-income pop.', pre60:'Pre-1960 units', score:'Combined risk score' }[m] || m;
+  return { fair:'FAIR plan rate', income:'Low-income pop.', pre60:'Pre-1960 units', score:'Combined risk score' }[m] || m;
 }
 
 /* ════════════════════════════════════════════
@@ -1499,6 +1552,7 @@ let dotLayer     = null;  // L.layerGroup for income/age dots
 let labelLayer   = null;  // L.layerGroup for ZIP labels
 let boundaryLayer= null;  // L.geoJSON for county boundary
 let firewiseLayer= null;  // L.layerGroup for Firewise site markers
+let dinsLayer    = null;  // L.layerGroup for DINS fire-damaged structure points
 
 function initLeafletMap() {
   if (leafletMap) return;
@@ -1526,10 +1580,10 @@ function initLeafletMap() {
 ════════════════════════════════════════════ */
 
 function clearAllLayers() {
-  [zipLayer, outlineLayer, dotLayer, labelLayer, boundaryLayer, firewiseLayer].forEach(l => {
+  [zipLayer, outlineLayer, dotLayer, labelLayer, boundaryLayer, firewiseLayer, dinsLayer].forEach(l => {
     if (l) leafletMap.removeLayer(l);
   });
-  zipLayer = outlineLayer = dotLayer = labelLayer = boundaryLayer = firewiseLayer = null;
+  zipLayer = outlineLayer = dotLayer = labelLayer = boundaryLayer = firewiseLayer = dinsLayer = null;
 }
 
 // Return the geographic centroid [lat, lng] of a GeoJSON geometry
@@ -1687,6 +1741,24 @@ function redrawOverlay() {
     firewiseLayer = L.layerGroup(fwMarkers).addTo(leafletMap);
   }
 
+  /* ── 6. DINS fire-damaged structure points ── */
+  if (layers.dins && dinsData) {
+    const zipSet = new Set(currentZipData.map(d => d.zip));
+    const pts = dinsData.filter(p => zipSet.has(p.zip));
+    const dinsMarkers = pts.map(p => L.circleMarker([p.lat, p.lng], {
+      radius: 4,
+      weight: 1,
+      color: '#fff',
+      fillColor: dinsColor(p.damage),
+      fillOpacity: 0.85,
+      pane: 'markerPane',
+    }).bindTooltip(
+      `<strong>${p.year}</strong><br>${p.damage}`,
+      { direction: 'top', offset: [0, -6] }
+    ));
+    dinsLayer = L.layerGroup(dinsMarkers).addTo(leafletMap);
+  }
+
   /* ── Update legend UI ── */
   const grad = gradCSS(choroMetric);
   document.getElementById('legend-grad').style.background = grad;
@@ -1698,6 +1770,7 @@ function redrawOverlay() {
   document.getElementById('leg-age').style.display    = layers.age    ? 'flex' : 'none';
   document.getElementById('leg-outline').style.display= layers.outline? 'flex' : 'none';
   document.getElementById('leg-firewise').style.display = layers.firewise ? 'flex' : 'none';
+  document.getElementById('leg-dins').style.display = layers.dins ? 'flex' : 'none';
 }
 
 // Efficiently restyle ZIP paths without full rebuild (used when selection changes)
@@ -1896,7 +1969,7 @@ div.onclick = () => {
 ════════════════════════════════════════════ */
 function toggleLayer(name) {
   layers[name] = !layers[name];
-  const colorMap = { income:'on-teal', age:'on-amber', outline:'on-red', labels:'on-forest', firewise:'on-fire' };
+  const colorMap = { income:'on-teal', age:'on-amber', outline:'on-red', labels:'on-forest', firewise:'on-fire', dins:'on-dins' };
   const tog = document.getElementById('tog-'+name);
   if (tog) tog.className = 'toggle' + (layers[name] ? ' ' + colorMap[name] : '');
 
@@ -1904,6 +1977,8 @@ function toggleLayer(name) {
     const note = document.getElementById('firewise-note');
     note.textContent = FIREWISE_SERVICE_URL ? '' : 'Showing illustrative placeholder sites — connect the real Firewise feature service URL in the script to plot live data.';
     loadFirewiseSites(currentCommunity).then(() => redrawOverlay());
+  } else if (name === 'dins' && layers.dins) {
+    loadDinsData().then(() => redrawOverlay());
   } else {
     redrawOverlay();
   }
@@ -2203,7 +2278,7 @@ function renderChartView() {
 
   area.innerHTML = `
     <div class="chart-panel">
-      <div class="chart-title">FAIR Plan Concentration by ZIP Code</div>
+      <div class="chart-title">FAIR Plan Rate by ZIP Code</div>
       <div class="chart-subtitle">${title} · sorted by rate</div>
       <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch1"></canvas></div>
     </div>
@@ -2246,7 +2321,7 @@ function renderChartView() {
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'%'}}},
       scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'FAIR plan concentration',color:tc}},
+        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'FAIR plan rate',color:tc}},
         y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}
       }
     }
@@ -2317,7 +2392,7 @@ function renderChartView() {
 ════════════════════════════════════════════ */
 document.getElementById('export-csv').addEventListener('click', () => {
   if (!currentZipData.length) { alert('Select a community first.'); return; }
-  const header = 'ZIP,Area Name,FAIR Plan Concentration,Low Income %,Pre-1960 %,Build Year,Population,Housing Units,Risk Score,Risk Factors\n';
+  const header = 'ZIP,Area Name,FAIR Plan Rate,Low Income %,Pre-1960 %,Build Year,Population,Housing Units,Risk Score,Risk Factors\n';
   const rows = currentZipData.map(d =>
     `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre60},${d.buildYr},${d.pop},${d.units},${getRiskScore(d)},${getRiskFactors(d)}`
   ).join('\n');
