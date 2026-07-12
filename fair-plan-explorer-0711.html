@@ -147,7 +147,14 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   font-size: 13px; pointer-events: none; line-height: 1;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
 }
-
+.dins-triangle-icon { background: none !important; border: none !important; }
+.dins-triangle {
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.45));
+}
+  
 /* Legend over map */
 .choro-legend {
   position: absolute; bottom: 40px; left: 14px; z-index: 500;
@@ -1745,16 +1752,17 @@ function redrawOverlay() {
   if (layers.dins && dinsData) {
     const zipSet = new Set(currentZipData.map(d => d.zip));
     const pts = dinsData.filter(p => zipSet.has(p.zip));
-    const dinsMarkers = pts.map(p => L.circleMarker([p.lat, p.lng], {
-      radius: 4,
-      weight: 1,
-      color: '#fff',
-      fillColor: dinsColor(p.damage),
-      fillOpacity: 0.85,
+    const dinsMarkers = pts.map(p => L.marker([p.lat, p.lng], {
+      icon: L.divIcon({
+        className: 'dins-triangle-icon',
+        html: `<div class="dins-triangle" style="border-bottom:9px solid ${dinsColor(p.damage)};"></div>`,
+        iconSize: [10, 9],
+        iconAnchor: [5, 8],
+      }),
       pane: 'markerPane',
     }).bindTooltip(
       `<strong>${p.year}</strong><br>${p.damage}`,
-      { direction: 'top', offset: [0, -6] }
+      { direction: 'top', offset: [0, -8] }
     ));
     dinsLayer = L.layerGroup(dinsMarkers).addTo(leafletMap);
   }
