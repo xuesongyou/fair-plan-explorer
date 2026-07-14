@@ -1477,7 +1477,7 @@ function dinsColor(damage) {
 }
 
 function firewiseSitesForZip(cd) {
-  const sites = firewiseCache[currentCommunity] || [];
+  const sites = FIREWISE_SITES[currentCommunity] || [];
   // Prefer explicit zip tag on placeholder data if present
   const tagged = sites.filter(s => s.zip === cd.zip);
   if (tagged.length) return tagged;
@@ -1972,7 +1972,7 @@ function redrawOverlay() {
 
   /* ── 5. Firewise sites In Good Standing ── */
   if (layers.firewise) {
-    const sites = firewiseCache[currentCommunity] || [];
+    const sites = FIREWISE_SITES[currentCommunity] || [];
     const fwMarkers = sites.map(s => L.marker([s.lat, s.lng], {
       icon: L.divIcon({
         className: 'firewise-marker-div',
@@ -2221,11 +2221,7 @@ function toggleLayer(name) {
   const tog = document.getElementById('tog-'+name);
   if (tog) tog.className = 'toggle' + (layers[name] ? ' ' + colorMap[name] : '');
 
-  if (name === 'firewise' && layers.firewise && currentCommunity) {
-    const note = document.getElementById('firewise-note');
-    note.textContent = FIREWISE_SERVICE_URL ? '' : 'Showing illustrative placeholder sites — connect the real Firewise feature service URL in the script to plot live data.';
-    loadFirewiseSites(currentCommunity).then(() => redrawOverlay());
-  } else if (name === 'dins' && layers.dins) {
+  if (name === 'dins' && layers.dins) {
     loadDinsData().then(() => redrawOverlay());
   } else {
     redrawOverlay();
@@ -2248,8 +2244,6 @@ function loadCommunityMap(communityKey) {
   // Fly Leaflet map to the community
   leafletMap.flyTo(meta.center, meta.zoom, { duration: 1.0 });
 
-  // Preload Firewise sites for this community (used by overlay + spotlight/tooltip)
-  loadFirewiseSites(communityKey);
 
   // Load ZIP GeoJSON
   Promise.all([
