@@ -780,7 +780,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
     <!-- RIGHT PANEL -->
     <div class="tt-right">
-      <div class="tt-row"><span class="tt-key">LMI pop.</span><span class="tt-val" id="tt-income"></span></div>
+      <div class="tt-row"><span class="tt-key">LMI population</span><span class="tt-val" id="tt-income"></span></div>
       <div class="tt-row"><span class="tt-key">Pre-2010 structures</span><span class="tt-val" id="tt-age"></span></div>
       <div class="tt-row"><span class="tt-key">FHSZ share</span><span class="tt-val" id="tt-fhsz"></span></div>
       <div class="tt-row"><span class="tt-key">Fire-damaged structures (DINS)</span><span class="tt-val" id="tt-damaged"></span></div>
@@ -815,7 +815,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
               <div class="spot-card">
                 <div class="spot-row"><span class="spot-key">FAIR plan rate</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
-                <div class="spot-row"><span class="spot-key">LMI pop.</span><span class="spot-val" id="sp-income"></span></div>
+                <div class="spot-row"><span class="spot-key">LMI population</span><span class="spot-val" id="sp-income"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
                 <div class="spot-row"><span class="spot-key">Pre-2010 structures</span><span class="spot-val" id="sp-age"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-age" style="background:var(--amber);"></div></div>
@@ -1609,7 +1609,7 @@ function gradCSS(metric) {
   return `linear-gradient(to right, ${s[0]}, ${s[s.length-1]})`;
 }
 function metricLabel(m) {
-  return { fair:'FAIR plan rate', income:'LMI pop.', pre2010:'Pre-2010 structures', score:'Combined risk score' }[m] || m;
+  return { fair:'FAIR plan rate', income:'LMI population', pre2010:'Pre-2010 structures', score:'Combined risk score' }[m] || m;
 }
 
 /* ════════════════════════════════════════════
@@ -2252,12 +2252,12 @@ function renderTableView() {
     { key:'zip',      label:'ZIP Code',      numeric:false },
     { key:'name',     label:'Area Name',     numeric:false },
     { key:'fair',     label:'FAIR Rate',     numeric:true  },
-    { key:'income',   label:'LMI',    numeric:true  },
+    { key:'income',   label:'LMI %',    numeric:true  },
     { key:'pre2010',  label:'Pre-2010 %',    numeric:true  },
     { key:'fhsz',     label:'FHSZ %',        numeric:true  },
     { key:'structure',label:'Structures',    numeric:true  },
     { key:'damaged',  label:'Damaged (DINS)',numeric:true  },
-    { key:'firewise', label:'Firewise Cmtys',numeric:true  },
+    { key:'firewise', label:'Firewise Sites',numeric:true  },
     { key:'pop',      label:'Population',    numeric:true  },
     { key:'score',    label:'Risk Score',    numeric:true  },
     { key:'factors',  label:'Risk Level',    numeric:true  },
