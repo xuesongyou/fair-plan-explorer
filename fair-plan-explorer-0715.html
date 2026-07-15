@@ -1582,27 +1582,16 @@ function getRiskFactors(d) {
 }
 // Mean & sample standard deviation for FAIR rate, low-income %, and pre-2010 %,
 // computed from the currently selected community's ZIP codes (currentZipData).
-function getZScoreStats() {
-  const fields = ['fair', 'income', 'pre2010'];
-  const stats = {};
-  fields.forEach(f => {
-    const vals = currentZipData.map(d => d[f]);
-    stats[f] = { mean: d3.mean(vals) || 0, sd: d3.deviation(vals) || 0 };
-  });
-  return stats;
-}
-
 function getRiskScore(d) {
-  const stats = getZScoreStats();
-  const z = (val, f) => stats[f].sd ? (val - stats[f].mean) / stats[f].sd : 0;
-  const avgZ = (z(d.fair, 'fair') + z(d.income, 'income') + z(d.pre2010, 'pre2010')) / 3;
-  return +avgZ.toFixed(2);
-}
-function pct(v) { return v.toFixed(1) + '%'; }
-function fmt(n) {
-  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
-  if (n >= 1e3) return (n/1e3).toFixed(0)+'K';
-  return n.toLocaleString();
+  // Normalize each factor relative to its Risk Threshold slider value:
+  // how far above/below the threshold, expressed as a fraction of the threshold itself.
+  const norm = (val, threshold) => threshold ? (val - threshold) / threshold : 0;
+  const avgNorm = (
+    norm(d.fair,    thresholds.fair)   +
+    norm(d.income,  thresholds.income) +
+    norm(d.pre2010, thresholds.age)
+  ) / 3;
+  return +avgNorm.toFixed(2);
 }
 
 /* Color scales */
