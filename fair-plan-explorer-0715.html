@@ -1580,8 +1580,23 @@ function getRiskFactors(d) {
   if (d.pre2010 >= thresholds.age)    n++;
   return n;
 }
+// Mean & sample standard deviation for FAIR rate, low-income %, and pre-2010 %,
+// computed from the currently selected community's ZIP codes (currentZipData).
+function getZScoreStats() {
+  const fields = ['fair', 'income', 'pre2010'];
+  const stats = {};
+  fields.forEach(f => {
+    const vals = currentZipData.map(d => d[f]);
+    stats[f] = { mean: d3.mean(vals) || 0, sd: d3.deviation(vals) || 0 };
+  });
+  return stats;
+}
+
 function getRiskScore(d) {
-  return Math.round((d.fair/40)*40 + (d.income/80)*30 + (d.pre2010/80)*30);
+  const stats = getZScoreStats();
+  const z = (val, f) => stats[f].sd ? (val - stats[f].mean) / stats[f].sd : 0;
+  const avgZ = (z(d.fair, 'fair') + z(d.income, 'income') + z(d.pre2010, 'pre2010')) / 3;
+  return +avgZ.toFixed(2);
 }
 function pct(v) { return v.toFixed(1) + '%'; }
 function fmt(n) {
