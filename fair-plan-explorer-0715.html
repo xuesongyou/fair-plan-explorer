@@ -1580,8 +1580,15 @@ function getRiskFactors(d) {
   if (d.pre2010 >= thresholds.age)    n++;
   return n;
 }
-function getRiskScore(d) { 
-  return Math.round((d.fair/thresholds.fair)*50 + (d.income/thresholds.income)*25 + (d.pre2010/thresholds.age)*25);
+function getRiskScore(d) {
+  // Normalize each factor relative to its Risk Threshold slider value:
+  // how far above/below the threshold, expressed as a fraction of the threshold itself.
+  const norm = (val, threshold) => threshold ? (val - threshold) / threshold : 0;
+  const weightedNorm =
+    0.50 * norm(d.fair,    thresholds.fair)   +
+    0.25 * norm(d.income,  thresholds.income) +
+    0.25 * norm(d.pre2010, thresholds.age);
+  return +weightedNorm.toFixed(2);
 }
 /* Color scales */
 const SCHEMES = {
