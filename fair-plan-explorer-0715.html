@@ -1580,14 +1580,6 @@ function getRiskFactors(d) {
   if (d.pre2010 >= thresholds.age)    n++;
   return n;
 }
-function getRiskFactors(d) {
-  let n = 0;
-  if (d.fair   >= thresholds.fair)   n++;
-  if (d.income >= thresholds.income) n++;
-  if (d.pre2010 >= thresholds.age)   n++;
-  return n;
-}
-
 // Risk classification level: 3 = High (all 3 exceeded), 2 = Medium (exactly 2
 // exceeded AND FAIR plan rate must be one of them), 1 = Watch (1 factor, or
 // 2 factors that don't include FAIR), 0 = Lower risk (none exceeded).
