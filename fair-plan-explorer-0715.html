@@ -787,7 +787,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       <div class="tt-row"><span class="tt-key">Fire-damaged structures (DINS)</span><span class="tt-val" id="tt-damaged"></span></div>
       <div class="tt-row"><span class="tt-key">Firewise communities</span><span class="tt-val" id="tt-fw-count"></span></div>
       <div class="tt-row"><span class="tt-key">Population</span><span class="tt-val" id="tt-pop"></span></div>
-      <div class="tt-row"><span class="tt-key">Risk score</span><span class="tt-val" id="tt-score"></span></div>
     </div>
 
   </div>
@@ -1879,7 +1878,6 @@ function showTooltip(event, cd) {
   document.getElementById('tt-damaged').textContent    = cd.damaged.toLocaleString();
   document.getElementById('tt-fw-count').textContent   = cd.firewise.toLocaleString();
   document.getElementById('tt-pop').textContent    = cd.pop.toLocaleString();
-  document.getElementById('tt-score').textContent  = getRiskScore(cd) + ' / 100';
 
   // Bar chart values
   const total = cd.totalPolicies || 1;
