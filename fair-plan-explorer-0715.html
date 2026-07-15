@@ -880,7 +880,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     <a href="https://www.arcgis.com/apps/mapviewer/index.html?webmap=c2260105797847b4bf5edf8f9cfc1f8f" target="_blank">Firewise Sites</a>
     <div class="footer-right">
       <button class="export-btn" id="export-csv">⬇ Export CSV</button>
-      <button class="export-btn" id="export-svg">🖼 Save map</button>
     </div>
   </footer>
 
@@ -2474,15 +2473,6 @@ document.getElementById('export-csv').addEventListener('click', () => {
   a.click();
 });
 
-document.getElementById('export-svg').addEventListener('click', () => {
-  const svg = document.getElementById('overlay-svg');
-  if (!svg) return;
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(new Blob([svg.outerHTML],{type:'image/svg+xml'})),
-    download: `fair-plan-overlay-${currentCommunity||'map'}.svg`
-  });
-  a.click();
-});
 
 /* ════════════════════════════════════════════
    INIT — run on page load
