@@ -1580,6 +1580,25 @@ function getRiskFactors(d) {
   if (d.pre2010 >= thresholds.age)    n++;
   return n;
 }
+function getRiskFactors(d) {
+  let n = 0;
+  if (d.fair   >= thresholds.fair)   n++;
+  if (d.income >= thresholds.income) n++;
+  if (d.pre2010 >= thresholds.age)   n++;
+  return n;
+}
+
+// Risk classification level: 3 = High (all 3 exceeded), 2 = Medium (exactly 2
+// exceeded AND FAIR plan rate must be one of them), 1 = Watch (1 factor, or
+// 2 factors that don't include FAIR), 0 = Lower risk (none exceeded).
+function getRiskLevel(d) {
+  const factors = getRiskFactors(d);
+  const fairExceeded = d.fair >= thresholds.fair;
+  if (factors === 3) return 3;
+  if (factors === 2 && fairExceeded) return 2;
+  if (factors >= 1) return 1;
+  return 0;
+}
 // Mean & sample standard deviation for FAIR rate, low-income %, and pre-2010 %,
 // computed from the currently selected community's ZIP codes (currentZipData).
 function getZScoreStats() {
@@ -1946,7 +1965,7 @@ function hideTooltip() { document.getElementById('tooltip').style.display = 'non
 function selectZip(cd) {
   document.getElementById('spotlight-empty').style.display   = 'none';
   document.getElementById('spotlight-content').style.display = 'block';
-  const factors = getRiskFactors(cd);
+  const factors = getRiskLevel(cd);
   const score   = getRiskScore(cd);
   document.getElementById('sp-name').textContent   = cd.zip + ' – ' + cd.name;
   document.getElementById('sp-sub').textContent    = `Score: ${score}/100 · ${factors} factor${factors!==1?'s':''} flagged`;
@@ -2029,7 +2048,7 @@ function updateTopZips() {
   container.innerHTML = '';
   sorted.forEach((cd, i) => {
     const score   = getRiskScore(cd);
-    const factors = getRiskFactors(cd);
+    const factors = getRiskLevel(cd);
     const cls     = factors===3?'score-red':factors===2?'score-amber':'score-green';
     const div = document.createElement('div');
     div.className = 'zip-item' + (selectedZip===cd.zip ? ' selected' : '');
@@ -2398,7 +2417,7 @@ function renderChartView() {
       labels,
       datasets:[{
         data:sorted.map(d=>d.fair),
-        backgroundColor:sorted.map(d=>getRiskFactors(d)>=3?'rgba(192,57,43,0.80)':getRiskFactors(d)>=2?'rgba(224,123,42,0.75)':'rgba(26,95,165,0.65)'),
+        backgroundColor:sorted.map(d=>getRiskLevel(d)===3?'rgba(192,57,43,0.80)':getRiskLevel(d)===2?'rgba(224,123,42,0.75)':'rgba(26,95,165,0.65)'),
         borderRadius:4,borderWidth:0
       }]
     },
@@ -2417,7 +2436,7 @@ function renderChartView() {
     data:{
       datasets:[{
         data:currentZipData.map(d=>({x:d.income,y:getRiskScore(d),r:Math.sqrt(d.pre2010)*0.9,label:d.zip+' '+d.name})),
-        backgroundColor:currentZipData.map(d=>getRiskFactors(d)>=3?'rgba(192,57,43,0.7)':getRiskFactors(d)>=2?'rgba(224,123,42,0.65)':'rgba(27,142,142,0.55)'),
+        backgroundColor:currentZipData.map(d=>getRiskLevel(d)===3?'rgba(192,57,43,0.7)':getRiskLevel(d)===2?'rgba(224,123,42,0.65)':'rgba(27,142,142,0.55)'),
         borderWidth:0
       }]
     },
@@ -2431,7 +2450,7 @@ function renderChartView() {
     }
   });
 
-  const counts = [0,1,2,3].map(n=>currentZipData.filter(d=>getRiskFactors(d)===n).length);
+  const counts = [0,1,2,3].map(n=>currentZipData.filter(d=>getRiskLevel(d)===n).length);
   const c3 = new Chart(document.getElementById('ch3'), {
     type:'doughnut',
     data:{
