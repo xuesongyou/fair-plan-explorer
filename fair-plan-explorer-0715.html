@@ -1587,10 +1587,10 @@ function getRiskScore(d) {
   // how far above/below the threshold, expressed as a fraction of the threshold itself.
   const norm = (val, threshold) => threshold ? (val - threshold) / threshold : 0;
   const avgNorm = (
-    norm(d.fair,    thresholds.fair)   +
-    norm(d.income,  thresholds.income) +
-    norm(d.pre2010, thresholds.age)
-  ) / 3;
+    norm(d.fair,    thresholds.fair) * 50  +
+    norm(d.income,  thresholds.income) * 25 +
+    norm(d.pre2010, thresholds.age) * 25
+  ) / 100;
   return +avgNorm.toFixed(2);
 }
 
