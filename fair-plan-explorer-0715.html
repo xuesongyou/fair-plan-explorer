@@ -649,7 +649,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         <div class="layer-row" onclick="toggleLayer('income')">
           <div class="toggle on-teal" id="tog-income"><div class="toggle-knob"></div></div>
           <div class="layer-dot" style="background:var(--teal)"></div>
-          <span class="layer-name">Low-income overlay</span>
+          <span class="layer-name">LMI overlay</span>
         </div>
         <div class="layer-row" onclick="toggleLayer('age')">
           <div class="toggle on-amber" id="tog-age"><div class="toggle-knob"></div></div>
@@ -693,7 +693,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         </div>
         <div class="slider-wrap">
           <div class="slider-meta">
-            <span class="slider-name">Low income ≥</span>
+            <span class="slider-name">LMI population ≥</span>
             <span class="slider-val" id="sv-income">40%</span>
           </div>
           <input type="range" id="sl-income" min="0" max="80" step="1" value="40">
@@ -780,7 +780,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
     <!-- RIGHT PANEL -->
     <div class="tt-right">
-      <div class="tt-row"><span class="tt-key">Low-income pop.</span><span class="tt-val" id="tt-income"></span></div>
+      <div class="tt-row"><span class="tt-key">LMI pop.</span><span class="tt-val" id="tt-income"></span></div>
       <div class="tt-row"><span class="tt-key">Pre-2010 structures</span><span class="tt-val" id="tt-age"></span></div>
       <div class="tt-row"><span class="tt-key">FHSZ share</span><span class="tt-val" id="tt-fhsz"></span></div>
       <div class="tt-row"><span class="tt-key">Fire-damaged structures (DINS)</span><span class="tt-val" id="tt-damaged"></span></div>
@@ -815,7 +815,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
               <div class="spot-card">
                 <div class="spot-row"><span class="spot-key">FAIR plan rate</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
-                <div class="spot-row"><span class="spot-key">Low-income pop.</span><span class="spot-val" id="sp-income"></span></div>
+                <div class="spot-row"><span class="spot-key">LMI pop.</span><span class="spot-val" id="sp-income"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
                 <div class="spot-row"><span class="spot-key">Pre-2010 structures</span><span class="spot-val" id="sp-age"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-age" style="background:var(--amber);"></div></div>
@@ -841,7 +841,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
             <div class="legend-ramp" id="sidebar-legend-ramp"></div>
             <div class="legend-ends"><span>Low</span><span>High</span></div>
             <div class="legend-items">
-              <div class="legend-item" id="leg-income"><div class="legend-swatch" style="background:var(--teal)"></div>Low-income overlay dot</div>
+              <div class="legend-item" id="leg-income"><div class="legend-swatch" style="background:var(--teal)"></div>LMI overlay dot</div>
               <div class="legend-item" id="leg-age"><div class="legend-swatch" style="background:var(--amber)"></div>Pre-2010 building dot</div>
               <div class="legend-item" id="leg-outline"><div class="legend-outline-sym"></div>High-risk ZIP border</div>
               <div class="legend-item" id="leg-dins"><div class="dins-triangle-sm" style="border-bottom:9px solid #3A3A3A;"></div>Fire-damaged structure (DINS)</div>
@@ -1609,7 +1609,7 @@ function gradCSS(metric) {
   return `linear-gradient(to right, ${s[0]}, ${s[s.length-1]})`;
 }
 function metricLabel(m) {
-  return { fair:'FAIR plan rate', income:'Low-income pop.', pre2010:'Pre-2010 structures', score:'Combined risk score' }[m] || m;
+  return { fair:'FAIR plan rate', income:'LMI pop.', pre2010:'Pre-2010 structures', score:'Combined risk score' }[m] || m;
 }
 
 /* ════════════════════════════════════════════
@@ -2252,7 +2252,7 @@ function renderTableView() {
     { key:'zip',      label:'ZIP Code',      numeric:false },
     { key:'name',     label:'Area Name',     numeric:false },
     { key:'fair',     label:'FAIR Rate',     numeric:true  },
-    { key:'income',   label:'Low Income',    numeric:true  },
+    { key:'income',   label:'LMI',    numeric:true  },
     { key:'pre2010',  label:'Pre-2010 %',    numeric:true  },
     { key:'fhsz',     label:'FHSZ %',        numeric:true  },
     { key:'structure',label:'Structures',    numeric:true  },
@@ -2354,7 +2354,7 @@ function renderChartView() {
       <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch1"></canvas></div>
     </div>
     <div class="chart-panel">
-      <div class="chart-title">Risk Score vs Low-Income Population</div>
+      <div class="chart-title">Risk Score vs LMI Population</div>
       <div class="chart-subtitle">Bubble size = pre-1960 share</div>
       <div style="height:240px;position:relative;"><canvas id="ch2"></canvas></div>
       <div class="chart-title" style="margin-top:22px;">ZIP Codes by Risk Level</div>
@@ -2362,7 +2362,7 @@ function renderChartView() {
       <div style="height:150px;position:relative;"><canvas id="ch3"></canvas></div>
     </div>
     <div class="chart-panel">
-      <div class="chart-title">Low-Income Population by ZIP</div>
+      <div class="chart-title">LMI Population by ZIP</div>
       <div class="chart-subtitle">${title} · threshold at ${thresholds.income}%</div>
       <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch4"></canvas></div>
     </div>
@@ -2409,9 +2409,9 @@ function renderChartView() {
     },
     options:{
       responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const d=currentZipData[c.dataIndex];return[d.zip+' '+d.name,`Low income: ${d.income}%`,`FAIR rate: ${d.fair.toFixed(1)}%`,`Score: ${getRiskScore(d)}`];}}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const d=currentZipData[c.dataIndex];return[d.zip+' '+d.name,`LMI: ${d.income}%`,`FAIR rate: ${d.fair.toFixed(1)}%`,`Score: ${getRiskScore(d)}`];}}}},
       scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'Low-income population %',color:tc}},
+        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'LMI population %',color:tc}},
         y:{grid:{color:gc},ticks:{color:tc},title:{display:true,text:'Risk score',color:tc}}
       }
     }
@@ -2463,7 +2463,7 @@ function renderChartView() {
 ════════════════════════════════════════════ */
 document.getElementById('export-csv').addEventListener('click', () => {
   if (!currentZipData.length) { alert('Select a community first.'); return; }
-  const header = 'ZIP,Area Name,FAIR Plan Rate,Low Income %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Score,Risk Factors\n';
+  const header = 'ZIP,Area Name,FAIR Plan Rate,LMI %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Score,Risk Factors\n';
   const rows = currentZipData.map(d =>
     `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${getRiskScore(d)},${getRiskFactors(d)}`
   ).join('\n');
