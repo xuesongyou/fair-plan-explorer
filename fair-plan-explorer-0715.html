@@ -1595,7 +1595,7 @@ function getZScoreStats() {
 function getRiskScore(d) {
   const stats = getZScoreStats();
   const z = (val, f) => stats[f].sd ? (val - stats[f].mean) / stats[f].sd : 0;
-  const avgZ = (z(d.fair, 'fair') + z(d.income, 'income') + z(d.pre2010, 'pre2010')) / 3;
+  const avgZ = 0.5 * z(d.fair, 'fair') + 0.25 * z(d.income, 'income') + 0.25 * z(d.pre2010, 'pre2010');
   return +avgZ.toFixed(2);
 }
 function pct(v) { return v.toFixed(1) + '%'; }
