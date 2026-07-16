@@ -1,0 +1,142 @@
+<h2 class="sr-only">Two charts from Monte Carlo simulation: how extra capital needed as a percentage above expected loss changes as pool size grows, holding correlation at 0%, and how it changes as correlation rises from 0% to 10%, holding pool size at 50 units. Loss probability 10%, loss per policy $100 in both.</h2>
+
+<div style="padding:1rem 0 0;">
+
+  <div style="font-size:12px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.05em; margin:0 0 4px;">Chart 1 — extra capital vs. pool size</div>
+  <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">Loss probability 10%, loss per policy $100, correlation 0%</div>
+  <div style="position:relative; height:280px; margin-bottom:2rem;">
+    <canvas id="chartN" role="img" aria-label="Line chart of extra capital needed as a percentage above expected loss, as pool size grows, at zero correlation"></canvas>
+  </div>
+
+  <div style="font-size:12px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.05em; margin:0 0 4px;">Chart 2 — extra capital vs. correlation</div>
+  <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px;">Loss probability 10%, loss per policy $100, 50 policies</div>
+  <div style="position:relative; height:280px;">
+    <canvas id="chartCorr" role="img" aria-label="Line chart of extra capital needed as a percentage above expected loss, as correlation rises from 0% to 10%, for a pool of 50 policies"></canvas>
+  </div>
+
+  <p style="font-size:12px; color:var(--text-secondary); margin-top:10px; line-height:1.6;">
+    Both charts run your Monte Carlo simulation function directly (5,000 trials per point, reduced from 10,000 for speed since many points are computed). Chart 1 samples pool sizes more densely at the small end, where the curve moves fastest.
+  </p>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function erf(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+  return sign * y;
+}
+function ncdf(x) { return 0.5 * (1 + erf(x / Math.sqrt(2))); }
+function erfInv(x) {
+  const a = 0.147;
+  const ln1mx2 = Math.log(1 - x*x);
+  const part1 = 2/(Math.PI*a) + ln1mx2/2;
+  const sign = x < 0 ? -1 : 1;
+  return sign * Math.sqrt(Math.sqrt(part1*part1 - ln1mx2/a) - part1);
+}
+function normalRandom() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function simulate(n, p, lossAmt, corr, trials = 10000) {
+  const z = Math.sqrt(2) * erfInv(2 * p - 1);
+  const lossFrequencies = Array(n + 1).fill(0);
+  for (let t = 0; t < trials; t++) {
+    const Z_sys = Math.random() < 0.5 ? normalRandom() : -normalRandom();
+    let defaultCount = 0;
+    for (let i = 0; i < n; i++) {
+      const Z_idio = normalRandom();
+      const unitZ = Math.sqrt(corr) * Z_sys + Math.sqrt(1 - corr) * Z_idio;
+      const u = ncdf(unitZ);
+      if (u < p) defaultCount++;
+    }
+    lossFrequencies[defaultCount]++;
+  }
+  const cdf = [];
+  let cumulativeProb = 0;
+  for (let k = 0; k <= n; k++) {
+    const probability = lossFrequencies[k] / trials;
+    cumulativeProb += probability;
+    cdf.push({ losses: k * lossAmt, prob: +cumulativeProb.toFixed(6) });
+  }
+  return cdf;
+}
+
+function var99Loss(cdf) {
+  for (const pt of cdf) {
+    if (pt.prob >= 0.99) return pt.losses;
+  }
+  return cdf.length ? cdf[cdf.length - 1].losses : 0;
+}
+
+const TRIALS = 5000;
+const P = 0.10;
+const LOSS_AMT = 100;
+
+// Chart 1: vary pool size, correlation fixed at 0
+const poolSizes = [1,2,3,5,7,10,15,20,30,40,50,75,100,125,150,175,200,225,250,275,300];
+const chart1Data = poolSizes.map(n => {
+  const cdf = simulate(n, P, LOSS_AMT, 0, TRIALS);
+  const expected = n * P * LOSS_AMT;
+  const var99 = var99Loss(cdf);
+  return { x: n, y: expected > 0 ? (var99 - expected) / expected * 100 : 0 };
+});
+
+// Chart 2: vary correlation 0 to 10% in 0.1% steps, pool size fixed at 50
+const N_FIXED = 50;
+const corrValues = [];
+for (let c = 0; c <= 100; c++) corrValues.push(c / 1000);
+const chart2Data = corrValues.map(corr => {
+  const cdf = simulate(N_FIXED, P, LOSS_AMT, corr, TRIALS);
+  const expected = N_FIXED * P * LOSS_AMT;
+  const var99 = var99Loss(cdf);
+  return { x: corr * 100, y: expected > 0 ? (var99 - expected) / expected * 100 : 0 };
+});
+
+const commonOpts = (xLabel) => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (item) => 'Extra capital: ' + item.parsed.y.toFixed(1) + '%'
+      }
+    }
+  },
+  scales: {
+    x: {
+      type: 'linear',
+      title: { display: true, text: xLabel, color: '#898781', font: { size: 11 } },
+      ticks: { color: '#898781', font: { size: 10 } },
+      grid: { color: 'rgba(137,135,129,0.15)' }
+    },
+    y: {
+      min: 0,
+      title: { display: true, text: 'Extra capital needed (% above expected loss)', color: '#898781', font: { size: 11 } },
+      ticks: { color: '#898781', font: { size: 10 }, callback: (v) => Math.round(v) + '%' },
+      grid: { color: 'rgba(137,135,129,0.15)' }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartN'), {
+  type: 'line',
+  data: { datasets: [{ label: 'Extra capital needed', data: chart1Data, borderColor: '#185FA5', backgroundColor: 'rgba(24,95,165,0.10)', fill: true, borderWidth: 2.5, pointRadius: 2, tension: 0.15 }] },
+  options: commonOpts('Number of policies in the pool')
+});
+
+new Chart(document.getElementById('chartCorr'), {
+  type: 'line',
+  data: { datasets: [{ label: 'Extra capital needed', data: chart2Data, borderColor: '#993C1D', backgroundColor: 'rgba(153,60,29,0.10)', fill: true, borderWidth: 2.5, pointRadius: 0, tension: 0.15 }] },
+  options: commonOpts('Correlation (%)')
+});
+</script>
