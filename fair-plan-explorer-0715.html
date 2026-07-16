@@ -543,7 +543,8 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 .tbl-badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; font-family: var(--mono); }
 .tbl-high { background: var(--red-pale); color: var(--red); }
 .tbl-med { background: var(--amber-pale); color: var(--amber); }
-.tbl-low { background: var(--green-pale); color: var(--green); }
+.tbl-watch { background: var(--teal-pale); color: var(--teal); }
+.tbl-lower { background: var(--green-pale); color: var(--green); }
 .mono { font-family: var(--mono); }
 .flag { color: var(--red); font-weight: 700; }
 .flag-amber { color: var(--amber); font-weight: 700; }
@@ -2307,8 +2308,8 @@ function renderTableView() {
       const score   = getRiskScore(d);
       const factors = getRiskFactors(d);
       const rowCls  = factors===3?'high-risk':factors===2?'med-risk':'';
-      const badgeCls= factors===3?'tbl-high':factors===2?'tbl-med':'tbl-low';
-      const badgeLbl= factors===3?'High':factors===2?'Medium':'Low';
+      const badgeCls= {3:'tbl-high', 2:'tbl-med', 1:'tbl-watch', 0:'tbl-lower'}[factors];
+      const badgeLbl= {3:'High', 2:'Medium', 1:'Watch', 0:'Lower'}[factors];
       const fairCls = d.fair>=thresholds.fair   ? 'flag'       : '';
       const incCls  = d.income>=thresholds.income? 'flag-amber' : '';
       const ageCls  = d.pre2010>=thresholds.age    ? 'flag-amber' : '';
