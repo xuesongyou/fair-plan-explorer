@@ -81,7 +81,7 @@ const P = 0.10;
 const LOSS_AMT = 100;
 
 // Chart 1: vary pool size, correlation fixed at 0
-const poolSizes = [5,10,15,20,30,40,50,75,100,125,150,175,200,225,250,275,300];
+const poolSizes = [5,10,15,20,30,40,50,75,100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,550,600,650,700,750,800,850,900,950,1000];
 const chart1Data = poolSizes.map(n => {
   const cdf = simulate(n, P, LOSS_AMT, 0, TRIALS);
   const expected = n * P * LOSS_AMT;
