@@ -90,7 +90,7 @@ const chart1Data = poolSizes.map(n => {
 });
 
 // Chart 2: vary correlation 0 to 10% in 0.5% steps, pool size fixed at 50
-const N_FIXED = 100;
+const N_FIXED = 50;
 const corrValues = [];
 for (let c = 0; c <= 100; c++) corrValues.push(c / 200);
 const chart2Data = corrValues.map(corr => {
