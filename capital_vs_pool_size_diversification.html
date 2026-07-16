@@ -1,0 +1,227 @@
+<h2 class="sr-only">How the extra capital needed to survive a 1-in-100-year event, expressed as a percentage above expected loss, changes as the number of units in the pool grows from 0 to 10,000. Shows two lines: one for zero correlation, one for the correlation chosen with the slider, for a chosen loss probability and loss per policy.</h2>
+
+<div style="padding:1rem 0 0;">
+
+  <div style="background:var(--surface-1); border-radius:12px; padding:14px; margin-bottom:1.25rem;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <label style="font-size:12px; color:var(--text-secondary); min-width:130px;">Loss probability</label>
+      <input type="range" min="1" max="40" value="10" step="1" id="prob" style="flex:1">
+      <span style="font-size:12px; font-weight:500; min-width:36px;" id="probOut">10%</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+      <label style="font-size:12px; color:var(--text-secondary); min-width:130px;">Loss per policy</label>
+      <input type="range" min="10" max="500" value="100" step="10" id="loss" style="flex:1">
+      <span style="font-size:12px; font-weight:500; min-width:36px;" id="lossOut">$100</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <label style="font-size:12px; color:var(--text-secondary); min-width:130px;">Selected correlation</label>
+      <input type="range" min="0" max="95" value="20" step="5" id="corr" style="flex:1">
+      <span style="font-size:12px; font-weight:500; min-width:36px;" id="corrOut">20%</span>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:1.25rem;">
+    <div style="background:var(--surface-1); border-radius:var(--radius); padding:1rem;">
+      <div style="font-size:12px; color:var(--text-secondary);">At 50 units — 0% correlation</div>
+      <div style="font-size:20px; font-weight:500;" id="at50Zero">—</div>
+    </div>
+    <div style="background:var(--surface-1); border-radius:var(--radius); padding:1rem;">
+      <div style="font-size:12px; color:var(--text-secondary);">At 50 units — selected correlation</div>
+      <div style="font-size:20px; font-weight:500;" id="at50Sel">—</div>
+    </div>
+    <div style="background:var(--surface-1); border-radius:var(--radius); padding:1rem;">
+      <div style="font-size:12px; color:var(--text-secondary);">Floor as pool → ∞ (selected)</div>
+      <div style="font-size:20px; font-weight:500;" id="floorVal">—</div>
+    </div>
+  </div>
+
+  <div style="font-size:12px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.05em; margin:0 0 10px;">Extra capital needed vs. pool size</div>
+  <div style="display:flex; gap:16px; margin-bottom:8px; font-size:12px; color:var(--text-secondary); flex-wrap:wrap;">
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; border-radius:2px; background:#0F6E56;"></span>Zero correlation</span>
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; border-radius:2px; background:#185FA5;"></span><span id="corrLegendLabel">Selected correlation (20%)</span></span>
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:2px; background:var(--text-muted); border-top:2px dashed var(--text-muted);"></span>Asymptotic floor (selected)</span>
+  </div>
+  <div style="position:relative; height:300px;">
+    <canvas id="chartDiv" role="img" aria-label="Line chart comparing extra capital needed as a percentage above expected loss, as pool size grows from 0 to 10,000 units, for zero correlation versus the selected correlation, with a dashed line marking the theoretical floor at infinite pool size for the selected correlation"></canvas>
+  </div>
+
+  <p style="font-size:12px; color:var(--text-secondary); margin-top:10px; line-height:1.6;">
+    Pool sizes up to 500 use the exact discrete mixture-of-binomials calculation (matches full Monte Carlo simulation). Above 500, a normal approximation to the conditional binomial is used for speed.
+  </p>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function erf(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+  return sign * y;
+}
+function ncdf(x) { return 0.5 * (1 + erf(x / Math.sqrt(2))); }
+function erfInv(x) {
+  const a = 0.147;
+  const ln1mx2 = Math.log(1 - x*x);
+  const part1 = 2/(Math.PI*a) + ln1mx2/2;
+  const sign = x < 0 ? -1 : 1;
+  return sign * Math.sqrt(Math.sqrt(part1*part1 - ln1mx2/a) - part1);
+}
+function invNorm(p) { return Math.sqrt(2) * erfInv(2 * p - 1); }
+
+const Z_MIN = -6, Z_MAX = 6, Z_STEP = 0.05;
+const zGrid = [];
+for (let z = Z_MIN; z <= Z_MAX; z += Z_STEP) zGrid.push(z);
+const zWeights = zGrid.map(z => (1/Math.sqrt(2*Math.PI)) * Math.exp(-z*z/2) * Z_STEP);
+const wSum = zWeights.reduce((a,b)=>a+b,0);
+for (let i=0;i<zWeights.length;i++) zWeights[i] /= wSum;
+
+function pzOf(z, invP, corr) {
+  if (corr <= 0) return ncdf(invP);
+  return ncdf((invP - Math.sqrt(corr) * z) / Math.sqrt(1 - corr));
+}
+
+function cdfAtApprox(x, n, pzCache) {
+  let total = 0;
+  for (let i = 0; i < zGrid.length; i++) {
+    const pz = pzCache[i];
+    const mean = n * pz;
+    const variance = Math.max(n * pz * (1 - pz), 1e-9);
+    total += zWeights[i] * ncdf((x - mean) / Math.sqrt(variance));
+  }
+  return total;
+}
+function var99UnitsApprox(n, pzCache) {
+  let lo = 0, hi = n;
+  for (let iter = 0; iter < 30; iter++) {
+    const mid = (lo + hi) / 2;
+    if (cdfAtApprox(mid, n, pzCache) < 0.99) lo = mid; else hi = mid;
+  }
+  return hi;
+}
+
+function var99UnitsExact(n, pzCache) {
+  const mixPmf = new Float64Array(n + 1);
+  for (let zi = 0; zi < zGrid.length; zi++) {
+    let pz = pzCache[zi];
+    if (pz < 1e-12) pz = 1e-12;
+    if (pz > 1 - 1e-12) pz = 1 - 1e-12;
+    const w = zWeights[zi];
+    let pmf = Math.pow(1 - pz, n);
+    mixPmf[0] += w * pmf;
+    const ratio = pz / (1 - pz);
+    for (let k = 0; k < n; k++) {
+      pmf = pmf * ratio * (n - k) / (k + 1);
+      mixPmf[k + 1] += w * pmf;
+    }
+  }
+  let cum = 0;
+  for (let k = 0; k <= n; k++) {
+    cum += mixPmf[k];
+    if (cum >= 0.99) return k;
+  }
+  return n;
+}
+
+const EXACT_MAX_N = 500;
+
+function extraPctAt(n, p, lossAmt, pzCache) {
+  const expected = n * p * lossAmt;
+  if (expected <= 0) return 0;
+  const units99 = n <= EXACT_MAX_N ? var99UnitsExact(n, pzCache) : var99UnitsApprox(n, pzCache);
+  const capital = units99 * lossAmt;
+  return (capital - expected) / expected * 100;
+}
+
+const poolSizes = [];
+for (let n = 1; n <= EXACT_MAX_N; n++) poolSizes.push(n);
+const N_SPARSE = 120;
+for (let i = 1; i <= N_SPARSE; i++) {
+  const t = i / N_SPARSE;
+  const n = EXACT_MAX_N + Math.round((10000 - EXACT_MAX_N) * Math.pow(t, 2.2));
+  if (n > poolSizes[poolSizes.length - 1]) poolSizes.push(n);
+}
+
+let chartDiv;
+
+function update() {
+  const pPct = +document.getElementById('prob').value;
+  const lossAmt = +document.getElementById('loss').value;
+  const corrPct = +document.getElementById('corr').value;
+
+  document.getElementById('probOut').textContent = pPct + '%';
+  document.getElementById('lossOut').textContent = '$' + lossAmt;
+  document.getElementById('corrOut').textContent = corrPct + '%';
+  document.getElementById('corrLegendLabel').textContent = 'Selected correlation (' + corrPct + '%)';
+
+  const p = pPct / 100;
+  const corr = corrPct / 100;
+  const invP = invNorm(p);
+
+  const pzCacheZero = zGrid.map(z => pzOf(z, invP, 0));
+  const pzCacheSel = zGrid.map(z => pzOf(z, invP, corr));
+
+  const curveZero = poolSizes.map(n => ({ x: n, y: extraPctAt(n, p, lossAmt, pzCacheZero) }));
+  const curveSel = poolSizes.map(n => ({ x: n, y: extraPctAt(n, p, lossAmt, pzCacheSel) }));
+
+  const wcdr = ncdf((invP + Math.sqrt(corr) * invNorm(0.99)) / Math.sqrt(1 - corr));
+  const floorPct = (wcdr - p) / p * 100;
+
+  const zeroAt50 = curveZero.find(pt => pt.x >= 50) || curveZero[curveZero.length - 1];
+  const selAt50 = curveSel.find(pt => pt.x >= 50) || curveSel[curveSel.length - 1];
+  document.getElementById('at50Zero').textContent = Math.round(zeroAt50.y) + '%';
+  document.getElementById('at50Sel').textContent = Math.round(selAt50.y) + '%';
+  document.getElementById('floorVal').textContent = Math.round(floorPct) + '%';
+
+  const floorLine = [{ x: 0, y: floorPct }, { x: 10000, y: floorPct }];
+  const maxY = Math.max(...curveZero.map(pt => pt.y), ...curveSel.map(pt => pt.y), floorPct, 1) * 1.15;
+
+  if (chartDiv) chartDiv.destroy();
+  chartDiv = new Chart(document.getElementById('chartDiv'), {
+    type: 'line',
+    data: {
+      datasets: [
+        { label: 'Zero correlation', data: curveZero, borderColor: '#0F6E56', backgroundColor: 'rgba(15,110,86,0.08)', fill: true, borderWidth: 2.5, pointRadius: 0, tension: 0.1, order: 2 },
+        { label: 'Selected correlation', data: curveSel, borderColor: '#185FA5', backgroundColor: 'rgba(24,95,165,0.08)', fill: true, borderWidth: 2.5, pointRadius: 0, tension: 0.1, order: 1 },
+        { label: 'Asymptotic floor', data: floorLine, borderColor: '#898781', borderDash: [4,4], borderWidth: 1.5, pointRadius: 0, fill: false, order: 0 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => Math.round(items[0].parsed.x).toLocaleString() + ' units',
+            label: (item) => item.dataset.label + ': ' + item.parsed.y.toFixed(1) + '%'
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 0,
+          max: 10000,
+          title: { display: true, text: 'Number of units in the pool', color: '#898781', font: { size: 11 } },
+          ticks: { color: '#898781', font: { size: 10 } },
+          grid: { color: 'rgba(137,135,129,0.15)' }
+        },
+        y: {
+          min: 0,
+          max: maxY,
+          title: { display: true, text: 'Extra capital needed (% above expected loss)', color: '#898781', font: { size: 11 } },
+          ticks: { color: '#898781', font: { size: 10 }, callback: (v) => Math.round(v) + '%' },
+          grid: { color: 'rgba(137,135,129,0.15)' }
+        }
+      }
+    }
+  });
+}
+
+document.querySelectorAll('input[type=range]').forEach(inp => inp.addEventListener('input', update));
+update();
+</script>
