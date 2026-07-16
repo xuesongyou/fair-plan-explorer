@@ -2488,10 +2488,11 @@ function renderChartView() {
 ════════════════════════════════════════════ */
 document.getElementById('export-csv').addEventListener('click', () => {
   if (!currentZipData.length) { alert('Select a community first.'); return; }
-  const header = 'ZIP,Area Name,FAIR Plan Rate,LMI %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Score,Risk Factors\n';
-  const rows = currentZipData.map(d =>
-    `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${getRiskScore(d)},${getRiskFactors(d)}`
-  ).join('\n');
+  const header = 'ZIP,Area Name,FAIR Plan Rate,LMI %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Score,Risk Level\n';
+  const rows = currentZipData.map(d => {
+  const levelLabel = { 3:'High', 2:'Medium', 1:'Watch', 0:'Lower' }[getRiskLevel(d)];
+  return `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${getRiskScore(d)},${levelLabel}`;
+}).join('\n');
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([header+rows],{type:'text/csv'})),
     download: `fair-plan-${currentCommunity||'data'}.csv`
