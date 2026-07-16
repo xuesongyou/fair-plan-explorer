@@ -551,7 +551,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
 /* ── Chart view ── */
 #view-chart { display: none; grid-column: 1 / 3; grid-row: 1; overflow: auto; background: var(--slate); }
-#view-chart.active { display: grid; grid-template-columns: 1fr 1fr; }
+#view-chart.active { display: flex; flex-direction: column; }
 
 .chart-panel { padding: 18px 20px; overflow: auto; background: var(--white); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .chart-panel:nth-child(even) { border-right: none; }
@@ -590,7 +590,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       <div class="view-tabs">
         <button class="view-tab active" id="btn-map">Map</button>
         <button class="view-tab" id="btn-table">Table</button>
-        <button class="view-tab" id="btn-chart">Charts</button>
+        <button class="view-tab" id="btn-chart">Definitions</button>
       </div>
     </div>
   </header>
@@ -890,7 +890,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 
 <script>
 /* ════════════════════════════════════════════
@@ -913,6 +912,17 @@ const COMMUNITY_META = {
                 frrc:[] },
 };
 
+const VARIABLE_DEFINITIONS = [
+  { variable: 'FAIR Plan Rate', definition: 'Percent of residential structures with a FAIR Plan policy (excluding policies for renters and condo unit owners)', source: 'California FAIR Plan residential policy data from California FAIR Plan Key Statistics & Data. Residential structure data from the National Structure Inventory (NSI).' },
+  { variable: 'LMI %', definition: 'Percent of population  earning  ≤ 80%  of the selected community\'s 2024 median family Income', source: 'US Census Bureau\'s 2020-2024 American Community Survey (ACS) 5-year data' },
+  { variable: 'Pre-2010 %', definition: 'Percent of structures built before 2010', source: 'US Census Bureau\'s 2020-2024 American Community Survey (ACS) 5-year data' },
+  { variable: 'FHSZ %', definition: 'Number of residential structures in Fire Hazard Severity Zones (State Responsibility Areas and Local Responsibility Areas)', source: 'CAL FIRE Fire Hazard Severity Zone Maps' },
+  { variable: 'Damaged (DINS)', definition: 'Number of fire-damaged structures (2013-2025)', source: 'CAL FIRE Damage Inspection (DINS) Data' },
+  { variable: 'Firewise Communities', definition: 'Number of Firewise sites (in good standing) as of June 01, 2026', source: 'National Fire Protection Association (NFPA)' },
+  { variable: 'Structures', definition: 'Number of residential structures', source: 'National Structure Inventory (NSI)' },
+  { variable: 'Population', definition: 'Population', source: 'US Census Bureau\'s 2020-2024 American Community Survey (ACS) 5-year data' },
+  { variable: 'Risk Level', definition: '= High (all 3 risk thresholds are exceeded);<br>= Medium (2 risk thresholds are exceeded AND FAIR plan rate must be one of them);<br>= Watch (1 risk threshold is exceeded, or 2 risk thresholds are exceeded that don\'t include FAIR plan rate);<br>= Low risk (none exceeded).', source: 'Three risk thresholds: FAIR plan rate; LMI %; Pre-2010 %' },
+];
 /* ════════════════════════════════════════════
    ADMITTED INSURER SEED LIST (placeholder — replace with real 2024 data)
 ════════════════════════════════════════════ */
@@ -1560,7 +1570,6 @@ let geoFeatures = null; // Array of GeoJSON features with _data attached
 let currentView = 'map';
 let sortCol = 'score';
 let sortDir = -1;
-let chartInstances = [];
 
 /* Leaflet map (initialized once) */
 let leafletMap = null;
@@ -2230,9 +2239,7 @@ function setView(v) {
       document.getElementById('view-chart').classList.add('active');
     }
 
-    // Destroy old chart instances before re-rendering
-    chartInstances.forEach(c => { try { c.destroy(); } catch(e){} });
-    chartInstances = [];
+
 
     renderCurrentNonMapView();
   }
@@ -2240,7 +2247,7 @@ function setView(v) {
 
 function renderCurrentNonMapView() {
   if (currentView === 'table') renderTableView();
-  else if (currentView === 'chart') renderChartView();
+  else if (currentView === 'chart') renderDefinitionsView();
 }
 
 ['map','table','chart'].forEach(v => {
@@ -2361,130 +2368,30 @@ function renderTableView() {
 /* ════════════════════════════════════════════
    CHART VIEW
 ════════════════════════════════════════════ */
-function renderChartView() {
+function renderDefinitionsView() {
   const area = document.getElementById('view-chart');
   if (!area) return;
-  const meta = COMMUNITY_META[currentCommunity];
-  const title = meta ? meta.label : '';
 
-  if (!currentZipData.length) {
-    area.style.gridTemplateColumns = '1fr';
-    area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text3);font-size:13px;">Select a community to view charts.</div>`;
-    return;
-  }
-
-  area.style.gridTemplateColumns = '1fr 1fr';
-  const barH = d => `${Math.max(200, d.length * 26)}px`;
+  const rows = VARIABLE_DEFINITIONS.map(d => `
+    <tr>
+      <td style="font-weight:700;color:var(--forest);white-space:nowrap;">${d.variable}</td>
+      <td>${d.definition}</td>
+      <td style="color:var(--text2);">${d.source}</td>
+    </tr>`).join('');
 
   area.innerHTML = `
-    <div class="chart-panel">
-      <div class="chart-title">FAIR Plan Rate by ZIP Code</div>
-      <div class="chart-subtitle">${title} · sorted by rate</div>
-      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch1"></canvas></div>
+    <div class="table-header-bar">
+      <div>
+        <div class="table-title">Variable Definitions &amp; Data Sources</div>
+        <div class="table-subtitle">Reference for every metric used across the Map and Table views</div>
+      </div>
     </div>
-    <div class="chart-panel">
-      <div class="chart-title">Risk Score vs LMI Population</div>
-      <div class="chart-subtitle">Bubble size = pre-1960 share</div>
-      <div style="height:240px;position:relative;"><canvas id="ch2"></canvas></div>
-      <div class="chart-title" style="margin-top:22px;">ZIP Codes by Risk Level</div>
-      <div class="chart-subtitle">Based on current threshold settings</div>
-      <div style="height:150px;position:relative;"><canvas id="ch3"></canvas></div>
-    </div>
-    <div class="chart-panel">
-      <div class="chart-title">LMI Population by ZIP</div>
-      <div class="chart-subtitle">${title} · threshold at ${thresholds.income}%</div>
-      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch4"></canvas></div>
-    </div>
-    <div class="chart-panel">
-      <div class="chart-title">Pre-2010 Building Stock by ZIP</div>
-      <div class="chart-subtitle">${title} · threshold at ${thresholds.age}%</div>
-      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch5"></canvas></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Variable</th><th>Definition</th><th>Data Source</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
     </div>`;
-
-  const tc = '#4B5563';
-  const gc = 'rgba(0,0,0,0.05)';
-
-  const sorted = [...currentZipData].sort((a,b) => b.fair-a.fair);
-  const labels = sorted.map(d => d.zip);
-
-  const c1 = new Chart(document.getElementById('ch1'), {
-    type:'bar',
-    data:{
-      labels,
-      datasets:[{
-        data:sorted.map(d=>d.fair),
-        backgroundColor:sorted.map(d=>getRiskLevel(d)===3?'rgba(192,57,43,0.80)':getRiskLevel(d)===2?'rgba(224,123,42,0.75)':'rgba(26,95,165,0.65)'),
-        borderRadius:4,borderWidth:0
-      }]
-    },
-    options:{
-      indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'%'}}},
-      scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'FAIR plan rate',color:tc}},
-        y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}
-      }
-    }
-  });
-
-  const c2 = new Chart(document.getElementById('ch2'), {
-    type:'bubble',
-    data:{
-      datasets:[{
-        data:currentZipData.map(d=>({x:d.income,y:getRiskScore(d),r:Math.sqrt(d.pre2010)*0.9,label:d.zip+' '+d.name})),
-        backgroundColor:currentZipData.map(d=>getRiskLevel(d)===3?'rgba(192,57,43,0.7)':getRiskLevel(d)===2?'rgba(224,123,42,0.65)':'rgba(27,142,142,0.55)'),
-        borderWidth:0
-      }]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const d=currentZipData[c.dataIndex];return[d.zip+' '+d.name,`LMI: ${d.income}%`,`FAIR rate: ${d.fair.toFixed(1)}%`,`Score: ${getRiskScore(d)}`];}}}},
-      scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'LMI population %',color:tc}},
-        y:{grid:{color:gc},ticks:{color:tc},title:{display:true,text:'Risk score',color:tc}}
-      }
-    }
-  });
-
-  const counts = [0,1,2,3].map(n=>currentZipData.filter(d=>getRiskLevel(d)===n).length);
-  const c3 = new Chart(document.getElementById('ch3'), {
-    type:'doughnut',
-    data:{
-      labels:['0 factors','1 factor','2 factors','All 3 factors'],
-      datasets:[{data:counts,backgroundColor:['#B4B2A9','#1B8E8E','#E07B2A','#C0392B'],borderWidth:2,borderColor:'#fff'}]
-    },
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:tc,font:{size:10},boxWidth:12}}}}
-  });
-
-  const sorted2 = [...currentZipData].sort((a,b)=>b.income-a.income);
-  const c4 = new Chart(document.getElementById('ch4'), {
-    type:'bar',
-    data:{
-      labels:sorted2.map(d=>d.zip),
-      datasets:[{data:sorted2.map(d=>d.income),backgroundColor:sorted2.map(d=>d.income>=thresholds.income?'rgba(27,142,142,0.80)':'rgba(27,142,142,0.30)'),borderRadius:4,borderWidth:0}]
-    },
-    options:{
-      indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},
-      scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},max:100},y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}}
-    }
-  });
-
-  const sorted3 = [...currentZipData].sort((a,b)=>b.pre2010-a.pre2010);
-  const c5 = new Chart(document.getElementById('ch5'), {
-    type:'bar',
-    data:{
-      labels:sorted3.map(d=>d.zip),
-      datasets:[{data:sorted3.map(d=>d.pre2010),backgroundColor:sorted3.map(d=>d.pre2010>=thresholds.age?'rgba(224,123,42,0.80)':'rgba(224,123,42,0.30)'),borderRadius:4,borderWidth:0}]
-    },
-    options:{
-      indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},
-      scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},max:100},y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}}
-    }
-  });
-
-  chartInstances = [c1,c2,c3,c4,c5];
 }
 
 /* ════════════════════════════════════════════
