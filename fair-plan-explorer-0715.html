@@ -1583,7 +1583,7 @@ function getRiskFactors(d) {
 }
 // Risk classification level: 3 = High (all 3 exceeded), 2 = Medium (exactly 2
 // exceeded AND FAIR plan rate must be one of them), 1 = Watch (1 factor, or
-// 2 factors that don't include FAIR), 0 = Lower risk (none exceeded).
+// 2 factors that don't include FAIR), 0 = Low risk (none exceeded).
 function getRiskLevel(d) {
   const factors = getRiskFactors(d);
   const fairExceeded = d.fair >= thresholds.fair;
@@ -1981,7 +1981,7 @@ function selectZip(cd) {
     ? `<span class="risk-badge risk-med">◉ Medium risk — 2 factors</span>`
     : factors === 1
     ? `<span class="risk-badge risk-low">✓ Watch — 1 factor</span>`
-    : `<span class="risk-badge risk-low">✓ Lower risk</span>`;
+    : `<span class="risk-badge risk-low">✓ Low risk</span>`;
 
   // Top admitted insurers
   const insurers = generateInsurers(cd.zip);
@@ -2048,7 +2048,7 @@ function updateTopZips() {
   sorted.forEach((cd, i) => {
     const factors = getRiskLevel(cd);
     const cls     = factors===3?'score-red':factors===2?'score-amber':factors===1?'score-teal':'score-green';
-    const label   = { 3:'High', 2:'Medium', 1:'Watch', 0:'Lower' }[factors];
+    const label   = { 3:'High', 2:'Medium', 1:'Watch', 0:'Low' }[factors];
     const div = document.createElement('div');
     div.className = 'zip-item' + (selectedZip===cd.zip ? ' selected' : '');
     div.innerHTML = `<span class="zip-rank">#${i+1}</span><span class="zip-code">${cd.zip}<br><span style="font-size:10px;font-weight:400;color:var(--text2);">${cd.name}</span></span><span class="zip-score ${cls}">${label}</span>`;
@@ -2313,7 +2313,7 @@ function renderTableView() {
       const factors = getRiskLevel(d);
       const rowCls  = factors===3?'high-risk':factors===2?'med-risk':'';
       const badgeCls= {3:'tbl-high', 2:'tbl-med', 1:'tbl-watch', 0:'tbl-lower'}[factors];
-      const badgeLbl= {3:'High', 2:'Medium', 1:'Watch', 0:'Lower'}[factors];
+      const badgeLbl= {3:'High', 2:'Medium', 1:'Watch', 0:'Low'}[factors];
       const fairCls = d.fair>=thresholds.fair   ? 'flag'       : '';
       const incCls  = d.income>=thresholds.income? 'flag-amber' : '';
       const ageCls  = d.pre2010>=thresholds.age    ? 'flag-amber' : '';
@@ -2494,7 +2494,7 @@ document.getElementById('export-csv').addEventListener('click', () => {
   if (!currentZipData.length) { alert('Select a community first.'); return; }
   const header = 'ZIP,Area Name,FAIR Plan Rate,LMI %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Level\n';
   const rows = currentZipData.map(d => {
-  const levelLabel = { 3:'High', 2:'Medium', 1:'Watch', 0:'Lower' }[getRiskLevel(d)];
+  const levelLabel = { 3:'High', 2:'Medium', 1:'Watch', 0:'Low' }[getRiskLevel(d)];
   return `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${levelLabel}`;
 }).join('\n');
   const a = Object.assign(document.createElement('a'), {
