@@ -2310,7 +2310,7 @@ function renderTableView() {
       return `<th class="${cls}" data-key="${c.key}">${c.label}</th>`;
     }).join('');
     const rows = sorted.map(d => {
-      const factors = getRiskFactors(d);
+      const factors = getRiskLevel(d);
       const rowCls  = factors===3?'high-risk':factors===2?'med-risk':'';
       const badgeCls= {3:'tbl-high', 2:'tbl-med', 1:'tbl-watch', 0:'tbl-lower'}[factors];
       const badgeLbl= {3:'High', 2:'Medium', 1:'Watch', 0:'Lower'}[factors];
