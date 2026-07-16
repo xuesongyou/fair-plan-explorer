@@ -495,7 +495,7 @@ input[type=range]:focus { outline: none; }
 .zip-rank { font-size: 10px; font-weight: 700; color: var(--text3); font-family: var(--mono); width: 16px; }
 .zip-code { font-weight: 600; color: var(--forest); flex: 1; padding-left: 4px; }
 .zip-score { font-family: var(--mono); font-size: 11px; font-weight: 700; }
-.score-red { color: var(--red); } .score-amber { color: var(--amber); } .score-green { color: var(--green); }
+.score-red { color: var(--red); } .score-amber { color: var(--amber); } .score-teal { color: var(--teal); } .score-green { color: var(--green); }
 
 /* Spotlight extra sections */
 .sp-section-title {
@@ -2037,15 +2037,21 @@ function updateTopZips() {
     container.innerHTML = '<div class="empty-state"><div class="es-icon">📊</div><span>Select a community</span></div>';
     return;
   }
-  const sorted = [...currentZipData].sort((a,b) => getRiskScore(b)-getRiskScore(a)).slice(0,8);
+  const sorted = [...currentZipData].sort((a,b) => {
+    const lvlDiff = getRiskLevel(b) - getRiskLevel(a);
+    if (lvlDiff !== 0) return lvlDiff;
+    if (b.fair !== a.fair) return b.fair - a.fair;
+    if (b.income !== a.income) return b.income - a.income;
+    return b.pre2010 - a.pre2010;
+  }).slice(0,8);
   container.innerHTML = '';
   sorted.forEach((cd, i) => {
-    const score   = getRiskScore(cd);
     const factors = getRiskLevel(cd);
-    const cls     = factors===3?'score-red':factors===2?'score-amber':'score-green';
+    const cls     = factors===3?'score-red':factors===2?'score-amber':factors===1?'score-teal':'score-green';
+    const label   = { 3:'High', 2:'Medium', 1:'Watch', 0:'Lower' }[factors];
     const div = document.createElement('div');
     div.className = 'zip-item' + (selectedZip===cd.zip ? ' selected' : '');
-    div.innerHTML = `<span class="zip-rank">#${i+1}</span><span class="zip-code">${cd.zip}<br><span style="font-size:10px;font-weight:400;color:var(--text2);">${cd.name}</span></span><span class="zip-score ${cls}">${score}</span>`;
+    div.innerHTML = `<span class="zip-rank">#${i+1}</span><span class="zip-code">${cd.zip}<br><span style="font-size:10px;font-weight:400;color:var(--text2);">${cd.name}</span></span><span class="zip-score ${cls}">${label}</span>`;
 div.onclick = () => {
   selectedZip = cd.zip;
   refreshZipStyles();
@@ -2285,7 +2291,6 @@ function renderTableView() {
     { key:'damaged',  label:'Damaged (DINS)',numeric:true  },
     { key:'firewise', label:'Firewise Sites',numeric:true  },
     { key:'pop',      label:'Population',    numeric:true  },
-    { key:'score',    label:'Risk Score',    numeric:true  },
     { key:'factors',  label:'Risk Level',    numeric:true  },
   ];
 
@@ -2305,7 +2310,6 @@ function renderTableView() {
       return `<th class="${cls}" data-key="${c.key}">${c.label}</th>`;
     }).join('');
     const rows = sorted.map(d => {
-      const score   = getRiskScore(d);
       const factors = getRiskFactors(d);
       const rowCls  = factors===3?'high-risk':factors===2?'med-risk':'';
       const badgeCls= {3:'tbl-high', 2:'tbl-med', 1:'tbl-watch', 0:'tbl-lower'}[factors];
@@ -2324,7 +2328,6 @@ function renderTableView() {
         <td class="mono" style="color:var(--text2);">${d.damaged.toLocaleString()}</td>
         <td class="mono" style="color:var(--text2);">${d.firewise.toLocaleString()}</td>
         <td class="mono" style="color:var(--text2);">${d.pop.toLocaleString()}</td>
-        <td class="mono" style="font-weight:700;color:${factors===3?'var(--red)':factors===2?'var(--amber)':'var(--text2)'};">${score}</td>
         <td><span class="tbl-badge ${badgeCls}">${badgeLbl}</span></td>
       </tr>`;
     }).join('');
@@ -2489,10 +2492,10 @@ function renderChartView() {
 ════════════════════════════════════════════ */
 document.getElementById('export-csv').addEventListener('click', () => {
   if (!currentZipData.length) { alert('Select a community first.'); return; }
-  const header = 'ZIP,Area Name,FAIR Plan Rate,LMI %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Score,Risk Level\n';
+  const header = 'ZIP,Area Name,FAIR Plan Rate,LMI %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Level\n';
   const rows = currentZipData.map(d => {
   const levelLabel = { 3:'High', 2:'Medium', 1:'Watch', 0:'Lower' }[getRiskLevel(d)];
-  return `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${getRiskScore(d)},${levelLabel}`;
+  return `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${levelLabel}`;
 }).join('\n');
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([header+rows],{type:'text/csv'})),
