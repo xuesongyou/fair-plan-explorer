@@ -83,11 +83,14 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 .metric:last-child { border-right: none; }
 .metric-label { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .08em; font-weight: 500; }
 .metric-value { font-size: 22px; font-weight: 700; margin-top: 1px; font-family: var(--mono); }
+.metric-value.metric-value-sm { font-size: 15px; line-height: 1.3; }
 .metric-sub { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; }
 .mv-amber { color: var(--amber-light); }
 .mv-teal { color: var(--teal-light); }
 .mv-red { color: #F07066; }
 .mv-white { color: #E8EDF4; }
+.mv-fire-yes { color: #F5A44A; }
+.mv-fire-no { color: rgba(232,237,244,0.55); }
 
 /* ── Body layout ── */
 .body {
@@ -139,6 +142,24 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   font-family: 'Inter', sans-serif; pointer-events: none;
   text-shadow: 0 0 3px white, 0 0 3px white, 0 0 3px white;
   white-space: nowrap;
+}
+.firewise-marker-div {
+  font-size: 13px; pointer-events: none; line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
+}
+.dins-triangle-icon { background: none !important; border: none !important; }
+.dins-triangle {
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.45));
+}
+.dins-triangle-sm {
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 7px solid #3A3A3A;
+  flex-shrink: 0;
 }
 
 /* Legend over map */
@@ -288,6 +309,61 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 .tt-key { color: #6b7280; font-size: 11px; }
 .tt-val { font-weight: 700; font-family: 'DM Mono', monospace; font-size: 11px; color: #111827; }
 
+/* Extra full-width section: insurers + firewise */
+.tt-extra {
+  display: flex;
+  flex-direction: row;
+  border-top: 1px solid rgba(15,31,60,0.1);
+}
+.tt-extra-col {
+  flex: 1;
+  padding: 11px 14px;
+}
+.tt-extra-col + .tt-extra-col {
+  border-left: 1px solid rgba(15,31,60,0.1);
+}
+.tt-extra-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--forest);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tt-ins-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+}
+.tt-ins-rank {
+  font-size: 9px; font-weight: 700; color: #9ca3af; font-family: 'DM Mono', monospace; width: 12px; flex-shrink: 0;
+}
+.tt-ins-name {
+  font-size: 10.5px; color: #374151; width: 92px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tt-ins-track {
+  flex: 1; height: 7px; background: #eef0f3; border-radius: 4px; overflow: hidden;
+}
+.tt-ins-fill {
+  height: 100%; background: linear-gradient(90deg, #1B8E8E, #26BFBF); border-radius: 4px;
+}
+.tt-ins-pct {
+  font-size: 10px; font-weight: 700; color: #1B8E8E; font-family: 'DM Mono', monospace; width: 34px; text-align: right; flex-shrink: 0;
+}
+.tt-fw-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #FBEFFB; color: #8E44AD; border: 1px solid #EAD3EA;
+  font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 12px;
+  margin: 0 4px 4px 0;
+}
+.tt-fw-empty {
+  font-size: 10.5px; color: #9ca3af; font-style: italic;
+}
+
 /* Map source attribution override */
 .map-source { position: absolute; bottom: 10px; right: 12px; font-size: 10px; color: rgba(0,0,0,0.45); background: rgba(255,255,255,0.82); padding: 3px 7px; border-radius: 4px; z-index: 500; }
 
@@ -354,9 +430,14 @@ select.ctrl-select:focus { outline: none; border-color: var(--amber); }
 .toggle.on-red .toggle-knob { background: white; left: 16px; }
 .toggle.on-forest { background: var(--forest); border-color: var(--forest); }
 .toggle.on-forest .toggle-knob { background: white; left: 16px; }
+.toggle.on-fire { background: #8E44AD; border-color: #8E44AD; }
+.toggle.on-fire .toggle-knob { background: white; left: 16px; }
+.toggle.on-dins { background: #3A3A3A; border-color: #3A3A3A; }
+.toggle.on-dins .toggle-knob { background: white; left: 16px; }
 .layer-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 .layer-name { font-size: 12px; color: var(--text); }
 .layer-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+.layer-note { font-size: 10px; color: var(--text3); margin-top: 6px; line-height: 1.4; }
 
 .slider-wrap { margin-bottom: 12px; }
 .slider-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
@@ -414,7 +495,24 @@ input[type=range]:focus { outline: none; }
 .zip-rank { font-size: 10px; font-weight: 700; color: var(--text3); font-family: var(--mono); width: 16px; }
 .zip-code { font-weight: 600; color: var(--forest); flex: 1; padding-left: 4px; }
 .zip-score { font-family: var(--mono); font-size: 11px; font-weight: 700; }
-.score-red { color: var(--red); } .score-amber { color: var(--amber); } .score-green { color: var(--green); }
+.score-red { color: var(--red); } .score-amber { color: var(--amber); } .score-teal { color: var(--teal); } .score-green { color: var(--green); }
+
+/* Spotlight extra sections */
+.sp-section-title {
+  font-size: 10px; font-weight: 700; color: var(--forest); text-transform: uppercase;
+  letter-spacing: .05em; margin: 12px 0 8px; display: flex; align-items: center; gap: 5px;
+}
+.sp-ins-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 10px; margin-bottom: 6px; }
+.sp-ins-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.sp-ins-row:last-child { margin-bottom: 0; }
+.sp-ins-rank { font-size: 9px; font-weight: 700; color: var(--text3); font-family: var(--mono); width: 13px; flex-shrink: 0; }
+.sp-ins-name { font-size: 11px; color: var(--text); width: 96px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-ins-track { flex: 1; height: 8px; background: var(--slate2); border-radius: 4px; overflow: hidden; }
+.sp-ins-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--teal-light)); border-radius: 4px; }
+.sp-ins-pct { font-size: 10.5px; font-weight: 700; color: var(--teal); font-family: var(--mono); width: 36px; text-align: right; flex-shrink: 0; }
+.sp-fw-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+.sp-fw-chip { display: inline-flex; align-items: center; gap: 4px; background: #FBEFFB; color: #8E44AD; border: 1px solid #EAD3EA; font-size: 10.5px; font-weight: 600; padding: 4px 9px; border-radius: 12px; }
+.sp-fw-empty { font-size: 11px; color: var(--text3); font-style: italic; }
 
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text3); font-size: 12px; gap: 8px; padding: 20px 10px; text-align: center; }
 .empty-state .es-icon { font-size: 28px; opacity: .5; }
@@ -445,14 +543,15 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 .tbl-badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; font-family: var(--mono); }
 .tbl-high { background: var(--red-pale); color: var(--red); }
 .tbl-med { background: var(--amber-pale); color: var(--amber); }
-.tbl-low { background: var(--green-pale); color: var(--green); }
+.tbl-watch { background: var(--teal-pale); color: var(--teal); }
+.tbl-lower { background: var(--green-pale); color: var(--green); }
 .mono { font-family: var(--mono); }
 .flag { color: var(--red); font-weight: 700; }
 .flag-amber { color: var(--amber); font-weight: 700; }
 
 /* ── Chart view ── */
 #view-chart { display: none; grid-column: 1 / 3; grid-row: 1; overflow: auto; background: var(--slate); }
-#view-chart.active { display: grid; grid-template-columns: 1fr 1fr; }
+#view-chart.active { display: flex; flex-direction: column; }
 
 .chart-panel { padding: 18px 20px; overflow: auto; background: var(--white); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .chart-panel:nth-child(even) { border-right: none; }
@@ -491,7 +590,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       <div class="view-tabs">
         <button class="view-tab active" id="btn-map">Map</button>
         <button class="view-tab" id="btn-table">Table</button>
-        <button class="view-tab" id="btn-chart">Charts</button>
+        <button class="view-tab" id="btn-chart">Definitions</button>
       </div>
     </div>
   </header>
@@ -514,9 +613,9 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       <div class="metric-sub">High-risk ZIPs</div>
     </div>
     <div class="metric">
-      <div class="metric-label">Median build year</div>
-      <div class="metric-value mv-white" id="m-year">—</div>
-      <div class="metric-sub">High-risk ZIPs</div>
+      <div class="metric-label">2026 Fire Risk Reduction List</div>
+      <div class="metric-value mv-white metric-value-sm" id="m-frrc">—</div>
+      <div class="metric-sub" id="m-frrc-sub">Select a community</div>
     </div>
   </div>
 
@@ -547,26 +646,16 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       </div>
 
       <div class="sidebar-section">
-        <div class="sec-label">Choropleth metric</div>
-        <select class="ctrl-select" id="choro-metric">
-          <option value="fair">FAIR plan concentration</option>
-          <option value="income">Low-income population</option>
-          <option value="pre60">Pre-1960 building stock</option>
-          <option value="score">Combined risk score</option>
-        </select>
-      </div>
-
-      <div class="sidebar-section">
         <div class="sec-label">Overlay layers</div>
         <div class="layer-row" onclick="toggleLayer('income')">
           <div class="toggle on-teal" id="tog-income"><div class="toggle-knob"></div></div>
           <div class="layer-dot" style="background:var(--teal)"></div>
-          <span class="layer-name">Low-income overlay</span>
+          <span class="layer-name">LMI overlay</span>
         </div>
         <div class="layer-row" onclick="toggleLayer('age')">
           <div class="toggle on-amber" id="tog-age"><div class="toggle-knob"></div></div>
           <div class="layer-dot" style="background:var(--amber)"></div>
-          <span class="layer-name">Pre-1960 overlay</span>
+          <span class="layer-name">Pre-2010 overlay</span>
         </div>
         <hr class="layer-divider">
         <div class="layer-row" onclick="toggleLayer('outline')">
@@ -579,6 +668,18 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
           <div class="layer-dot" style="background:var(--forest)"></div>
           <span class="layer-name">ZIP code labels</span>
         </div>
+        <div class="layer-note" id="firewise-note"></div>
+        <hr class="layer-divider">
+        <div class="layer-row" onclick="toggleLayer('dins')">
+          <div class="toggle" id="tog-dins"><div class="toggle-knob"></div></div>
+          <div class="dins-triangle-sm" style="border-bottom:9px solid #3A3A3A;"></div>
+          <span class="layer-name">Fire-damaged structures (DINS)</span>
+        </div>
+        <hr class="layer-divider">
+        <div class="layer-row" onclick="toggleLayer('firewise')">
+          <div class="toggle" id="tog-firewise"><div class="toggle-knob"></div></div>
+          <span class="layer-name">🔥 Firewise sites</span>
+        </div>
       </div>
 
       <div class="sidebar-section">
@@ -586,14 +687,14 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         <div class="slider-wrap">
           <div class="slider-meta">
             <span class="slider-name">FAIR plan rate ≥</span>
-            <span class="slider-val" id="sv-fair">15%</span>
+            <span class="slider-val" id="sv-fair">20%</span>
           </div>
-          <input type="range" id="sl-fair" min="0" max="50" step="1" value="15">
+          <input type="range" id="sl-fair" min="0" max="50" step="1" value="20">
           <div class="slider-bounds"><span>0%</span><span>50%</span></div>
         </div>
         <div class="slider-wrap">
           <div class="slider-meta">
-            <span class="slider-name">Low income ≥</span>
+            <span class="slider-name">LMI population ≥</span>
             <span class="slider-val" id="sv-income">40%</span>
           </div>
           <input type="range" id="sl-income" min="0" max="80" step="1" value="40">
@@ -601,21 +702,13 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
         </div>
         <div class="slider-wrap">
           <div class="slider-meta">
-            <span class="slider-name">Pre-1960 units ≥</span>
-            <span class="slider-val" id="sv-age">30%</span>
+            <span class="slider-name">Pre-2010 structures ≥</span>
+            <span class="slider-val" id="sv-age">75%</span>
           </div>
-          <input type="range" id="sl-age" min="0" max="80" step="1" value="30">
-          <div class="slider-bounds"><span>0%</span><span>80%</span></div>
+          <input type="range" id="sl-age" min="50" max="100" step="1" value="75">
+          <div class="slider-bounds"><span>50%</span><span>100%</span></div>
         </div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sec-label">High-risk when</div>
-        <div class="radio-group">
-          <label class="radio-row"><input type="radio" name="hl" value="3" checked> All 3 factors exceeded</label>
-          <label class="radio-row"><input type="radio" name="hl" value="2"> Any 2 factors exceeded</label>
-          <label class="radio-row"><input type="radio" name="hl" value="1"> Any 1 factor exceeded</label>
-        </div>
+        <div class="layer-note">A ZIP is <strong>high-risk</strong> when all three thresholds above are exceeded.</div>
       </div>
 
     </aside>
@@ -688,13 +781,23 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 
     <!-- RIGHT PANEL -->
     <div class="tt-right">
-      <div class="tt-row"><span class="tt-key">Low-income pop.</span><span class="tt-val" id="tt-income"></span></div>
-      <div class="tt-row"><span class="tt-key">Pre-1960 units</span><span class="tt-val" id="tt-age"></span></div>
-      <div class="tt-row"><span class="tt-key">Median build yr</span><span class="tt-val" id="tt-year"></span></div>
+      <div class="tt-row"><span class="tt-key">LMI population</span><span class="tt-val" id="tt-income"></span></div>
+      <div class="tt-row"><span class="tt-key">Pre-2010 structures</span><span class="tt-val" id="tt-age"></span></div>
+      <div class="tt-row"><span class="tt-key">FHSZ share</span><span class="tt-val" id="tt-fhsz"></span></div>
+      <div class="tt-row"><span class="tt-key">Fire-damaged structures (DINS)</span><span class="tt-val" id="tt-damaged"></span></div>
+      <div class="tt-row"><span class="tt-key">Firewise communities</span><span class="tt-val" id="tt-fw-count"></span></div>
+      <div class="tt-row"><span class="tt-key">Residential structures</span><span class="tt-val" id="tt-structures"></span></div>
       <div class="tt-row"><span class="tt-key">Population</span><span class="tt-val" id="tt-pop"></span></div>
-      <div class="tt-row"><span class="tt-key">Risk score</span><span class="tt-val" id="tt-score"></span></div>
     </div>
 
+  </div>
+
+  <!-- EXTRA: top admitted insurers -->
+  <div class="tt-extra">
+    <div class="tt-extra-col">
+      <div class="tt-extra-title">🏢 Top Admitted Insurers · 2024</div>
+      <div id="tt-insurers"></div>
+    </div>
   </div>
 </div>
         </div>
@@ -713,15 +816,24 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
               <div class="spot-card">
                 <div class="spot-row"><span class="spot-key">FAIR plan rate</span><span class="spot-val" id="sp-fair" style="color:var(--red);"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-fair" style="background:var(--red);"></div></div>
-                <div class="spot-row"><span class="spot-key">Low-income pop.</span><span class="spot-val" id="sp-income"></span></div>
+                <div class="spot-row"><span class="spot-key">LMI population</span><span class="spot-val" id="sp-income"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-income" style="background:var(--teal);"></div></div>
-                <div class="spot-row"><span class="spot-key">Pre-1960 units</span><span class="spot-val" id="sp-age"></span></div>
+                <div class="spot-row"><span class="spot-key">Pre-2010 structures</span><span class="spot-val" id="sp-age"></span></div>
                 <div class="bar-track"><div class="bar-fill" id="bar-age" style="background:var(--amber);"></div></div>
-                <div class="spot-row"><span class="spot-key">Median build yr</span><span class="spot-val" id="sp-year"></span></div>
+                <div class="spot-row"><span class="spot-key">FHSZ share</span><span class="spot-val" id="sp-fhsz"></span></div>
+                <div class="bar-track"><div class="bar-fill" id="bar-fhsz" style="background:#8E44AD;"></div></div>
+                <div class="spot-row"><span class="spot-key">Residential structures</span><span class="spot-val" id="sp-structures"></span></div>
+                <div class="spot-row"><span class="spot-key">DINS damaged (2013–25)</span><span class="spot-val" id="sp-damaged"></span></div>
+                <div class="spot-row"><span class="spot-key">Firewise communities</span><span class="spot-val" id="sp-fw-count"></span></div>
                 <div class="spot-row"><span class="spot-key">Population</span><span class="spot-val" id="sp-pop"></span></div>
-                <div class="spot-row"><span class="spot-key">Housing units</span><span class="spot-val" id="sp-units"></span></div>
               </div>
               <div id="sp-badge"></div>
+
+              <div class="sp-section-title">🏢 Top Admitted Insurers · 2024</div>
+              <div class="sp-ins-card" id="sp-insurers"></div>
+
+              <div class="sp-section-title">🔥 Firewise Sites In Good Standing</div>
+              <div class="sp-fw-wrap" id="sp-firewise"></div>
             </div>
           </div>
           <div class="sidebar-section">
@@ -730,9 +842,11 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
             <div class="legend-ramp" id="sidebar-legend-ramp"></div>
             <div class="legend-ends"><span>Low</span><span>High</span></div>
             <div class="legend-items">
-              <div class="legend-item" id="leg-income"><div class="legend-swatch" style="background:var(--teal)"></div>Low-income overlay dot</div>
-              <div class="legend-item" id="leg-age"><div class="legend-swatch" style="background:var(--amber)"></div>Pre-1960 building dot</div>
+              <div class="legend-item" id="leg-income"><div class="legend-swatch" style="background:var(--teal)"></div>LMI overlay dot</div>
+              <div class="legend-item" id="leg-age"><div class="legend-swatch" style="background:var(--amber)"></div>Pre-2010 building dot</div>
               <div class="legend-item" id="leg-outline"><div class="legend-outline-sym"></div>High-risk ZIP border</div>
+              <div class="legend-item" id="leg-dins"><div class="dins-triangle-sm" style="border-bottom:9px solid #3A3A3A;"></div>Fire-damaged structure (DINS)</div>
+              <div class="legend-item" id="leg-firewise"><span style="font-size:12px;">🔥</span>Firewise site (Good Standing)</div>
             </div>
           </div>
           <div class="sidebar-section" style="flex:1;">
@@ -762,9 +876,11 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     <a href="https://www.cfpnet.com/key-statistics-data/" target="_blank">CA FAIR Plan</a>
     <a href="https://www.hec.usace.army.mil/confluence/nsi" target="_blank">National Structure Inventory</a>
     <a href="https://data.census.gov" target="_blank">ACS 5-yr</a>
+    <a href="https://lab.data.ca.gov/dataset/cal-fire-damage-inspection-dins-data" target="_blank">DINS</a>
+    <a href="https://34c031f8-c9fd-4018-8c5a-4159cdff6b0d-cdn-endpoint.azureedge.net/-/media/bof-website/projects-and-programs/fire-risk-reduction-community-list/07-01-2026-frrcl-and-bof-resolution-of-approval.pdf?rev=3428690de0414895a06fe75c4de609b7&hash=3B29D082C5B6ADEB36048F2EDB7C6D79" target="_blank">Fire Reduction Community</a>
+    <a href="https://www.arcgis.com/apps/mapviewer/index.html?webmap=c2260105797847b4bf5edf8f9cfc1f8f" target="_blank">Firewise Sites</a>
     <div class="footer-right">
       <button class="export-btn" id="export-csv">⬇ Export CSV</button>
-      <button class="export-btn" id="export-svg">🖼 Save map</button>
     </div>
   </footer>
 
@@ -774,21 +890,444 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 
 <script>
 /* ════════════════════════════════════════════
    COMMUNITY DEFINITIONS
 ════════════════════════════════════════════ */
 const COMMUNITY_META = {
-  monterey:   { label:'Monterey County',      fips:'06053', detail:'Central Coast · 434K population',               center:[36.2,-121.3], zoom:9  },
-  san_benito: { label:'San Benito County',    fips:'06069', detail:'Inland Central Coast · 63K population',          center:[36.8,-121.1], zoom:10 },
-  san_diego:  { label:'San Diego County',     fips:'06073', detail:'Southern California · 3.3M population',          center:[32.9,-116.9], zoom:9  },
-  santa_cruz: { label:'Santa Cruz County',    fips:'06087', detail:'Central Coast · 271K population',               center:[37.05,-122.0],zoom:10 },
-  tulare:     { label:'Tulare County',        fips:'06107', detail:'San Joaquin Valley · 473K population',           center:[36.2,-119.0], zoom:9  },
-  tuolumne:   { label:'Tuolumne County',      fips:'06109', detail:'Sierra Nevada Foothills · 55K population',      center:[37.9,-120.0], zoom:10 },
-  hoopa:      { label:'Hoopa Valley Tribe',   fips:'130821',detail:'Northwestern California · Tribal Nation',        center:[41.05,-123.7],zoom:11 },
+  monterey:   { label:'Monterey County',      fips:'06053', detail:'Central Coast · 434K population',               center:[36.2,-121.3], zoom:9,
+                frrc:['City of Monterey','Monterey County Regional Fire District','Monterey Fire Department'] },
+  san_benito: { label:'San Benito County',    fips:'06069', detail:'Inland Central Coast · 63K population',          center:[36.8,-121.1], zoom:10,
+                frrc:[] },
+  san_diego:  { label:'San Diego County',     fips:'06073', detail:'Southern California · 3.3M population',          center:[32.9,-116.9], zoom:9,
+                frrc:['San Diego County'] },
+  santa_cruz: { label:'Santa Cruz County',    fips:'06087', detail:'Central Coast · 271K population',               center:[37.05,-122.0],zoom:10,
+                frrc:['Santa Cruz County'] },
+  tulare:     { label:'Tulare County',        fips:'06107', detail:'San Joaquin Valley · 473K population',           center:[36.2,-119.0], zoom:9,
+                frrc:[] },
+  tuolumne:   { label:'Tuolumne County',      fips:'06109', detail:'Sierra Nevada Foothills · 55K population',      center:[37.9,-120.0], zoom:10,
+                frrc:[] },
+  hoopa:      { label:'Hoopa Valley Tribe',   fips:'130821',detail:'Northwestern California · Tribal Nation',        center:[41.05,-123.7],zoom:11,
+                frrc:[] },
 };
+
+const VARIABLE_DEFINITIONS = [
+  { variable: 'FAIR Plan Rate', definition: 'Percent of residential structures with a FAIR Plan policy (excluding policies for renters and condo unit owners)', source: 'California FAIR Plan residential policy data from California FAIR Plan Key Statistics & Data. Residential structure data from the National Structure Inventory (NSI).' },
+  { variable: 'LMI %', definition: 'Percent of population  earning  ≤ 80%  of the selected community\'s 2024 median family Income', source: 'US Census Bureau\'s 2020-2024 American Community Survey (ACS) 5-year data' },
+  { variable: 'Pre-2010 %', definition: 'Percent of structures built before 2010', source: 'US Census Bureau\'s 2020-2024 American Community Survey (ACS) 5-year data' },
+  { variable: 'FHSZ %', definition: 'Number of residential structures in Fire Hazard Severity Zones (State Responsibility Areas and Local Responsibility Areas)', source: 'CAL FIRE Fire Hazard Severity Zone Maps' },
+  { variable: 'Damaged (DINS)', definition: 'Number of fire-damaged structures (2013-2025)', source: 'CAL FIRE Damage Inspection (DINS) Data' },
+  { variable: 'Firewise Communities', definition: 'Number of Firewise sites (in good standing) as of June 01, 2026', source: 'National Fire Protection Association (NFPA)' },
+  { variable: 'Structures', definition: 'Number of residential structures', source: 'National Structure Inventory (NSI)' },
+  { variable: 'Population', definition: 'Population', source: 'US Census Bureau\'s 2020-2024 American Community Survey (ACS) 5-year data' },
+  { variable: 'Risk Level', definition: '= High (all 3 risk thresholds are exceeded);<br>= Medium (2 risk thresholds are exceeded AND FAIR plan rate must be one of them);<br>= Watch (1 risk threshold is exceeded, or 2 risk thresholds are exceeded that don\'t include FAIR plan rate);<br>= Low risk (none exceeded).', source: 'Three risk thresholds: FAIR plan rate; LMI %; Pre-2010 %' },
+];
+/* ════════════════════════════════════════════
+   ADMITTED INSURER SEED LIST (placeholder — replace with real 2024 data)
+════════════════════════════════════════════ */
+const ADMITTED_INSURER_POOL = [
+  'State Farm', 'CSAA / AAA', 'Mercury Insurance', 'Farmers Insurance', 'Allstate',
+  'USAA', 'Liberty Mutual', 'Travelers', 'Nationwide', 'Auto Club (Interinsurance)',
+  'Safeco', 'Chubb', 'Century National', 'Wawanesa', 'American National'
+];
+
+// Simple deterministic PRNG seeded by ZIP so results are stable per ZIP but look varied
+function seededRandom(seed) {
+  let s = 0;
+  for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
+  return function() {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function generateInsurers(zip) {
+  const rng = seededRandom(zip + '-ins');
+  const pool = [...ADMITTED_INSURER_POOL];
+  const picks = [];
+  for (let i = 0; i < 5 && pool.length; i++) {
+    const idx = Math.floor(rng() * pool.length);
+    picks.push(pool.splice(idx, 1)[0]);
+  }
+  // Generate a descending, plausible market-share split (placeholder data)
+  let remaining = 58 + rng() * 20; // top-5 admitted share of ~58-78%
+  const shares = [];
+  let rem = remaining;
+  for (let i = 0; i < 5; i++) {
+    const frac = i === 4 ? rem : rem * (0.28 + rng() * 0.20);
+    shares.push(Math.max(1, frac));
+    rem -= frac;
+  }
+  shares.sort((a,b) => b-a);
+  return picks.map((name, i) => ({ name, share: +shares[i].toFixed(1) }));
+}
+
+/* ════════════════════════════════════════════
+   FIREWISE SITES — In Good Standing (as of 06/01/2026)
+   Source: Firewise_07122026.xlsx, converted to a static JS lookup keyed
+   by community. Data is already in memory (no fetch needed), so lookups
+   are synchronous and always available for the toggle, map markers,
+   tooltip, and ZIP spotlight panel.
+════════════════════════════════════════════ */
+const FIREWISE_SITES = {
+  monterey: [
+    { name: 'Spanish Bit Firewise', description: 'Participation began 5/10/2024', lat: 36.859806, lng: -121.639502, zip: '95004' },
+    { name: 'Clear Ridge', description: 'Participation began 8/11/2023', lat: 36.267111, lng: -121.813053, zip: '93920' },
+    { name: 'Partington Ridge', description: 'Participation began 11/20/2023', lat: 36.189054, lng: -121.697296, zip: '93920' },
+    { name: 'Post Creek', description: 'Participation began 5/12/2023', lat: 36.22867, lng: -121.767909, zip: '93920' },
+    { name: 'Treebones', description: 'Participation began 5/26/2026', lat: 35.884232, lng: -121.455262, zip: '93920' },
+    { name: 'Green Ridge', description: 'Participation began 2/9/2026', lat: 36.382823, lng: -121.85855, zip: '93923' },
+    { name: 'Country Club Drive', description: 'Participation began 12/17/2021', lat: 36.494008, lng: -121.733335, zip: '93924' },
+    { name: 'El Caminito', description: 'Participation began 8/19/2022', lat: 36.48606, lng: -121.721706, zip: '93924' },
+    { name: 'Hidden Hills HOA', description: 'Participation began 10/29/2024', lat: 36.54183, lng: -121.766966, zip: '93924' },
+    { name: 'La Rancheria', description: 'Participation began 12/20/2024', lat: 36.503078, lng: -121.750386, zip: '93924' },
+    { name: 'Laurel', description: 'Participation began 9/12/2025', lat: 36.488543, lng: -121.733802, zip: '93924' },
+    { name: 'Los Tulares', description: 'Participation began 12/7/2022', lat: 36.465183, lng: -121.708315, zip: '93924' },
+    { name: 'Rancho del Sol', description: 'Participation began 6/16/2022', lat: 36.51775, lng: -121.766363, zip: '93924' },
+    { name: 'Rancho/Middle Canyon', description: 'Participation began 10/21/2022', lat: 36.493805, lng: -121.74184, zip: '93924' },
+    { name: 'Robles del Rio', description: 'Participation began 12/31/2020', lat: 36.46979, lng: -121.723467, zip: '93924' },
+    { name: 'Sleepy Hollow', description: 'Participation began 11/21/2022', lat: 36.45425, lng: -121.708118, zip: '93924' },
+    { name: 'Tularcitos Ridge', description: 'Participation began 12/17/2021', lat: 36.42714, lng: -121.671788, zip: '93924' },
+    { name: 'Village Green HOA', description: 'Participation began 6/16/2022', lat: 36.483436, lng: -121.736876, zip: '93924' },
+    { name: 'Carmel Views', description: 'Participation began 10/8/2021', lat: 36.55883, lng: -121.900665, zip: '93923' },
+    { name: 'Club Place Lane', description: 'Participation began 7/23/2021', lat: 36.518874, lng: -121.801108, zip: '93923' },
+    { name: 'Del Mesa Carmel', description: 'Participation began 8/10/2022', lat: 36.543999, lng: -121.870868, zip: '93923' },
+    { name: 'Hacienda Carmel Community Association', description: 'Participation began 3/25/2022', lat: 36.537345, lng: -121.876593, zip: '93923' },
+    { name: 'Mercurio Road', description: 'Participation began 3/22/2024', lat: 36.530155, lng: -121.806194, zip: '93923' },
+    { name: 'Oakshire HOA', description: 'Participation began 10/3/2025', lat: 36.517329, lng: -121.79627, zip: '93923' },
+    { name: 'Quail Meadows', description: 'Participation began 5/18/2022', lat: 36.53166, lng: -121.882988, zip: '93923' },
+    { name: 'Ranch House Place HOA', description: 'Participation began 10/1/2021', lat: 36.518304, lng: -121.794898, zip: '93923' },
+    { name: 'Rancho Tierra Grande', description: 'Participation began 12/31/2020', lat: 36.528014, lng: -121.80384, zip: '93923' },
+    { name: 'Santa Lucia Preserve', description: 'Participation began 12/7/2021', lat: 36.445782, lng: -121.798087, zip: '93923' },
+    { name: 'Tehama', description: 'Participation began 12/17/2021', lat: 36.534943, lng: -121.850189, zip: '93923' },
+    { name: 'Chualar Canyon', description: 'Participation began 12/19/2023', lat: 36.60171, lng: -121.432599, zip: '93925' },
+    { name: 'Upper Forest', description: 'Participation began 11/7/2025', lat: 36.588687, lng: -121.921563, zip: '93953' },
+    { name: 'The Oaks of Del Rey condos', description: 'Participation began 5/1/2024', lat: 36.589702, lng: -121.8322, zip: '93940' },
+    { name: 'Deer Flats Park', description: 'Participation began 3/11/2026', lat: 36.576795, lng: -121.861236, zip: '93940' },
+    { name: 'Manor-Jacks', description: 'Participation began 3/11/2026', lat: 36.576462, lng: -121.865867, zip: '93940' },
+    { name: 'Monterra Ranch', description: 'Participation began 12/22/2023', lat: 36.571713, lng: -121.838429, zip: '93940' },
+    { name: 'Shepherd\'s Knoll HOA', description: 'Participation began 4/23/2026', lat: 36.581148, lng: -121.912516, zip: '93953' },
+    { name: 'Skyline Crest HOA', description: 'Participation began 4/25/2025', lat: 36.59189, lng: -121.919516, zip: '93940' },
+    { name: 'Forest Grove HOA', description: 'Participation began 4/9/2024', lat: 36.606541, lng: -121.929099, zip: '93950' },
+    { name: 'Glen Heights Homeowners Assoc', description: 'Participation began 9/12/2025', lat: 36.603046, lng: -121.922838, zip: '93950' },
+    { name: 'Kim Ann Lane Firewise Association (KALFA)', description: 'Participation began 3/10/2023', lat: 36.818086, lng: -121.658921, zip: '93907' },
+    { name: 'Kirby Ranch Road Association/Tumbleweed Lane', description: 'Participation began 10/24/2025', lat: 36.833268, lng: -121.717161, zip: '95076' },
+    { name: 'Belmont HOA', description: 'Participation began 12/7/2021', lat: 36.585987, lng: -121.62699, zip: '93908' },
+    { name: 'Corral de Tierra Oaks and Corte Cordillera', description: 'Participation began 10/17/2022', lat: 36.568038, lng: -121.741524, zip: '93908' },
+    { name: 'Corral de Tierra Villas HOA', description: 'Participation began 7/14/2022', lat: 36.577196, lng: -121.724317, zip: '93908' },
+    { name: 'Country Meadows', description: 'Participation began 2/9/2026', lat: 36.769725, lng: -121.651265, zip: '93907' },
+    { name: 'El Rancho Corral de Tierra', description: 'Participation began 2/20/2023', lat: 36.564827, lng: -121.723154, zip: '93908' },
+    { name: 'Harper Canyon', description: 'Participation began 7/14/2022', lat: 36.568376, lng: -121.705242, zip: '93908' },
+    { name: 'Holly Hills', description: 'Participation began 10/4/2024', lat: 36.788236, lng: -121.648021, zip: '93907' },
+    { name: 'Manzanita Estates Homeowners Association', description: 'Participation began 3/22/2024', lat: 36.787882, lng: -121.658566, zip: '93907' },
+    { name: 'Markham Ranch', description: 'Participation began 12/17/2021', lat: 36.556718, lng: -121.731834, zip: '93908' },
+    { name: 'Mesa del Toro Area', description: 'Participation began 2/9/2022', lat: 36.520873, lng: -121.693201, zip: '93908' },
+    { name: 'Meyer Neighborhood Fire Defense Committee (FDC)', description: 'Participation began 2/9/2022', lat: 36.572677, lng: -121.707924, zip: '93908' },
+    { name: 'Pattee Ranch HOA', description: 'Participation began 8/31/2021', lat: 36.553498, lng: -121.737828, zip: '93908' },
+    { name: 'Pepper Canyon', description: 'Participation began 5/23/2024', lat: 36.564215, lng: -121.702581, zip: '93908' },
+    { name: 'Pisorwise', description: 'Participation began 7/19/2024', lat: 36.562541, lng: -121.729846, zip: '93908' },
+    { name: 'San Benancio Village', description: 'Participation began 6/29/2022', lat: 36.569414, lng: -121.71569, zip: '93908' },
+    { name: 'The Bluffs of Reservation Road', description: 'Participation began 12/30/2022', lat: 36.638559, lng: -121.706142, zip: '93908' },
+    { name: 'Tierra Vista', description: 'Participation began 4/29/2022', lat: 36.551085, lng: -121.700355, zip: '93908' },
+    { name: 'Vista del Toro Place', description: 'Participation began 7/14/2022', lat: 36.559261, lng: -121.749495, zip: '93908' },
+    { name: 'Vista Drive', description: 'Participation began 7/23/2024', lat: 36.824597, lng: -121.631674, zip: '93907' },
+    { name: 'Vista el Encanto', description: 'Participation began 9/12/2025', lat: 36.560094, lng: -121.745095, zip: '93908' },
+    { name: 'Whiskey Gulch', description: 'Participation began 8/10/2022', lat: 36.55302, lng: -121.694504, zip: '93908' },
+    { name: 'The Enclave @ Cypress Grove in Monterey County', description: 'Participation began 12/31/2024', lat: 36.630597, lng: -121.826123, zip: '93955' },
+  ],
+  san_benito: [
+    { name: 'Hidden Valley HOA', description: 'Participation began 10/29/24', lat: 36.815015, lng: -121.416549, zip: '95023' },
+    { name: 'Rancho Aromitas', description: 'Participation began 12/22/2023', lat: 36.886705, lng: -121.62837, zip: '95004' },
+    { name: 'Rancho Larios Homeowner Association', description: 'Participation began 10/11/2022', lat: 36.846237, lng: -121.5724, zip: '95045' },
+    { name: 'San Juan Canyon', description: 'Participation began 8/19/2022', lat: 36.800648, lng: -121.498038, zip: '95045' },
+  ],
+  san_diego: [
+    { name: 'Alpine SD NORTH', description: 'Participation began 7/14/2021', lat: 32.836995, lng: -116.773942, zip: '91901' },
+    { name: 'Alpine SD SOUTH', description: 'Participation began 12/20/2024', lat: 32.833541, lng: -116.785155, zip: '91901' },
+    { name: 'Bonita Highlands', description: 'Participation began 5/20/2026', lat: 32.670349, lng: -117.014678, zip: '91902' },
+    { name: 'Community Of Brookfield', description: 'Participation began 11/7/2025', lat: 33.108513, lng: -117.230676, zip: '92009' },
+    { name: 'La Costa Alta Community', description: 'Participation began 12/20/2024', lat: 33.109161, lng: -117.237409, zip: '92009' },
+    { name: 'La Costa Greens', description: 'Participation began 11/19/2025', lat: 33.109119, lng: -117.255134, zip: '92009' },
+    { name: 'La Costa Oaks Community Association', description: 'Participation began 4/23/2026', lat: 33.081044, lng: -117.226704, zip: '92009' },
+    { name: 'Rancho Carrillo Firewise Council', description: 'Participation began 4/25/2025', lat: 33.09544, lng: -117.249968, zip: '92009' },
+    { name: 'Chula Vista Oleander Community', description: 'Participation began 10/3/2025', lat: 32.599066, lng: -117.034483, zip: '91911' },
+    { name: 'Crest San Diego', description: 'Participation began 10/3/2025', lat: 32.821057, lng: -116.85007, zip: '92021' },
+    { name: 'Fuerte Knolls', description: 'Participation began 10/31/2025', lat: 32.765415, lng: -116.933041, zip: '92019' },
+    { name: 'Champagne Village', description: 'Participation began 4/25/2025', lat: 33.226725, lng: -117.140042, zip: '92026' },
+    { name: 'Emerald Heights Homeowners Association', description: 'Participation began 5/20/2026', lat: 33.163378, lng: -117.136846, zip: '92026' },
+    { name: 'Hidden Meadows', description: 'Participation began 12/19/2024', lat: 33.215696, lng: -117.11471, zip: '92026' },
+    { name: 'Southwest Escondido', description: 'Participation began 10/27/2023', lat: 33.10036, lng: -117.09837, zip: '92029' },
+    { name: 'Lawson Valley Community', description: 'Participation began 12/31/2024', lat: 32.739932, lng: -116.80035, zip: '91935' },
+    { name: 'Mount Laguna', description: 'Participation began 12/26/2013', lat: 32.871093, lng: -116.426476, zip: '91948' },
+    { name: 'Stonemark HOA', description: 'Participation began 6/27/2025', lat: 33.255232, lng: -117.298646, zip: '92057' },
+    { name: 'Wanis View Estates', description: 'Participation began 12/19/2023', lat: 33.229647, lng: -117.354168, zip: '92058' },
+    { name: 'Rancho Heights Community', description: 'Participation began 5/22/2025', lat: 33.365248, lng: -117.075543, zip: '92059' },
+    { name: 'Ezra Lane', description: 'Participation began 3/19/2026', lat: 32.976346, lng: -117.024585, zip: '92064' },
+    { name: 'Firewise Neighborhood 48', description: 'Participation began 5/20/2026', lat: 32.952365, lng: -117.069624, zip: '92064' },
+    { name: 'Quail Mountain', description: 'Participation began 12/22/2023', lat: 32.996601, lng: -116.977215, zip: '92064' },
+    { name: 'San Diego Country Estates - East', description: 'Participation began 3/11/2026', lat: 32.999168, lng: -116.812089, zip: '92065' },
+    { name: 'San Diego Country Estates Community South / Barona Mesa - 4 Corners', description: 'Participation began 3/11/2026', lat: 32.998754, lng: -116.812456, zip: '92065' },
+    { name: 'San Diego Country Estates Community West', description: 'Participation began 3/11/2026', lat: 32.999077, lng: -116.812597, zip: '92065' },
+    { name: 'Cielo Homeowners Association', description: 'Participation began 12/20/2024', lat: 33.045432, lng: -117.16621, zip: '92067' },
+    { name: 'Fairbanks Ranch', description: 'Participation began 2/19/2025', lat: 33.017683, lng: -117.22645, zip: '92067' },
+    { name: 'Rancho Santa Fe Association', description: 'Participation began 10/31/2025', lat: 33.020553, lng: -117.205444, zip: '92067' },
+    { name: 'Kensington Block A', description: 'Participation began 4/23/2026', lat: 32.77397, lng: -117.107984, zip: '92116' },
+    { name: 'Santaluz', description: 'Participation began 7/31/2025', lat: 32.993877, lng: -117.146532, zip: '92127' },
+    { name: 'Fairways HOA', description: 'Participation began 10/31/2025', lat: 33.118004, lng: -117.215611, zip: '92078' },
+    { name: 'Old Creek Ranch', description: 'Participation began 5/16/2025', lat: 33.095316, lng: -117.21237, zip: '92078' },
+    { name: 'San Elijo Hills - North', description: 'Participation began 5/16/2025', lat: 33.111236, lng: -117.180624, zip: '92078' },
+    { name: 'San Elijo Hills - South', description: 'Participation began 5/22/2025', lat: 33.097329, lng: -117.195047, zip: '92078' },
+    { name: 'Wynola Estates', description: 'Participation began 8/2/2024', lat: 33.096889, lng: -116.658287, zip: '92070' },
+    { name: 'Vista Valley Villas', description: 'Participation began 10/31/2025', lat: 33.244416, lng: -117.190018, zip: '92084' },
+  ],
+  santa_cruz: [
+    { name: 'Comstock/Conifer', description: 'Participation began 3/1/2023', lat: 37.082651, lng: -122.145023, zip: '95060' },
+    { name: 'El Solyo Heights', description: 'Participation began 4/30/2025', lat: 37.067886, lng: -122.087575, zip: '95018' },
+    { name: 'McGivernites', description: 'Participation began 8/2/2024', lat: 37.054952, lng: -122.115715, zip: '95060' },
+    { name: 'Sunset Ridge Road', description: 'Participation began 8/30/2019', lat: 37.175313, lng: -122.050299, zip: '95033' },
+    { name: 'Baker Oaks', description: 'Participation began 3/11/2026', lat: 36.996386, lng: -121.877706, zip: '95003' },
+    { name: 'Brooktree Ranch Road', description: 'Participation began 5/22/2025', lat: 37.006421, lng: -121.849446, zip: '95003' },
+    { name: 'Chaparral', description: 'Participation began 3/11/2026', lat: 37.000563, lng: -121.855596, zip: '95003' },
+    { name: 'Cox Road', description: 'Participation began 4/14/2026', lat: 36.997009, lng: -121.856903, zip: '95003' },
+    { name: 'Cuesta', description: 'Participation began 3/11/2026', lat: 36.965324, lng: -121.878348, zip: '95003' },
+    { name: 'Day Valley View Area', description: 'Participation began 2/9/2026', lat: 36.994838, lng: -121.839889, zip: '95003' },
+    { name: 'Forest and Meadows', description: 'Participation began 10/29/2024', lat: 37.001173, lng: -121.845975, zip: '95003' },
+    { name: 'Johanna Tolak', description: 'Participation began 11/17/2025', lat: 36.993914, lng: -121.927705, zip: '95003' },
+    { name: 'Larsen Road Association', description: 'Participation began 3/25/2022', lat: 37.018129, lng: -121.891945, zip: '95003' },
+    { name: 'Lupine Valley', description: 'Participation began 8/2/2024', lat: 36.996425, lng: -121.874241, zip: '95003' },
+    { name: 'McKay/Possumwood', description: 'Participation began 6/6/2025', lat: 36.998004, lng: -121.863651, zip: '95003' },
+    { name: 'Meadow Ranch', description: 'Participation began 7/3/2025', lat: 37.015482, lng: -121.878485, zip: '95003' },
+    { name: 'Porter Gulch', description: 'Participation began 8/19/2022', lat: 37.001978, lng: -121.929767, zip: '95003' },
+    { name: 'Redwood/Cathedral', description: 'Participation began 12/31/2020', lat: 37.003916, lng: -121.901232, zip: '95003' },
+    { name: 'Seascape Uplands', description: 'Participation began 4/4/2025', lat: 36.955255, lng: -121.86688, zip: '95003' },
+    { name: 'Upper Cox Road', description: 'Participation began 3/19/2026', lat: 37.003789, lng: -121.859161, zip: '95003' },
+    { name: 'Viewpoint Road', description: 'Participation began 8/31/2021', lat: 36.988951, lng: -121.912249, zip: '95003' },
+    { name: 'Willow Heights', description: 'Participation began 6/13/2025', lat: 36.978245, lng: -121.830396, zip: '95003' },
+    { name: 'Alba Road', description: 'Participation began 4/29/2022', lat: 37.095113, lng: -122.114331, zip: '95005' },
+    { name: 'Brook Lomond', description: 'Participation began 6/13/2025', lat: 37.093962, lng: -122.095179, zip: '95005' },
+    { name: 'Melin&Friends', description: 'Participation began 3/19/2026', lat: 37.071088, lng: -122.073589, zip: '95005' },
+    { name: 'Quail Hollow', description: 'Participation began 10/6/2023', lat: 37.083021, lng: -122.074533, zip: '95005' },
+    { name: 'Rancho Rio', description: 'Participation began 3/14/2025', lat: 37.089313, lng: -122.076005, zip: '95005' },
+    { name: 'Roberts-Ridge Roads', description: 'Participation began 11/21/2022', lat: 37.105316, lng: -122.091955, zip: '95005' },
+    { name: 'Sandhills of Quail Hollow', description: 'Participation began 9/26/2025', lat: 37.081219, lng: -122.069109, zip: '95005' },
+    { name: 'Conifer Molina', description: 'Participation began 3/10/2023', lat: 37.085628, lng: -122.142116, zip: '95060' },
+    { name: 'Country Estates', description: 'Participation began 9/15/2023', lat: 37.053987, lng: -122.159162, zip: '95060' },
+    { name: 'Redwood Meadows Ranch', description: 'Participation began 10/10/2025', lat: 37.037684, lng: -122.166233, zip: '95060' },
+    { name: 'Sunlit lane', description: 'Participation began 6/26/2023', lat: 37.069533, lng: -122.129722, zip: '95060' },
+    { name: 'West Bonny Doon', description: 'Participation began 7/30/2025', lat: 37.05469, lng: -122.160866, zip: '95060' },
+    { name: 'Bear Creek Estates', description: 'Participation began 8/15/2025', lat: 37.142799, lng: -122.087018, zip: '95006' },
+    { name: 'Bear Creek Park', description: 'Participation began 6/28/2024', lat: 37.128069, lng: -122.121664, zip: '95006' },
+    { name: 'Bonnie Brier', description: 'Participation began 2/9/2026', lat: 37.1265, lng: -122.113581, zip: '95006' },
+    { name: 'China Grade Neighborhood', description: 'Participation began 6/14/2024', lat: 37.172958, lng: -122.169409, zip: '95006' },
+    { name: 'Fairmount Heights', description: 'Participation began 5/22/2025', lat: 37.118245, lng: -122.112995, zip: '95006' },
+    { name: 'Huckleberry Woods', description: 'Participation began 12/20/2024', lat: 37.138438, lng: -122.114962, zip: '95006' },
+    { name: 'Kaila Community', description: 'Participation began 12/7/2022', lat: 37.162976, lng: -122.083435, zip: '95006' },
+    { name: 'Nina Terrace', description: 'Participation began 7/19/2024', lat: 37.111653, lng: -122.098974, zip: '95006' },
+    { name: 'Sunbeam Woods', description: 'Participation began 5/10/2024', lat: 37.156502, lng: -122.126946, zip: '95006' },
+    { name: 'Upper 236', description: 'Participation began 6/6/2025', lat: 37.193509, lng: -122.169571, zip: '95006' },
+    { name: 'Upper Two Bar', description: 'Participation began 2/9/2026', lat: 37.171638, lng: -122.100692, zip: '95006' },
+    { name: 'Upper Fern Flat Road Association (UFFRA)', description: 'Participation began 4/30/2025', lat: 37.012232, lng: -121.857785, zip: '95003' },
+    { name: 'Eagle Tree Lane Community', description: 'Participation began 6/29/2022', lat: 37.136989, lng: -122.029645, zip: '95018' },
+    { name: 'Fall Creek', description: 'Participation began 10/16/2023', lat: 37.057472, lng: -122.079599, zip: '95018' },
+    { name: 'Felton Acres', description: 'Participation began 11/21/2022', lat: 37.040787, lng: -122.0793, zip: '95018' },
+    { name: 'Felton Empire', description: 'Participation began 11/17/2025', lat: 37.050216, lng: -122.092424, zip: '95018' },
+    { name: 'Felton Heights', description: 'Participation began 10/8/2021', lat: 37.043197, lng: -122.089924, zip: '95018' },
+    { name: 'Fern Ridge', description: 'Participation began 12/22/2023', lat: 37.043528, lng: -122.07238, zip: '95018' },
+    { name: 'Forest Lakes Neighborhood', description: 'Participation began 7/14/2021', lat: 37.032656, lng: -122.076848, zip: '95018' },
+    { name: 'Gold Gulch River Park', description: 'Participation began 11/21/2025', lat: 37.037759, lng: -122.066075, zip: '95018' },
+    { name: 'Lomita Avenue', description: 'Participation began 12/20/2024', lat: 37.102887, lng: -122.052568, zip: '95018' },
+    { name: 'Mount Hermon Northwest', description: 'Participation began 10/29/2024', lat: 37.052406, lng: -122.063911, zip: '95018' },
+    { name: 'North Lompico', description: 'Participation began 12/31/2024', lat: 37.111845, lng: -122.047251, zip: '95018' },
+    { name: 'Tanglewood', description: 'Participation began 5/14/2021', lat: 37.041531, lng: -122.074679, zip: '95018' },
+    { name: 'Sand Dollar - Canon Del Sol', description: 'Participation began 7/21/2023', lat: 36.921054, lng: -121.852417, zip: '95076' },
+    { name: 'Central Summit Watershed', description: 'Participation began 10/16/2023', lat: 37.129582, lng: -121.954913, zip: '95033' },
+    { name: 'Ellen Roads', description: 'Participation began 3/31/2021', lat: 37.136325, lng: -122.013964, zip: '95033' },
+    { name: 'Hester Creek Amaya Ridge', description: 'Participation began 12/7/2022', lat: 37.088006, lng: -121.941773, zip: '95033' },
+    { name: 'Hutchinson Road', description: 'Participation began 9/30/2021', lat: 37.128288, lng: -122.002728, zip: '95033' },
+    { name: 'Las Cumbres', description: 'Participation began 12/23/2019', lat: 37.19033, lng: -122.058778, zip: '95033' },
+    { name: 'Laurel', description: 'Participation began 10/4/2024', lat: 37.117169, lng: -121.966805, zip: '95033' },
+    { name: 'Laurel Creek', description: 'Participation began 9/26/2025', lat: 37.124474, lng: -121.938115, zip: '95033' },
+    { name: 'Loma Prieta Ave', description: 'Participation began 2/9/2026', lat: 37.121643, lng: -121.9279, zip: '95033' },
+    { name: 'Long Ridge', description: 'Participation began 10/29/2024', lat: 37.096984, lng: -121.920438, zip: '95033' },
+    { name: 'Marty Road', description: 'Participation began 3/27/2020', lat: 37.150634, lng: -122.011297, zip: '95033' },
+    { name: 'Mountain Charlie Road', description: 'Participation began 2/19/2025', lat: 37.123744, lng: -121.98978, zip: '95033' },
+    { name: 'Mt Bache Loma Prieta Plus', description: 'Participation began 12/20/2024', lat: 37.104297, lng: -121.893884, zip: '95033' },
+    { name: 'Oak Ridge Road', description: 'Participation began 11/17/2025', lat: 37.193966, lng: -122.050943, zip: '95033' },
+    { name: 'Old Ranch Road', description: 'Participation began 12/7/2021', lat: 37.143204, lng: -121.997841, zip: '95033' },
+    { name: 'Radonich', description: 'Participation began 12/31/2024', lat: 37.101283, lng: -121.904919, zip: '95033' },
+    { name: 'Riva Ridge HOA', description: 'Participation began 9/6/2019', lat: 37.144965, lng: -121.992054, zip: '95033' },
+    { name: 'Skyland', description: 'Participation began 10/3/2025', lat: 37.110796, lng: -121.927653, zip: '95033' },
+    { name: 'Spanish Ranch Road', description: 'Participation began 8/10/2022', lat: 37.099379, lng: -121.901704, zip: '95033' },
+    { name: 'Stagecoach95033', description: 'Participation began 8/15/2025', lat: 37.142798, lng: -121.99084, zip: '95033' },
+    { name: 'Stetson Ridge', description: 'Participation began 12/7/2022', lat: 37.101845, lng: -121.937158, zip: '95033' },
+    { name: 'Summit Woods Firesafe Community', description: 'Participation began 5/18/2022', lat: 37.114681, lng: -121.949988, zip: '95033' },
+    { name: 'Terrace Grove Road', description: 'Participation began 12/18/2020', lat: 37.104476, lng: -121.95087, zip: '95033' },
+    { name: 'Upper/Outer Zayante and West Summit', description: 'Participation began 2/24/2022', lat: 37.161996, lng: -122.015201, zip: '95033' },
+    { name: 'Wilderfield/Whiterock/Bear Mountain Roads', description: 'Participation began 12/7/2022', lat: 37.153139, lng: -122.022681, zip: '95033' },
+    { name: 'Mount Hermon West', description: 'Participation began 8/23/2024', lat: 37.047922, lng: -122.06041, zip: '95041' },
+    { name: 'Mt Hermon Pine-Ridge', description: 'Participation began 8/23/2024', lat: 37.049445, lng: -122.053116, zip: '95041' },
+    { name: 'B40FirewiseCharlie', description: 'Participation began 8/26/2021', lat: 37.034441, lng: -121.988854, zip: '95065' },
+    { name: 'Bird Streets and Beyond', description: 'Participation began 3/23/2021', lat: 37.050538, lng: -122.15321, zip: '95060' },
+    { name: 'Bohnen/Jarvis/Richardson', description: 'Participation began 11/17/2025', lat: 37.074411, lng: -121.959385, zip: '95065' },
+    { name: 'Bonny Wood Community (McAmant|Tasset|plus)', description: 'Participation began 1/5/2022', lat: 37.044219, lng: -122.101993, zip: '95060' },
+    { name: 'Bonnymede Plus', description: 'Participation began 8/10/2022', lat: 37.028984, lng: -122.138338, zip: '95060' },
+    { name: 'Boomer Creek', description: 'Participation began 8/15/2023', lat: 37.031453, lng: -122.010465, zip: '95060' },
+    { name: 'Branciforte Ridge', description: 'Participation began 9/25/2025', lat: 36.991535, lng: -122.011456, zip: '95065' },
+    { name: 'Granite Ridge Drive', description: 'Participation began 12/19/2023', lat: 37.046505, lng: -121.996746, zip: '95065' },
+    { name: 'Happy Valley', description: 'Participation began 12/7/2021', lat: 37.029976, lng: -121.986629, zip: '95065' },
+    { name: 'Highland/Hillcrest Terrace', description: 'Participation began 1/21/2020', lat: 36.979663, lng: -122.03825, zip: '95060' },
+    { name: 'Laguna Creek', description: 'Participation began 6/8/2023', lat: 37.020853, lng: -122.128723, zip: '95060' },
+    { name: 'Lions Field Drive', description: 'Participation began 7/14/2022', lat: 37.038253, lng: -121.997786, zip: '95065' },
+    { name: 'Moore Creek Canyon HOA', description: 'Participation began 7/11/2024', lat: 36.964664, lng: -122.057502, zip: '95065' },
+    { name: 'Oak Knoll Plus', description: 'Participation began 4/28/2025', lat: 37.019211, lng: -122.032389, zip: '95060' },
+    { name: 'Ocean St Extension', description: 'Participation began 9/22/2022', lat: 36.998172, lng: -122.034693, zip: '95060' },
+    { name: 'Paradise Park', description: 'Participation began 11/24/2019', lat: 37.010653, lng: -122.046188, zip: '95060' },
+    { name: 'Pineridge plus', description: 'Participation began 12/7/2021', lat: 37.042632, lng: -122.11729, zip: '95060' },
+    { name: 'Prospect Heights', description: 'Participation began 6/17/2019', lat: 36.991281, lng: -121.999999, zip: '95065' },
+    { name: 'Rider Ridge Road & Jarvis Hill', description: 'Participation began 9/12/2025', lat: 37.072144, lng: -121.964277, zip: '95065' },
+    { name: 'Rolling Woods West', description: 'Participation began 11/21/2025', lat: 37.022031, lng: -122.035761, zip: '95060' },
+    { name: 'Santa Cruz Gardens', description: 'Participation began 9/30/2021', lat: 36.993229, lng: -121.975682, zip: '95065' },
+    { name: 'SkyRanch', description: 'Participation began 4/4/2025', lat: 37.075673, lng: -122.133121, zip: '95060' },
+    { name: 'Up Yonder', description: 'Participation began 6/28/2024', lat: 37.035395, lng: -121.98712, zip: '95065' },
+    { name: 'Westdale', description: 'Participation began 10/8/2021', lat: 37.063214, lng: -122.142911, zip: '95060' },
+    { name: 'Western Drive', description: 'Participation began 11/1/2019', lat: 36.972474, lng: -122.057795, zip: '95060' },
+    { name: 'Winter Creek', description: 'Participation began 7/31/2025', lat: 36.974124, lng: -122.028806, zip: '95060' },
+    { name: 'Woodland Heights 1 HOA', description: 'Participation began 10/29/2024', lat: 36.989031, lng: -121.971674, zip: '95065' },
+    { name: 'Heritage Parks Association', description: 'Participation began 10/3/2025', lat: 37.033375, lng: -122.028161, zip: '95066' },
+    { name: 'Hidden Glen', description: 'Participation began 12/31/2025', lat: 37.037085, lng: -122.036789, zip: '95066' },
+    { name: 'Mid-Glenwood', description: 'Participation began 1/31/2023', lat: 37.094119, lng: -122.004383, zip: '95066' },
+    { name: 'Montevalle', description: 'Participation began 5/20/2026', lat: 37.053192, lng: -122.026203, zip: '95066' },
+    { name: 'North Nelson Neighbors', description: 'Participation began 12/20/2024', lat: 37.071582, lng: -122.021909, zip: '95066' },
+    { name: 'Quail Ridge Road', description: 'Participation began 6/29/2022', lat: 37.08965, lng: -121.973733, zip: '95066' },
+    { name: 'Upper Glen Canyon Road', description: 'Participation began 12/20/2024', lat: 37.033582, lng: -122.018525, zip: '95066' },
+    { name: 'Weston Road', description: 'Participation began 12/20/2024', lat: 37.09505, lng: -122.026868, zip: '95066' },
+    { name: 'Glen Haven', description: 'Participation began 10/29/2024', lat: 37.003474, lng: -121.946488, zip: '95073' },
+    { name: 'Hoover Road', description: 'Participation began 2/7/2025', lat: 36.988162, lng: -121.957369, zip: '95073' },
+    { name: 'LLG Firewise', description: 'Participation began 12/20/2024', lat: 37.051554, lng: -121.956407, zip: '95073' },
+    { name: 'North Rodeo Gulch', description: 'Participation began 12/17/2021', lat: 36.990094, lng: -121.969694, zip: '95073' },
+    { name: 'OSJ Road', description: 'Participation began 3/11/2026', lat: 37.02671, lng: -121.948891, zip: '95073' },
+    { name: 'Olson Rd', description: 'Participation began 7/19/2023', lat: 37.048592, lng: -121.957608, zip: '95073' },
+    { name: 'Pau Hana Drive', description: 'Participation began 4/19/2024', lat: 37.052475, lng: -121.929949, zip: '95073' },
+    { name: 'Twin Lanes', description: 'Participation began 5/20/2026', lat: 37.055877, lng: -121.952791, zip: '95073' },
+    { name: 'Upper Fairway', description: 'Participation began 8/10/2022', lat: 37.000917, lng: -121.938247, zip: '95073' },
+    { name: 'Bella Vista Lane', description: 'Participation began 6/13/2025', lat: 36.990253, lng: -121.711355, zip: '95076' },
+    { name: 'Corralitos Flagship Lower Enos Lane Plus', description: 'Participation began 10/29/2024', lat: 36.998131, lng: -121.81603, zip: '95076' },
+  ],
+  tulare: [
+    { name: 'Upper Tule', description: 'Participation began 4/30/2025', lat: 36.210648, lng: -118.719787, zip: '93265' },
+    { name: 'Alder Creek', description: 'Participation began 8/15/2025', lat: 36.181413, lng: -118.633364, zip: '93265' },
+    { name: 'Badger', description: 'Participation began 8/23/2024', lat: 36.628143, lng: -119.008975, zip: '93603' },
+  ],
+  tuolumne: [
+    { name: 'Old Mono Road', description: 'Participation began 4/4/2025', lat: 38.162689, lng: -120.053266, zip: '95335' },
+    { name: 'Gold Springs Ranch (GSR)', description: 'Participation began 8/7/2019', lat: 38.043084, lng: -120.41558, zip: '95310' },
+    { name: 'Clifftonites', description: 'Participation began 7/23/2021', lat: 37.868237, lng: -120.171034, zip: '95321' },
+    { name: 'Crest Valley', description: 'Participation began 12/7/2022', lat: 37.856639, lng: -120.180915, zip: '95321' },
+    { name: 'PointViewers', description: 'Participation began 1/31/2023', lat: 37.844915, lng: -120.18246, zip: '95321' },
+    { name: 'Melones Sunset Lake', description: 'Participation began 12/20/2024', lat: 37.966508, lng: -120.479797, zip: '95327' },
+    { name: 'Sierra Park', description: 'Participation began 6/16/2022', lat: 38.074504, lng: -120.173081, zip: '95346' },
+    { name: 'Sugar-Wuk', description: 'Participation began 6/7/2024', lat: 38.058703, lng: -120.191234, zip: '95346' },
+    { name: 'Cedar Ridge', description: 'Participation began 10/3/2025', lat: 38.052416, lng: -120.273462, zip: '95370' },
+    { name: 'Comstock Ranch', description: 'Participation began 7/14/2021', lat: 38.043775, lng: -120.261056, zip: '95370' },
+    { name: 'Curtis Creek Ranch', description: 'Participation began 3/11/2026', lat: 37.97033, lng: -120.294213, zip: '95370' },
+    { name: 'Elks Hill', description: 'Participation began 12/17/2021', lat: 37.995366, lng: -120.38663, zip: '95370' },
+    { name: 'Greenley Oaks', description: 'Participation began 4/19/2024', lat: 37.987149, lng: -120.359653, zip: '95370' },
+    { name: 'Keeley Drive-Arno Way', description: 'Participation began 5/26/2023', lat: 37.999427, lng: -120.398897, zip: '95370' },
+    { name: 'Sonora Knolls/Dragoon Gulch', description: 'Participation began 4/21/2021', lat: 37.987654, lng: -120.394291, zip: '95370' },
+    { name: 'TELLARA', description: 'Participation began 4/3/2019', lat: 37.964971, lng: -120.337388, zip: '95370' },
+    { name: 'Ridgewood 108', description: 'Participation began 8/7/2019', lat: 37.998402, lng: -120.292983, zip: '95370' },
+    { name: 'Scenic Brook', description: 'Participation began 4/4/2025', lat: 37.996486, lng: -120.334609, zip: '95370' },
+    { name: 'River Drive Firewise Group', description: 'Participation began 4/23/2026', lat: 38.196935, lng: -120.009089, zip: '95375' },
+    { name: 'Strawberry Meadow View', description: 'Participation began 3/11/2026', lat: 38.197776, lng: -120.014268, zip: '95375' },
+    { name: 'Tanager Neighborhood', description: 'Participation began 9/28/2022', lat: 38.198372, lng: -120.012729, zip: '95375' },
+    { name: 'Mira Monte', description: 'Participation began 12/24/2019', lat: 37.973986, lng: -120.222825, zip: '95379' },
+    { name: 'Cedarview', description: 'Participation began 1/21/2020', lat: 38.038422, lng: -120.243318, zip: '95383' },
+    { name: 'Pinewood-Upper Sullivan', description: 'Participation began 5/16/2025', lat: 38.044761, lng: -120.239149, zip: '95383' },
+    { name: 'Wildwood Shadybrook', description: 'Participation began 3/25/2022', lat: 38.04701, lng: -120.235474, zip: '95383' },
+  ],
+  hoopa: [
+  ],
+};
+
+// Ray-casting point-in-polygon test (works for Polygon & MultiPolygon rings)
+function pointInGeometry(lat, lng, geometry) {
+  function inRing(pt, ring) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1];
+      const xj = ring[j][0], yj = ring[j][1];
+      const intersect = ((yi > pt[1]) !== (yj > pt[1])) &&
+        (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+  const pt = [lng, lat];
+  if (geometry.type === 'Polygon') {
+    return inRing(pt, geometry.coordinates[0]);
+  } else if (geometry.type === 'MultiPolygon') {
+    return geometry.coordinates.some(poly => inRing(pt, poly[0]));
+  }
+  return false;
+}
+
+/* ════════════════════════════════════════════
+   DINS — Damage Inspection (DINS) points
+   Structures damaged by wildland fire, 2013–2025.
+   Loaded once from ./DINS.json (same folder as this file) and filtered
+   to whichever ZIP codes belong to the currently selected community.
+════════════════════════════════════════════ */
+let dinsData = null;        // flat array of {year, damage, incident, zip, lat, lng}
+let dinsLoadPromise = null;
+
+function loadDinsData() {
+  if (dinsData) return Promise.resolve(dinsData);
+  if (dinsLoadPromise) return dinsLoadPromise;
+  dinsLoadPromise = fetch('./DINS.json')
+    .then(r => r.json())
+    .then(gj => {
+      dinsData = (gj.features || []).map(f => ({
+        year:     f.properties.Event_Year,
+        damage:   f.properties.DAMAGE,
+        incident: f.properties.INCIDENTNAME,
+        zip:      String(f.properties.ZIP_CODE),
+        lat:      f.geometry.coordinates[1],
+        lng:      f.geometry.coordinates[0],
+      }));
+      return dinsData;
+    })
+    .catch(err => {
+      console.warn('Could not load DINS.json', err);
+      dinsData = [];
+      return dinsData;
+    });
+  return dinsLoadPromise;
+}
+
+// Color-code points by damage severity (adjust strings to match your DAMAGE values if needed)
+function dinsColor(damage) {
+  const d = (damage || '').toLowerCase();
+  if (d.includes('destroy'))              return '#7B1818'; // Destroyed (>50%)
+  if (d.includes('major'))                return '#C0392B'; // Major (26-50%)
+  if (d.includes('minor'))                return '#E07B2A'; // Minor (10-25%)
+  if (d.includes('affected'))             return '#F5A44A'; // Affected (1-9%)
+  if (d.includes('no damage') || d.includes('inaccessible')) return '#9CA3AF';
+  return '#3A3A3A';
+}
+
+function firewiseSitesForZip(cd) {
+  const sites = FIREWISE_SITES[currentCommunity] || [];
+  // Prefer explicit zip tag on placeholder data if present
+  const tagged = sites.filter(s => s.zip === cd.zip);
+  if (tagged.length) return tagged;
+  // Otherwise try point-in-polygon against the ZIP's geometry, if loaded
+  if (geoFeatures) {
+    const feat = geoFeatures.find(f => f._data && f._data.zip === cd.zip);
+    if (feat) return sites.filter(s => pointInGeometry(s.lat, s.lng, feat.geometry));
+  }
+  return [];
+}
 
 /* ════════════════════════════════════════════
    ZIP DATA SEEDS (same as original)
@@ -796,225 +1335,222 @@ const COMMUNITY_META = {
 function generateZIPs(community) {
   const seeds = {
     monterey: [
-{ zip:'93426', name:'Bradley', fair:28.98,totalPolicies:391,lowRisk:2,medRisk:97,highRisk:292, income:145, pre60:42.6, buildYr:1965, pop:300, units:4600},
-{ zip:'93450', name:'San Ardo', fair:2.33,totalPolicies:6,lowRisk:6,medRisk:0,highRisk:0, income:135, pre60:17.5, buildYr:1970, pop:5900, units:5000},
-{ zip:'93451', name:'San Miguel', fair:5.26,totalPolicies:95,lowRisk:42,medRisk:35,highRisk:18, income:77, pre60:57.9, buildYr:1965, pop:6400, units:700},
-{ zip:'93901', name:'Salinas', fair:0.23,totalPolicies:16,lowRisk:16,medRisk:0,highRisk:0, income:105, pre60:15.4, buildYr:1970, pop:1600, units:7100},
-{ zip:'93905', name:'Salinas', fair:0.48,totalPolicies:46,lowRisk:46,medRisk:0,highRisk:0, income:16, pre60:68.7, buildYr:1965, pop:6200, units:6000},
-{ zip:'93906', name:'Salinas', fair:0.29,totalPolicies:39,lowRisk:39,medRisk:0,highRisk:0, income:96, pre60:93.3, buildYr:1970, pop:7200, units:9300},
-{ zip:'93907', name:'Salinas', fair:10.07,totalPolicies:695,lowRisk:16,medRisk:270,highRisk:409, income:80, pre60:59.7, buildYr:1965, pop:8400, units:4500},
-{ zip:'93908', name:'Salinas', fair:9.16,totalPolicies:462,lowRisk:20,medRisk:181,highRisk:261, income:33, pre60:5.8, buildYr:1970, pop:5700, units:7500},
-{ zip:'93920', name:'Big Sur', fair:31.65,totalPolicies:138,lowRisk:110,medRisk:17,highRisk:11, income:65, pre60:84.4, buildYr:1971, pop:5000, units:7000},
-{ zip:'93923', name:'Carmel', fair:12.84,totalPolicies:1227,lowRisk:41,medRisk:934,highRisk:252, income:105, pre60:78.2, buildYr:1965, pop:9200, units:500},
-{ zip:'93924', name:'Carmel Valley', fair:30.45,totalPolicies:870,lowRisk:2,medRisk:149,highRisk:719, income:91, pre60:15, buildYr:1965, pop:5900, units:9800},
-{ zip:'93925', name:'Chualar', fair:8.33,totalPolicies:18,lowRisk:7,medRisk:0,highRisk:11, income:139, pre60:93.7, buildYr:1965, pop:7200, units:4500},
-{ zip:'93926', name:'Gonzales', fair:0.55,totalPolicies:10,lowRisk:9,medRisk:0,highRisk:1, income:131, pre60:96.2, buildYr:1965, pop:2100, units:200},
-{ zip:'93927', name:'Greenfield', fair:2.08,totalPolicies:76,lowRisk:22,medRisk:23,highRisk:31, income:23, pre60:6.7, buildYr:1965, pop:6800, units:7100},
-{ zip:'93930', name:'King City', fair:5.92,totalPolicies:204,lowRisk:132,medRisk:4,highRisk:68, income:126, pre60:22.6, buildYr:1965, pop:5200, units:9300},
-{ zip:'93932', name:'Lockwood', fair:4.78,totalPolicies:13,lowRisk:3,medRisk:3,highRisk:7, income:3, pre60:64.8, buildYr:1965, pop:8800, units:9500},
-{ zip:'93933', name:'Marina', fair:1.14,totalPolicies:68,lowRisk:50,medRisk:18,highRisk:0, income:65, pre60:65.3, buildYr:1965, pop:2900, units:8900},
-{ zip:'93940', name:'Monterey', fair:3.99,totalPolicies:403,lowRisk:38,medRisk:274,highRisk:91, income:40, pre60:83.1, buildYr:1965, pop:8400, units:5400},
-{ zip:'93950', name:'Pacific Grove', fair:0.80,totalPolicies:47,lowRisk:36,medRisk:11,highRisk:0, income:65, pre60:81, buildYr:1965, pop:7900, units:9100},
-{ zip:'93953', name:'Pebble Beach', fair:5.95,totalPolicies:178,lowRisk:0,medRisk:178,highRisk:0, income:88, pre60:54.4, buildYr:1965, pop:1400, units:9300},
-{ zip:'93954', name:'San Lucas', fair:3.49,totalPolicies:3,lowRisk:3,medRisk:0,highRisk:0, income:17, pre60:54, buildYr:1965, pop:4200, units:4400},
-{ zip:'93955', name:'Seaside', fair:0.48,totalPolicies:40,lowRisk:38,medRisk:2,highRisk:0, income:77, pre60:37.7, buildYr:1965, pop:3100, units:1500},
-{ zip:'93960', name:'Soledad', fair:0.77,totalPolicies:32,lowRisk:30,medRisk:0,highRisk:2, income:17, pre60:13.7, buildYr:1965, pop:300, units:5900},
-{ zip:'93962', name:'Spreckels', fair:1.06,totalPolicies:2,lowRisk:2,medRisk:0,highRisk:0, income:97, pre60:61.3, buildYr:1965, pop:8900, units:600},
-{ zip:'95004', name:'Aromas', fair:10.17,totalPolicies:146,lowRisk:0,medRisk:31,highRisk:115, income:94, pre60:29, buildYr:1965, pop:6700, units:500},
-{ zip:'95012', name:'Castroville', fair:2.72,totalPolicies:63,lowRisk:17,medRisk:39,highRisk:7, income:40, pre60:57.3, buildYr:1965, pop:1600, units:3000},
-{ zip:'95039', name:'Moss Landing', fair:1.45,totalPolicies:5,lowRisk:3,medRisk:2,highRisk:0, income:131, pre60:99.1, buildYr:1965, pop:5600, units:5100},
-{ zip:'95076', name:'Watsonville', fair:5.07,totalPolicies:994,lowRisk:146,medRisk:251,highRisk:597, income:24, pre60:75.7, buildYr:1965, pop:4400, units:7800},
+{ zip:'93426', name:'Bradley', fair:28.98,totalPolicies:391,lowRisk:2,medRisk:97,highRisk:292, income:35.7, pre2010:88.9, fhsz:99.5, damaged:1, firewise:0, structure:1349, pop:1366 },
+{ zip:'93450', name:'San Ardo', fair:2.33,totalPolicies:6,lowRisk:6,medRisk:0,highRisk:0, income:50.6, pre2010:100.0, fhsz:53.5, damaged:0, firewise:0, structure:258, pop:661 },
+{ zip:'93451', name:'San Miguel', fair:5.26,totalPolicies:95,lowRisk:42,medRisk:35,highRisk:18, income:32.7, pre2010:81.0, fhsz:78.6, damaged:1, firewise:0, structure:1806, pop:4850 },
+{ zip:'93901', name:'Salinas', fair:0.23,totalPolicies:16,lowRisk:16,medRisk:0,highRisk:0, income:40.0, pre2010:94.7, fhsz:0.0, damaged:0, firewise:0, structure:7110, pop:29989 },
+{ zip:'93905', name:'Salinas', fair:0.48,totalPolicies:46,lowRisk:46,medRisk:0,highRisk:0, income:56.4, pre2010:95.9, fhsz:2.8, damaged:0, firewise:0, structure:9573, pop:63730 },
+{ zip:'93906', name:'Salinas', fair:0.29,totalPolicies:39,lowRisk:39,medRisk:0,highRisk:0, income:39.8, pre2010:97.6, fhsz:0.9, damaged:0, firewise:0, structure:13265, pop:67042 },
+{ zip:'93907', name:'Salinas', fair:10.07,totalPolicies:695,lowRisk:16,medRisk:270,highRisk:409, income:31.4, pre2010:97.7, fhsz:65.0, damaged:0, firewise:5, structure:6899, pop:23193 },
+{ zip:'93908', name:'Salinas', fair:9.16,totalPolicies:462,lowRisk:20,medRisk:181,highRisk:261, income:17.3, pre2010:99.0, fhsz:92.1, damaged:35, firewise:17, structure:5045, pop:13526 },
+{ zip:'93920', name:'Big Sur', fair:31.65,totalPolicies:138,lowRisk:110,medRisk:17,highRisk:11, income:49.7, pre2010:87.3, fhsz:97.9, damaged:0, firewise:4, structure:436, pop:1237 },
+{ zip:'93923', name:'Carmel', fair:12.84,totalPolicies:1227,lowRisk:41,medRisk:934,highRisk:252, income:15.1, pre2010:95.8, fhsz:86.5, damaged:75, firewise:12, structure:9558, pop:15408 },
+{ zip:'93924', name:'Carmel Valley', fair:30.45,totalPolicies:870,lowRisk:2,medRisk:149,highRisk:719, income:13.5, pre2010:95.8, fhsz:98.8, damaged:103, firewise:12, structure:2857, pop:6671 },
+{ zip:'93925', name:'Chualar', fair:8.33,totalPolicies:18,lowRisk:7,medRisk:0,highRisk:11, income:59.2, pre2010:91.9, fhsz:12.5, damaged:0, firewise:1, structure:216, pop:1247 },
+{ zip:'93926', name:'Gonzales', fair:0.55,totalPolicies:10,lowRisk:9,medRisk:0,highRisk:1, income:48.1, pre2010:96.0, fhsz:1.5, damaged:0, firewise:0, structure:1822, pop:9283 },
+{ zip:'93927', name:'Greenfield', fair:2.08,totalPolicies:76,lowRisk:22,medRisk:23,highRisk:31, income:47.7, pre2010:91.1, fhsz:6.4, damaged:0, firewise:0, structure:3654, pop:20497 },
+{ zip:'93930', name:'King City', fair:5.92,totalPolicies:204,lowRisk:132,medRisk:4,highRisk:68, income:57.8, pre2010:86.8, fhsz:31.2, damaged:1, firewise:0, structure:3444, pop:16282 },
+{ zip:'93932', name:'Lockwood', fair:4.78,totalPolicies:13,lowRisk:3,medRisk:3,highRisk:7, income:22.3, pre2010:95.8, fhsz:75.4, damaged:0, firewise:0, structure:272, pop:674 },
+{ zip:'93933', name:'Marina', fair:1.14,totalPolicies:68,lowRisk:50,medRisk:18,highRisk:0, income:36.3, pre2010:79.8, fhsz:31.3, damaged:0, firewise:0, structure:5978, pop:28261 },
+{ zip:'93940', name:'Monterey', fair:3.99,totalPolicies:403,lowRisk:38,medRisk:274,highRisk:91, income:25.0, pre2010:96.4, fhsz:46.7, damaged:0, firewise:5, structure:10094, pop:29071 },
+{ zip:'93950', name:'Pacific Grove', fair:0.8,totalPolicies:47,lowRisk:36,medRisk:11,highRisk:0, income:28.3, pre2010:99.0, fhsz:23.7, damaged:0, firewise:2, structure:5872, pop:15047 },
+{ zip:'93953', name:'Pebble Beach', fair:5.95,totalPolicies:178,lowRisk:0,medRisk:178,highRisk:0, income:16.4, pre2010:94.6, fhsz:100.0, damaged:0, firewise:2, structure:2990, pop:4781 },
+{ zip:'93954', name:'San Lucas', fair:3.49,totalPolicies:3,lowRisk:3,medRisk:0,highRisk:0, income:78.3, pre2010:73.2, fhsz:5.8, damaged:0, firewise:0, structure:86, pop:335 },
+{ zip:'93955', name:'Seaside', fair:0.48,totalPolicies:40,lowRisk:38,medRisk:2,highRisk:0, income:46.7, pre2010:95.0, fhsz:10.0, damaged:0, firewise:1, structure:8380, pop:32323 },
+{ zip:'93960', name:'Soledad', fair:0.77,totalPolicies:32,lowRisk:30,medRisk:0,highRisk:2, income:42.7, pre2010:81.9, fhsz:7.3, damaged:5, firewise:0, structure:4143, pop:26605 },
+{ zip:'93962', name:'Spreckels', fair:1.06,totalPolicies:2,lowRisk:2,medRisk:0,highRisk:0, income:79.3, pre2010:100.0, fhsz:0.0, damaged:0, firewise:0, structure:189, pop:504 },
+{ zip:'95004', name:'Aromas', fair:10.17,totalPolicies:146,lowRisk:0,medRisk:31,highRisk:115, income:22.8, pre2010:99.2, fhsz:98.7, damaged:3, firewise:2, structure:1436, pop:4032 },
+{ zip:'95012', name:'Castroville', fair:2.72,totalPolicies:63,lowRisk:17,medRisk:39,highRisk:7, income:50.5, pre2010:82.0, fhsz:33.0, damaged:0, firewise:0, structure:2320, pop:11902 },
+{ zip:'95039', name:'Moss Landing', fair:1.45,totalPolicies:5,lowRisk:3,medRisk:2,highRisk:0, income:71.0, pre2010:98.5, fhsz:45.1, damaged:0, firewise:0, structure:346, pop:2373 },
+{ zip:'95076', name:'Watsonville', fair:5.07,totalPolicies:994,lowRisk:146,medRisk:251,highRisk:597, income:41.8, pre2010:97.3, fhsz:32.8, damaged:0, firewise:4, structure:19613, pop:82340 },
     ],
     san_benito: [
-{ zip:'95004', name:'Aromas', fair:10.17,totalPolicies:146,lowRisk:0,medRisk:31,highRisk:115, income:108, pre60:73.2, buildYr:1965, pop:8200, units:900},
-{ zip:'95023', name:'Hollister', fair:1.76,totalPolicies:244,lowRisk:152,medRisk:82,highRisk:10, income:130, pre60:94.6, buildYr:1970, pop:8600, units:8000},
-{ zip:'95043', name:'Paicines', fair:20.07,totalPolicies:55,lowRisk:3,medRisk:10,highRisk:42, income:11, pre60:55.9, buildYr:1965, pop:6300, units:5500},
-{ zip:'95045', name:'San Juan Bautista', fair:7.17,totalPolicies:93,lowRisk:23,medRisk:30,highRisk:40, income:78, pre60:37.4, buildYr:1970, pop:3400, units:5100},
-{ zip:'95075', name:'Tres Pinos', fair:8.28,totalPolicies:14,lowRisk:8,medRisk:6,highRisk:0, income:41, pre60:25.7, buildYr:1965, pop:800, units:3500},
+{ zip:'95004', name:'Aromas', fair:10.17,totalPolicies:146,lowRisk:0,medRisk:31,highRisk:115, income:35.4, pre2010:99.2, fhsz:98.7, damaged:3, firewise:2, structure:1436, pop:4032 },
+{ zip:'95023', name:'Hollister', fair:1.76,totalPolicies:244,lowRisk:152,medRisk:82,highRisk:10, income:38.3, pre2010:83.3, fhsz:20.8, damaged:2, firewise:1, structure:13859, pop:61202 },
+{ zip:'95043', name:'Paicines', fair:20.07,totalPolicies:55,lowRisk:3,medRisk:10,highRisk:42, income:16.1, pre2010:84.4, fhsz:96.4, damaged:0, firewise:0, structure:274, pop:674 },
+{ zip:'95045', name:'San Juan Bautista', fair:7.17,totalPolicies:93,lowRisk:23,medRisk:30,highRisk:40, income:30.5, pre2010:89.9, fhsz:57.9, damaged:2, firewise:2, structure:1297, pop:4570 },
+{ zip:'95075', name:'Tres Pinos', fair:8.28,totalPolicies:14,lowRisk:8,medRisk:6,highRisk:0, income:15.1, pre2010:99.5, fhsz:100.0, damaged:0, firewise:0, structure:169, pop:366 },
     ],
     san_diego: [
-{ zip:'91901', name:'Alpine', fair:50.79,totalPolicies:2943,lowRisk:0,medRisk:633,highRisk:2310, income:113, pre60:20.5, buildYr:1965, pop:5400, units:3600},
-{ zip:'91902', name:'Bonita', fair:3.22,totalPolicies:182,lowRisk:167,medRisk:12,highRisk:3, income:59, pre60:39.1, buildYr:1970, pop:9300, units:5000},
-{ zip:'91905', name:'Boulevard', fair:28.34,totalPolicies:223,lowRisk:0,medRisk:26,highRisk:197, income:76, pre60:68.4, buildYr:1965, pop:9400, units:500},
-{ zip:'91906', name:'Campo', fair:37.44,totalPolicies:520,lowRisk:1,medRisk:0,highRisk:519, income:71, pre60:40.1, buildYr:1970, pop:8500, units:7900},
-{ zip:'91910', name:'Chula Vista', fair:1.28,totalPolicies:224,lowRisk:224,medRisk:0,highRisk:0, income:129, pre60:77.2, buildYr:1965, pop:3300, units:6500},
-{ zip:'91911', name:'Chula Vista', fair:1.17,totalPolicies:202,lowRisk:202,medRisk:0,highRisk:0, income:56, pre60:37.8, buildYr:1970, pop:9300, units:5500},
-{ zip:'91913', name:'Chula Vista', fair:2.32,totalPolicies:320,lowRisk:320,medRisk:0,highRisk:0, income:41, pre60:4.9, buildYr:1965, pop:700, units:4300},
-{ zip:'91914', name:'Chula Vista', fair:10.02,totalPolicies:473,lowRisk:61,medRisk:321,highRisk:91, income:57, pre60:99.7, buildYr:1970, pop:3600, units:2700},
-{ zip:'91915', name:'Chula Vista', fair:2.95,totalPolicies:237,lowRisk:138,medRisk:99,highRisk:0, income:39, pre60:93.9, buildYr:1971, pop:9100, units:6600},
-{ zip:'91916', name:'Descanso', fair:45.04,totalPolicies:422,lowRisk:0,medRisk:0,highRisk:422, income:118, pre60:68.1, buildYr:1965, pop:4600, units:4000},
-{ zip:'91917', name:'Dulzura', fair:33.99,totalPolicies:86,lowRisk:0,medRisk:0,highRisk:86, income:59, pre60:26.6, buildYr:1965, pop:8000, units:4300},
-{ zip:'91931', name:'Guatay', fair:100.00,totalPolicies:84,lowRisk:0,medRisk:0,highRisk:84, income:66, pre60:49.8, buildYr:1965, pop:1400, units:9700},
-{ zip:'91932', name:'Imperial Beach', fair:0.61,totalPolicies:39,lowRisk:39,medRisk:0,highRisk:0, income:44, pre60:9.3, buildYr:1965, pop:1700, units:3000},
-{ zip:'91934', name:'Jacumba', fair:10.43,totalPolicies:36,lowRisk:7,medRisk:29,highRisk:0, income:123, pre60:65.6, buildYr:1965, pop:5500, units:6100},
-{ zip:'91935', name:'Jamul', fair:50.37,totalPolicies:1620,lowRisk:0,medRisk:82,highRisk:1538, income:138, pre60:87.6, buildYr:1965, pop:2600, units:3500},
-{ zip:'91941', name:'La Mesa', fair:1.75,totalPolicies:178,lowRisk:155,medRisk:23,highRisk:0, income:16, pre60:85, buildYr:1965, pop:200, units:2100},
-{ zip:'91942', name:'La Mesa', fair:0.59,totalPolicies:66,lowRisk:66,medRisk:0,highRisk:0, income:65, pre60:67.1, buildYr:1965, pop:5700, units:5100},
-{ zip:'91945', name:'Lemon Grove', fair:1.29,totalPolicies:92,lowRisk:92,medRisk:0,highRisk:0, income:106, pre60:10.4, buildYr:1965, pop:300, units:3200},
-{ zip:'91950', name:'National City', fair:1.19,totalPolicies:121,lowRisk:121,medRisk:0,highRisk:0, income:124, pre60:16.6, buildYr:1965, pop:9700, units:5900},
-{ zip:'91962', name:'Pine Valley', fair:51.13,totalPolicies:499,lowRisk:0,medRisk:28,highRisk:471, income:125, pre60:71.3, buildYr:1965, pop:4000, units:4300},
-{ zip:'91963', name:'Potrero', fair:26.40,totalPolicies:85,lowRisk:29,medRisk:0,highRisk:56, income:147, pre60:41.7, buildYr:1965, pop:9900, units:1200},
-{ zip:'91977', name:'Spring Valley', fair:3.54,totalPolicies:586,lowRisk:438,medRisk:148,highRisk:0, income:74, pre60:69.8, buildYr:1965, pop:9600, units:4400},
-{ zip:'91978', name:'Spring Valley', fair:13.79,totalPolicies:377,lowRisk:37,medRisk:218,highRisk:122, income:138, pre60:67.6, buildYr:1965, pop:100, units:1500},
-{ zip:'91980', name:'Tecate', fair:9.21,totalPolicies:7,lowRisk:0,medRisk:0,highRisk:7, income:46, pre60:44.5, buildYr:1965, pop:400, units:8600},
-{ zip:'92003', name:'Bonsall', fair:21.85,totalPolicies:419,lowRisk:31,medRisk:274,highRisk:114, income:99, pre60:5.6, buildYr:1965, pop:4500, units:3100},
-{ zip:'92004', name:'Borrego Springs', fair:3.31,totalPolicies:87,lowRisk:87,medRisk:0,highRisk:0, income:121, pre60:16.3, buildYr:1965, pop:800, units:600},
-{ zip:'92007', name:'Cardiff By The Sea', fair:1.50,totalPolicies:58,lowRisk:45,medRisk:13,highRisk:0, income:29, pre60:56.1, buildYr:1965, pop:1400, units:1900},
-{ zip:'92008', name:'Carlsbad', fair:1.48,totalPolicies:129,lowRisk:97,medRisk:32,highRisk:0, income:3, pre60:58.5, buildYr:1965, pop:2200, units:9400},
-{ zip:'92009', name:'Carlsbad', fair:5.77,totalPolicies:871,lowRisk:773,medRisk:98,highRisk:0, income:127, pre60:59.1, buildYr:1965, pop:8100, units:6900},
-{ zip:'92010', name:'Carlsbad', fair:2.86,totalPolicies:171,lowRisk:165,medRisk:6,highRisk:0, income:73, pre60:32.6, buildYr:1965, pop:1800, units:200},
-{ zip:'92011', name:'Carlsbad', fair:2.50,totalPolicies:216,lowRisk:216,medRisk:0,highRisk:0, income:14, pre60:13.7, buildYr:1965, pop:6400, units:7700},
-{ zip:'92014', name:'Del Mar', fair:3.17,totalPolicies:191,lowRisk:137,medRisk:54,highRisk:0, income:58, pre60:7.2, buildYr:1965, pop:5100, units:5800},
-{ zip:'92019', name:'El Cajon', fair:12.61,totalPolicies:1644,lowRisk:290,medRisk:656,highRisk:698, income:107, pre60:67.8, buildYr:1965, pop:3400, units:6400},
-{ zip:'92020', name:'El Cajon', fair:1.81,totalPolicies:231,lowRisk:205,medRisk:26,highRisk:0, income:138, pre60:71.8, buildYr:1965, pop:4500, units:8600},
-{ zip:'92021', name:'El Cajon', fair:9.90,totalPolicies:1682,lowRisk:183,medRisk:413,highRisk:1086, income:123, pre60:39.4, buildYr:1965, pop:2300, units:3100},
-{ zip:'92024', name:'Encinitas', fair:3.27,totalPolicies:579,lowRisk:278,medRisk:243,highRisk:58, income:8, pre60:86.3, buildYr:1965, pop:8900, units:3600},
-{ zip:'92025', name:'Escondido', fair:5.73,totalPolicies:615,lowRisk:169,medRisk:370,highRisk:76, income:18, pre60:52.6, buildYr:1965, pop:4700, units:4700},
-{ zip:'92026', name:'Escondido', fair:18.52,totalPolicies:2656,lowRisk:355,medRisk:1141,highRisk:1160, income:111, pre60:4.9, buildYr:1965, pop:3700, units:3900},
-{ zip:'92027', name:'Escondido', fair:9.92,totalPolicies:1336,lowRisk:237,medRisk:747,highRisk:352, income:58, pre60:1.6, buildYr:1965, pop:1100, units:4300},
-{ zip:'92028', name:'Fallbrook', fair:23.49,totalPolicies:3714,lowRisk:119,medRisk:2293,highRisk:1302, income:68, pre60:64, buildYr:1965, pop:5000, units:3700},
-{ zip:'92029', name:'Escondido', fair:14.67,totalPolicies:1083,lowRisk:46,medRisk:739,highRisk:298, income:39, pre60:55.5, buildYr:1965, pop:4700, units:8000},
-{ zip:'92036', name:'Julian', fair:45.34,totalPolicies:1076,lowRisk:8,medRisk:19,highRisk:1049, income:36, pre60:46, buildYr:1965, pop:700, units:2500},
-{ zip:'92037', name:'La Jolla', fair:1.70,totalPolicies:288,lowRisk:271,medRisk:17,highRisk:0, income:28, pre60:53.3, buildYr:1965, pop:4700, units:6000},
-{ zip:'92040', name:'Lakeside', fair:12.73,totalPolicies:1668,lowRisk:288,medRisk:856,highRisk:524, income:32, pre60:78.7, buildYr:1965, pop:9400, units:4700},
-{ zip:'92054', name:'Oceanside', fair:1.73,totalPolicies:184,lowRisk:184,medRisk:0,highRisk:0, income:29, pre60:60.4, buildYr:1965, pop:7800, units:3400},
-{ zip:'92056', name:'Oceanside', fair:1.83,totalPolicies:330,lowRisk:325,medRisk:5,highRisk:0, income:139, pre60:17.5, buildYr:1965, pop:4900, units:2400},
-{ zip:'92057', name:'Oceanside', fair:4.39,totalPolicies:794,lowRisk:640,medRisk:149,highRisk:5, income:37, pre60:51.4, buildYr:1965, pop:8800, units:6800},
-{ zip:'92058', name:'Oceanside', fair:3.97,totalPolicies:334,lowRisk:233,medRisk:101,highRisk:0, income:89, pre60:90.2, buildYr:1965, pop:4300, units:3000},
-{ zip:'92059', name:'Pala', fair:23.95,totalPolicies:80,lowRisk:0,medRisk:2,highRisk:78, income:20, pre60:82.8, buildYr:1965, pop:7400, units:4000},
-{ zip:'92060', name:'Palomar Mountain', fair:62.56,totalPolicies:132,lowRisk:0,medRisk:0,highRisk:132, income:68, pre60:82.7, buildYr:1965, pop:2700, units:3800},
-{ zip:'92061', name:'Pauma Valley', fair:28.45,totalPolicies:278,lowRisk:34,medRisk:79,highRisk:165, income:101, pre60:36.3, buildYr:1965, pop:8600, units:9300},
-{ zip:'92064', name:'Poway', fair:10.48,totalPolicies:1523,lowRisk:456,medRisk:599,highRisk:468, income:68, pre60:67.8, buildYr:1965, pop:9300, units:5600},
-{ zip:'92065', name:'Ramona', fair:30.77,totalPolicies:3674,lowRisk:2,medRisk:886,highRisk:2786, income:146, pre60:55.2, buildYr:1965, pop:9900, units:8100},
-{ zip:'92066', name:'Ranchita', fair:13.49,totalPolicies:39,lowRisk:0,medRisk:0,highRisk:39, income:24, pre60:48, buildYr:1965, pop:6900, units:8600},
-{ zip:'92067', name:'Rancho Santa Fe', fair:27.05,totalPolicies:801,lowRisk:30,medRisk:688,highRisk:83, income:150, pre60:13.5, buildYr:1965, pop:7700, units:1700},
-{ zip:'92069', name:'San Marcos', fair:7.65,totalPolicies:885,lowRisk:596,medRisk:242,highRisk:47, income:33, pre60:11.1, buildYr:1965, pop:9400, units:9100},
-{ zip:'92070', name:'Santa Ysabel', fair:31.71,totalPolicies:137,lowRisk:1,medRisk:1,highRisk:135, income:143, pre60:24.5, buildYr:1965, pop:2500, units:300},
-{ zip:'92071', name:'Santee', fair:6.00,totalPolicies:1043,lowRisk:420,medRisk:502,highRisk:121, income:47, pre60:13.7, buildYr:1965, pop:5500, units:5500},
-{ zip:'92075', name:'Solana Beach', fair:1.90,totalPolicies:91,lowRisk:66,medRisk:25,highRisk:0, income:133, pre60:98.6, buildYr:1965, pop:3000, units:8800},
-{ zip:'92078', name:'San Marcos', fair:9.46,totalPolicies:1396,lowRisk:475,medRisk:786,highRisk:135, income:78, pre60:64.7, buildYr:1965, pop:3400, units:6900},
-{ zip:'92081', name:'Vista', fair:2.06,totalPolicies:174,lowRisk:170,medRisk:4,highRisk:0, income:61, pre60:49, buildYr:1965, pop:6400, units:5800},
-{ zip:'92082', name:'Valley Center', fair:43.14,totalPolicies:2844,lowRisk:101,medRisk:153,highRisk:2590, income:63, pre60:29.4, buildYr:1965, pop:5200, units:8500},
-{ zip:'92083', name:'Vista', fair:1.36,totalPolicies:104,lowRisk:104,medRisk:0,highRisk:0, income:67, pre60:32.1, buildYr:1965, pop:3500, units:5800},
-{ zip:'92084', name:'Vista', fair:9.39,totalPolicies:1167,lowRisk:269,medRisk:659,highRisk:239, income:26, pre60:5, buildYr:1965, pop:2400, units:8200},
-{ zip:'92086', name:'Warner Springs', fair:45.52,totalPolicies:381,lowRisk:3,medRisk:0,highRisk:378, income:106, pre60:26.6, buildYr:1965, pop:2100, units:9400},
-{ zip:'92091', name:'Rancho Santa Fe', fair:12.03,totalPolicies:191,lowRisk:2,medRisk:161,highRisk:28, income:91, pre60:92.6, buildYr:1965, pop:9600, units:3500},
-{ zip:'92101', name:'San Diego', fair:0.18,totalPolicies:21,lowRisk:21,medRisk:0,highRisk:0, income:125, pre60:42.3, buildYr:1965, pop:300, units:7500},
-{ zip:'92102', name:'San Diego', fair:2.95,totalPolicies:249,lowRisk:249,medRisk:0,highRisk:0, income:93, pre60:49.5, buildYr:1965, pop:9200, units:2000},
-{ zip:'92103', name:'San Diego', fair:1.81,totalPolicies:192,lowRisk:192,medRisk:0,highRisk:0, income:135, pre60:12.9, buildYr:1965, pop:8100, units:9500},
-{ zip:'92104', name:'San Diego', fair:1.18,totalPolicies:151,lowRisk:151,medRisk:0,highRisk:0, income:94, pre60:15.9, buildYr:1965, pop:600, units:8100},
-{ zip:'92105', name:'San Diego', fair:3.97,totalPolicies:509,lowRisk:509,medRisk:0,highRisk:0, income:148, pre60:39.3, buildYr:1965, pop:2600, units:3900},
-{ zip:'92106', name:'San Diego', fair:0.47,totalPolicies:31,lowRisk:31,medRisk:0,highRisk:0, income:116, pre60:62.7, buildYr:1965, pop:2000, units:8900},
-{ zip:'92107', name:'San Diego', fair:0.80,totalPolicies:71,lowRisk:71,medRisk:0,highRisk:0, income:53, pre60:91.1, buildYr:1965, pop:3300, units:1700},
-{ zip:'92108', name:'San Diego', fair:0.20,totalPolicies:16,lowRisk:16,medRisk:0,highRisk:0, income:98, pre60:74.8, buildYr:1965, pop:4500, units:8300},
-{ zip:'92109', name:'San Diego', fair:0.51,totalPolicies:76,lowRisk:76,medRisk:0,highRisk:0, income:71, pre60:49.1, buildYr:1965, pop:9900, units:9600},
-{ zip:'92110', name:'San Diego', fair:0.87,totalPolicies:59,lowRisk:59,medRisk:0,highRisk:0, income:134, pre60:11, buildYr:1965, pop:8100, units:7300},
-{ zip:'92111', name:'San Diego', fair:1.46,totalPolicies:184,lowRisk:184,medRisk:0,highRisk:0, income:127, pre60:34.8, buildYr:1965, pop:1200, units:3100},
-{ zip:'92113', name:'San Diego', fair:3.65,totalPolicies:319,lowRisk:319,medRisk:0,highRisk:0, income:93, pre60:40.4, buildYr:1965, pop:6600, units:6900},
-{ zip:'92114', name:'San Diego', fair:1.65,totalPolicies:282,lowRisk:282,medRisk:0,highRisk:0, income:10, pre60:58.9, buildYr:1965, pop:6700, units:7500},
-{ zip:'92115', name:'San Diego', fair:1.95,totalPolicies:275,lowRisk:251,medRisk:24,highRisk:0, income:2, pre60:47.6, buildYr:1965, pop:9200, units:6700},
-{ zip:'92116', name:'San Diego', fair:2.67,totalPolicies:266,lowRisk:266,medRisk:0,highRisk:0, income:86, pre60:68.1, buildYr:1965, pop:3400, units:6400},
-{ zip:'92117', name:'San Diego', fair:1.64,totalPolicies:270,lowRisk:261,medRisk:6,highRisk:3, income:97, pre60:95.2, buildYr:1965, pop:8700, units:5200},
-{ zip:'92118', name:'Coronado', fair:0.33,totalPolicies:22,lowRisk:22,medRisk:0,highRisk:0, income:70, pre60:26, buildYr:1965, pop:3000, units:900},
-{ zip:'92119', name:'San Diego', fair:5.02,totalPolicies:432,lowRisk:57,medRisk:344,highRisk:31, income:3, pre60:94.7, buildYr:1965, pop:800, units:8700},
-{ zip:'92120', name:'San Diego', fair:4.32,totalPolicies:432,lowRisk:202,medRisk:216,highRisk:14, income:80, pre60:60.9, buildYr:1965, pop:300, units:6200},
-{ zip:'92121', name:'San Diego', fair:7.13,totalPolicies:109,lowRisk:2,medRisk:96,highRisk:11, income:85, pre60:30, buildYr:1965, pop:8800, units:6700},
-{ zip:'92122', name:'San Diego', fair:0.87,totalPolicies:96,lowRisk:93,medRisk:3,highRisk:0, income:105, pre60:22.7, buildYr:1965, pop:8400, units:5000},
-{ zip:'92123', name:'San Diego', fair:1.11,totalPolicies:80,lowRisk:80,medRisk:0,highRisk:0, income:90, pre60:25.7, buildYr:1965, pop:3500, units:1500},
-{ zip:'92124', name:'San Diego', fair:6.29,totalPolicies:462,lowRisk:187,medRisk:249,highRisk:26, income:34, pre60:15.8, buildYr:1965, pop:1200, units:2500},
-{ zip:'92126', name:'San Diego', fair:3.02,totalPolicies:596,lowRisk:188,medRisk:401,highRisk:7, income:89, pre60:17.3, buildYr:1965, pop:3700, units:2100},
-{ zip:'92127', name:'San Diego', fair:10.16,totalPolicies:1496,lowRisk:336,medRisk:1159,highRisk:1, income:13, pre60:24.7, buildYr:1965, pop:200, units:8700},
-{ zip:'92128', name:'San Diego', fair:3.86,totalPolicies:692,lowRisk:384,medRisk:296,highRisk:12, income:127, pre60:38.6, buildYr:1965, pop:8300, units:2300},
-{ zip:'92129', name:'San Diego', fair:8.95,totalPolicies:1389,lowRisk:115,medRisk:1098,highRisk:176, income:13, pre60:95.5, buildYr:1965, pop:4100, units:7500},
-{ zip:'92130', name:'San Diego', fair:7.06,totalPolicies:1299,lowRisk:426,medRisk:778,highRisk:95, income:86, pre60:64.6, buildYr:1965, pop:7500, units:7500},
-{ zip:'92131', name:'San Diego', fair:11.92,totalPolicies:1396,lowRisk:386,medRisk:769,highRisk:241, income:57, pre60:28.6, buildYr:1965, pop:2700, units:600},
-{ zip:'92139', name:'San Diego', fair:0.71,totalPolicies:62,lowRisk:62,medRisk:0,highRisk:0, income:82, pre60:59.4, buildYr:1965, pop:2700, units:8200},
-{ zip:'92154', name:'San Diego', fair:2.38,totalPolicies:410,lowRisk:309,medRisk:98,highRisk:3, income:35, pre60:12.9, buildYr:1965, pop:6000, units:7600},
-{ zip:'92173', name:'San Ysidro', fair:1.47,totalPolicies:61,lowRisk:61,medRisk:0,highRisk:0, income:79, pre60:54.9, buildYr:1965, pop:5700, units:8700},
-{ zip:'92536', name:'Aguanga', fair:27.35,totalPolicies:577,lowRisk:0,medRisk:0,highRisk:577, income:99, pre60:76.2, buildYr:1965, pop:8500, units:8300},
-{ zip:'92672', name:'San Clemente', fair:4.99,totalPolicies:620,lowRisk:393,medRisk:221,highRisk:6, income:110, pre60:4.3, buildYr:1965, pop:8300, units:4600},
+{ zip:'91901', name:'Alpine', fair:50.79,totalPolicies:2943,lowRisk:0,medRisk:633,highRisk:2310, income:36.5, pre2010:97.4, fhsz:98.9, damaged:91, firewise:2, structure:5795, pop:17879 },
+{ zip:'91902', name:'Bonita', fair:3.22,totalPolicies:182,lowRisk:167,medRisk:12,highRisk:3, income:27.3, pre2010:97.4, fhsz:46.9, damaged:0, firewise:1, structure:5645, pop:18056 },
+{ zip:'91905', name:'Boulevard', fair:28.34,totalPolicies:223,lowRisk:0,medRisk:26,highRisk:197, income:70.7, pre2010:90.7, fhsz:93.0, damaged:0, firewise:0, structure:787, pop:1812 },
+{ zip:'91906', name:'Campo', fair:37.44,totalPolicies:520,lowRisk:1,medRisk:0,highRisk:519, income:46.0, pre2010:97.4, fhsz:96.6, damaged:1, firewise:0, structure:1389, pop:3819 },
+{ zip:'91910', name:'Chula Vista', fair:1.28,totalPolicies:224,lowRisk:224,medRisk:0,highRisk:0, income:47.1, pre2010:97.3, fhsz:14.1, damaged:0, firewise:0, structure:17520, pop:79401 },
+{ zip:'91911', name:'Chula Vista', fair:1.17,totalPolicies:202,lowRisk:202,medRisk:0,highRisk:0, income:54.4, pre2010:97.1, fhsz:11.5, damaged:0, firewise:1, structure:17318, pop:85210 },
+{ zip:'91913', name:'Chula Vista', fair:2.32,totalPolicies:320,lowRisk:320,medRisk:0,highRisk:0, income:29.0, pre2010:72.5, fhsz:31.9, damaged:0, firewise:0, structure:13765, pop:58084 },
+{ zip:'91914', name:'Chula Vista', fair:10.02,totalPolicies:473,lowRisk:61,medRisk:321,highRisk:91, income:21.1, pre2010:87.6, fhsz:78.6, damaged:0, firewise:0, structure:4722, pop:17023 },
+{ zip:'91915', name:'Chula Vista', fair:2.95,totalPolicies:237,lowRisk:138,medRisk:99,highRisk:0, income:28.1, pre2010:69.2, fhsz:37.9, damaged:0, firewise:0, structure:8028, pop:35520 },
+{ zip:'91916', name:'Descanso', fair:45.04,totalPolicies:422,lowRisk:0,medRisk:0,highRisk:422, income:38.0, pre2010:98.4, fhsz:97.8, damaged:0, firewise:0, structure:937, pop:2185 },
+{ zip:'91917', name:'Dulzura', fair:33.99,totalPolicies:86,lowRisk:0,medRisk:0,highRisk:86, income:59.2, pre2010:94.7, fhsz:99.6, damaged:5, firewise:0, structure:253, pop:930 },
+{ zip:'91931', name:'Guatay', fair:100.0,totalPolicies:84,lowRisk:0,medRisk:0,highRisk:84, income:100.0, pre2010:83.3, fhsz:100.0, damaged:0, firewise:0, structure:43, pop:96 },
+{ zip:'91932', name:'Imperial Beach', fair:0.61,totalPolicies:39,lowRisk:39,medRisk:0,highRisk:0, income:53.7, pre2010:93.0, fhsz:3.2, damaged:0, firewise:0, structure:6430, pop:25789 },
+{ zip:'91934', name:'Jacumba', fair:10.43,totalPolicies:36,lowRisk:7,medRisk:29,highRisk:0, income:97.8, pre2010:95.5, fhsz:100.0, damaged:0, firewise:0, structure:345, pop:800 },
+{ zip:'91935', name:'Jamul', fair:50.37,totalPolicies:1620,lowRisk:0,medRisk:82,highRisk:1538, income:30.6, pre2010:91.1, fhsz:99.9, damaged:45, firewise:1, structure:3216, pop:11824 },
+{ zip:'91941', name:'La Mesa', fair:1.75,totalPolicies:178,lowRisk:155,medRisk:23,highRisk:0, income:33.8, pre2010:97.5, fhsz:9.6, damaged:0, firewise:0, structure:10199, pop:34173 },
+{ zip:'91942', name:'La Mesa', fair:0.59,totalPolicies:66,lowRisk:66,medRisk:0,highRisk:0, income:37.0, pre2010:96.2, fhsz:0.9, damaged:0, firewise:0, structure:11103, pop:40774 },
+{ zip:'91945', name:'Lemon Grove', fair:1.29,totalPolicies:92,lowRisk:92,medRisk:0,highRisk:0, income:50.1, pre2010:94.5, fhsz:1.2, damaged:0, firewise:0, structure:7121, pop:27382 },
+{ zip:'91950', name:'National City', fair:1.19,totalPolicies:121,lowRisk:121,medRisk:0,highRisk:0, income:69.2, pre2010:92.8, fhsz:0.0, damaged:0, firewise:0, structure:10178, pop:57972 },
+{ zip:'91962', name:'Pine Valley', fair:51.13,totalPolicies:499,lowRisk:0,medRisk:28,highRisk:471, income:15.0, pre2010:100.0, fhsz:88.2, damaged:5, firewise:0, structure:976, pop:2118 },
+{ zip:'91963', name:'Potrero', fair:26.4,totalPolicies:85,lowRisk:29,medRisk:0,highRisk:56, income:100.0, pre2010:60.4, fhsz:99.7, damaged:37, firewise:0, structure:322, pop:1117 },
+{ zip:'91977', name:'Spring Valley', fair:3.54,totalPolicies:586,lowRisk:438,medRisk:148,highRisk:0, income:47.5, pre2010:97.9, fhsz:30.7, damaged:0, firewise:0, structure:16532, pop:60413 },
+{ zip:'91978', name:'Spring Valley', fair:13.79,totalPolicies:377,lowRisk:37,medRisk:218,highRisk:122, income:38.1, pre2010:94.0, fhsz:76.1, damaged:0, firewise:0, structure:2734, pop:9949 },
+{ zip:'91980', name:'Tecate', fair:9.21,totalPolicies:7,lowRisk:0,medRisk:0,highRisk:7, income:91.6, pre2010:100.0, fhsz:100.0, damaged:0, firewise:0, structure:76, pop:251 },
+{ zip:'92003', name:'Bonsall', fair:21.85,totalPolicies:419,lowRisk:31,medRisk:274,highRisk:114, income:30.5, pre2010:89.0, fhsz:99.3, damaged:203, firewise:0, structure:1918, pop:5796 },
+{ zip:'92004', name:'Borrego Springs', fair:3.31,totalPolicies:87,lowRisk:87,medRisk:0,highRisk:0, income:43.8, pre2010:94.9, fhsz:38.1, damaged:0, firewise:0, structure:2626, pop:3430 },
+{ zip:'92007', name:'Cardiff By The Sea', fair:1.5,totalPolicies:58,lowRisk:45,medRisk:13,highRisk:0, income:24.4, pre2010:93.7, fhsz:30.9, damaged:0, firewise:0, structure:3858, pop:10878 },
+{ zip:'92008', name:'Carlsbad', fair:1.48,totalPolicies:129,lowRisk:97,medRisk:32,highRisk:0, income:34.5, pre2010:93.6, fhsz:20.6, damaged:0, firewise:0, structure:8715, pop:28083 },
+{ zip:'92009', name:'Carlsbad', fair:5.77,totalPolicies:871,lowRisk:773,medRisk:98,highRisk:0, income:22.2, pre2010:91.8, fhsz:56.3, damaged:0, firewise:5, structure:15087, pop:44441 },
+{ zip:'92010', name:'Carlsbad', fair:2.86,totalPolicies:171,lowRisk:165,medRisk:6,highRisk:0, income:29.4, pre2010:76.7, fhsz:65.5, damaged:0, firewise:0, structure:5979, pop:19816 },
+{ zip:'92011', name:'Carlsbad', fair:2.5,totalPolicies:216,lowRisk:216,medRisk:0,highRisk:0, income:24.2, pre2010:91.6, fhsz:33.6, damaged:0, firewise:0, structure:8657, pop:24189 },
+{ zip:'92014', name:'Del Mar', fair:3.17,totalPolicies:191,lowRisk:137,medRisk:54,highRisk:0, income:8.1, pre2010:95.6, fhsz:84.0, damaged:0, firewise:0, structure:6017, pop:13079 },
+{ zip:'92019', name:'El Cajon', fair:12.61,totalPolicies:1644,lowRisk:290,medRisk:656,highRisk:698, income:42.1, pre2010:97.2, fhsz:50.4, damaged:0, firewise:1, structure:13039, pop:43446 },
+{ zip:'92020', name:'El Cajon', fair:1.81,totalPolicies:231,lowRisk:205,medRisk:26,highRisk:0, income:56.7, pre2010:96.8, fhsz:4.9, damaged:0, firewise:0, structure:12785, pop:62810 },
+{ zip:'92021', name:'El Cajon', fair:9.9,totalPolicies:1682,lowRisk:183,medRisk:413,highRisk:1086, income:55.3, pre2010:95.5, fhsz:43.9, damaged:14, firewise:1, structure:16991, pop:68406 },
+{ zip:'92024', name:'Encinitas', fair:3.27,totalPolicies:579,lowRisk:278,medRisk:243,highRisk:58, income:24.1, pre2010:94.6, fhsz:27.9, damaged:0, firewise:0, structure:17725, pop:51954 },
+{ zip:'92025', name:'Escondido', fair:5.73,totalPolicies:615,lowRisk:169,medRisk:370,highRisk:76, income:49.1, pre2010:90.2, fhsz:20.7, damaged:1, firewise:0, structure:10728, pop:51443 },
+{ zip:'92026', name:'Escondido', fair:18.52,totalPolicies:2656,lowRisk:355,medRisk:1141,highRisk:1160, income:42.6, pre2010:93.3, fhsz:52.4, damaged:0, firewise:3, structure:14338, pop:54205 },
+{ zip:'92027', name:'Escondido', fair:9.92,totalPolicies:1336,lowRisk:237,medRisk:747,highRisk:352, income:45.1, pre2010:96.6, fhsz:29.1, damaged:0, firewise:0, structure:13461, pop:56652 },
+{ zip:'92028', name:'Fallbrook', fair:23.49,totalPolicies:3714,lowRisk:119,medRisk:2293,highRisk:1302, income:41.7, pre2010:87.9, fhsz:71.5, damaged:20, firewise:0, structure:15808, pop:52904 },
+{ zip:'92029', name:'Escondido', fair:14.67,totalPolicies:1083,lowRisk:46,medRisk:739,highRisk:298, income:26.4, pre2010:88.7, fhsz:81.4, damaged:38, firewise:1, structure:7382, pop:21839 },
+{ zip:'92036', name:'Julian', fair:45.34,totalPolicies:1076,lowRisk:8,medRisk:19,highRisk:1049, income:62.1, pre2010:93.5, fhsz:99.2, damaged:3, firewise:0, structure:2373, pop:3734 },
+{ zip:'92037', name:'La Jolla', fair:1.7,totalPolicies:288,lowRisk:271,medRisk:17,highRisk:0, income:21.9, pre2010:96.2, fhsz:24.9, damaged:0, firewise:0, structure:16920, pop:42582 },
+{ zip:'92040', name:'Lakeside', fair:12.73,totalPolicies:1668,lowRisk:288,medRisk:856,highRisk:524, income:37.6, pre2010:93.4, fhsz:74.4, damaged:0, firewise:0, structure:13108, pop:43799 },
+{ zip:'92054', name:'Oceanside', fair:1.73,totalPolicies:184,lowRisk:184,medRisk:0,highRisk:0, income:49.3, pre2010:93.3, fhsz:6.1, damaged:0, firewise:0, structure:10664, pop:38465 },
+{ zip:'92056', name:'Oceanside', fair:1.83,totalPolicies:330,lowRisk:325,medRisk:5,highRisk:0, income:34.8, pre2010:93.4, fhsz:25.8, damaged:0, firewise:0, structure:18058, pop:54462 },
+{ zip:'92057', name:'Oceanside', fair:4.39,totalPolicies:794,lowRisk:640,medRisk:149,highRisk:5, income:36.8, pre2010:93.9, fhsz:11.8, damaged:0, firewise:1, structure:18089, pop:57895 },
+{ zip:'92058', name:'Oceanside', fair:3.97,totalPolicies:334,lowRisk:233,medRisk:101,highRisk:0, income:66.9, pre2010:87.4, fhsz:34.6, damaged:0, firewise:1, structure:8409, pop:45206 },
+{ zip:'92059', name:'Pala', fair:23.95,totalPolicies:80,lowRisk:0,medRisk:2,highRisk:78, income:46.8, pre2010:87.9, fhsz:66.2, damaged:1, firewise:1, structure:334, pop:1577 },
+{ zip:'92060', name:'Palomar Mountain', fair:62.56,totalPolicies:132,lowRisk:0,medRisk:0,highRisk:132, income:12.0, pre2010:94.4, fhsz:100.0, damaged:0, firewise:0, structure:211, pop:69 },
+{ zip:'92061', name:'Pauma Valley', fair:28.45,totalPolicies:278,lowRisk:34,medRisk:79,highRisk:165, income:43.2, pre2010:93.1, fhsz:85.1, damaged:0, firewise:0, structure:977, pop:2629 },
+{ zip:'92064', name:'Poway', fair:10.48,totalPolicies:1523,lowRisk:456,medRisk:599,highRisk:468, income:28.3, pre2010:96.7, fhsz:76.9, damaged:0, firewise:3, structure:14528, pop:48419 },
+{ zip:'92065', name:'Ramona', fair:30.77,totalPolicies:3674,lowRisk:2,medRisk:886,highRisk:2786, income:31.8, pre2010:94.8, fhsz:79.0, damaged:1, firewise:3, structure:11941, pop:36642 },
+{ zip:'92066', name:'Ranchita', fair:13.49,totalPolicies:39,lowRisk:0,medRisk:0,highRisk:39, income:57.0, pre2010:100.0, fhsz:90.0, damaged:0, firewise:0, structure:289, pop:361 },
+{ zip:'92067', name:'Rancho Santa Fe', fair:27.05,totalPolicies:801,lowRisk:30,medRisk:688,highRisk:83, income:13.1, pre2010:90.6, fhsz:100.0, damaged:0, firewise:3, structure:2961, pop:7366 },
+{ zip:'92069', name:'San Marcos', fair:7.65,totalPolicies:885,lowRisk:596,medRisk:242,highRisk:47, income:47.2, pre2010:89.4, fhsz:44.0, damaged:0, firewise:0, structure:11572, pop:49174 },
+{ zip:'92070', name:'Santa Ysabel', fair:31.71,totalPolicies:137,lowRisk:1,medRisk:1,highRisk:135, income:37.1, pre2010:95.6, fhsz:73.8, damaged:0, firewise:1, structure:432, pop:1137 },
+{ zip:'92071', name:'Santee', fair:6.0,totalPolicies:1043,lowRisk:420,medRisk:502,highRisk:121, income:34.9, pre2010:90.0, fhsz:60.4, damaged:0, firewise:0, structure:17383, pop:60598 },
+{ zip:'92075', name:'Solana Beach', fair:1.9,totalPolicies:91,lowRisk:66,medRisk:25,highRisk:0, income:28.9, pre2010:95.1, fhsz:13.8, damaged:0, firewise:0, structure:4799, pop:12122 },
+{ zip:'92078', name:'San Marcos', fair:9.46,totalPolicies:1396,lowRisk:475,medRisk:786,highRisk:135, income:29.6, pre2010:83.5, fhsz:67.9, damaged:11, firewise:4, structure:14758, pop:52886 },
+{ zip:'92081', name:'Vista', fair:2.06,totalPolicies:174,lowRisk:170,medRisk:4,highRisk:0, income:37.3, pre2010:93.9, fhsz:29.3, damaged:0, firewise:0, structure:8434, pop:29715 },
+{ zip:'92082', name:'Valley Center', fair:43.14,totalPolicies:2844,lowRisk:101,medRisk:153,highRisk:2590, income:28.1, pre2010:89.1, fhsz:94.1, damaged:0, firewise:0, structure:6592, pop:21942 },
+{ zip:'92083', name:'Vista', fair:1.36,totalPolicies:104,lowRisk:104,medRisk:0,highRisk:0, income:50.8, pre2010:89.8, fhsz:0.1, damaged:0, firewise:0, structure:7666, pop:38436 },
+{ zip:'92084', name:'Vista', fair:9.39,totalPolicies:1167,lowRisk:269,medRisk:659,highRisk:239, income:45.1, pre2010:93.0, fhsz:41.8, damaged:0, firewise:1, structure:12424, pop:52369 },
+{ zip:'92086', name:'Warner Springs', fair:45.52,totalPolicies:381,lowRisk:3,medRisk:0,highRisk:378, income:62.8, pre2010:95.4, fhsz:99.5, damaged:0, firewise:0, structure:837, pop:1450 },
+{ zip:'92091', name:'Rancho Santa Fe', fair:12.03,totalPolicies:191,lowRisk:2,medRisk:161,highRisk:28, income:45.5, pre2010:86.4, fhsz:100.0, damaged:0, firewise:0, structure:1588, pop:3008 },
+{ zip:'92101', name:'San Diego', fair:0.18,totalPolicies:21,lowRisk:21,medRisk:0,highRisk:0, income:32.5, pre2010:67.9, fhsz:15.6, damaged:0, firewise:0, structure:11480, pop:54540 },
+{ zip:'92102', name:'San Diego', fair:2.95,totalPolicies:249,lowRisk:249,medRisk:0,highRisk:0, income:58.9, pre2010:93.3, fhsz:1.3, damaged:0, firewise:0, structure:8451, pop:40358 },
+{ zip:'92103', name:'San Diego', fair:1.81,totalPolicies:192,lowRisk:192,medRisk:0,highRisk:0, income:24.9, pre2010:92.9, fhsz:39.2, damaged:0, firewise:0, structure:10608, pop:33919 },
+{ zip:'92104', name:'San Diego', fair:1.18,totalPolicies:151,lowRisk:151,medRisk:0,highRisk:0, income:48.0, pre2010:93.7, fhsz:5.9, damaged:0, firewise:0, structure:12762, pop:45512 },
+{ zip:'92105', name:'San Diego', fair:3.97,totalPolicies:509,lowRisk:509,medRisk:0,highRisk:0, income:63.2, pre2010:97.6, fhsz:0.0, damaged:0, firewise:0, structure:12836, pop:66217 },
+{ zip:'92106', name:'San Diego', fair:0.47,totalPolicies:31,lowRisk:31,medRisk:0,highRisk:0, income:26.7, pre2010:97.2, fhsz:0.1, damaged:0, firewise:0, structure:6633, pop:20579 },
+{ zip:'92107', name:'San Diego', fair:0.8,totalPolicies:71,lowRisk:71,medRisk:0,highRisk:0, income:28.2, pre2010:97.1, fhsz:0.0, damaged:0, firewise:0, structure:8848, pop:28128 },
+{ zip:'92108', name:'San Diego', fair:0.2,totalPolicies:16,lowRisk:16,medRisk:0,highRisk:0, income:38.7, pre2010:73.5, fhsz:23.6, damaged:0, firewise:0, structure:7842, pop:29197 },
+{ zip:'92109', name:'San Diego', fair:0.51,totalPolicies:76,lowRisk:76,medRisk:0,highRisk:0, income:28.2, pre2010:95.3, fhsz:4.1, damaged:0, firewise:0, structure:15007, pop:44911 },
+{ zip:'92110', name:'San Diego', fair:0.87,totalPolicies:59,lowRisk:59,medRisk:0,highRisk:0, income:31.5, pre2010:90.0, fhsz:10.2, damaged:0, firewise:0, structure:6805, pop:30346 },
+{ zip:'92111', name:'San Diego', fair:1.46,totalPolicies:184,lowRisk:184,medRisk:0,highRisk:0, income:42.0, pre2010:98.3, fhsz:33.6, damaged:0, firewise:0, structure:12629, pop:46988 },
+{ zip:'92113', name:'San Diego', fair:3.65,totalPolicies:319,lowRisk:319,medRisk:0,highRisk:0, income:71.1, pre2010:92.8, fhsz:0.0, damaged:0, firewise:0, structure:8740, pop:47089 },
+{ zip:'92114', name:'San Diego', fair:1.65,totalPolicies:282,lowRisk:282,medRisk:0,highRisk:0, income:46.6, pre2010:98.0, fhsz:0.0, damaged:0, firewise:0, structure:17092, pop:65354 },
+{ zip:'92115', name:'San Diego', fair:1.95,totalPolicies:275,lowRisk:251,medRisk:24,highRisk:0, income:52.6, pre2010:97.0, fhsz:2.2, damaged:0, firewise:0, structure:14071, pop:63525 },
+{ zip:'92116', name:'San Diego', fair:2.67,totalPolicies:266,lowRisk:266,medRisk:0,highRisk:0, income:37.2, pre2010:97.5, fhsz:55.1, damaged:0, firewise:1, structure:9956, pop:31566 },
+{ zip:'92117', name:'San Diego', fair:1.64,totalPolicies:270,lowRisk:261,medRisk:6,highRisk:3, income:40.9, pre2010:98.1, fhsz:31.9, damaged:0, firewise:0, structure:16490, pop:50403 },
+{ zip:'92118', name:'Coronado', fair:0.33,totalPolicies:22,lowRisk:22,medRisk:0,highRisk:0, income:23.9, pre2010:94.2, fhsz:0.0, damaged:0, firewise:0, structure:6671, pop:19324 },
+{ zip:'92119', name:'San Diego', fair:5.02,totalPolicies:432,lowRisk:57,medRisk:344,highRisk:31, income:29.7, pre2010:98.6, fhsz:44.0, damaged:0, firewise:0, structure:8600, pop:24119 },
+{ zip:'92120', name:'San Diego', fair:4.32,totalPolicies:432,lowRisk:202,medRisk:216,highRisk:14, income:29.5, pre2010:85.1, fhsz:46.3, damaged:0, firewise:0, structure:10009, pop:29980 },
+{ zip:'92121', name:'San Diego', fair:7.13,totalPolicies:109,lowRisk:2,medRisk:96,highRisk:11, income:22.7, pre2010:95.4, fhsz:86.8, damaged:0, firewise:0, structure:1528, pop:5090 },
+{ zip:'92122', name:'San Diego', fair:0.87,totalPolicies:96,lowRisk:93,medRisk:3,highRisk:0, income:34.7, pre2010:91.8, fhsz:50.0, damaged:0, firewise:0, structure:11012, pop:46082 },
+{ zip:'92123', name:'San Diego', fair:1.11,totalPolicies:80,lowRisk:80,medRisk:0,highRisk:0, income:31.3, pre2010:85.9, fhsz:34.3, damaged:0, firewise:0, structure:7189, pop:29372 },
+{ zip:'92124', name:'San Diego', fair:6.29,totalPolicies:462,lowRisk:187,medRisk:249,highRisk:26, income:37.6, pre2010:96.4, fhsz:77.3, damaged:0, firewise:0, structure:7341, pop:30210 },
+{ zip:'92126', name:'San Diego', fair:3.02,totalPolicies:596,lowRisk:188,medRisk:401,highRisk:7, income:35.1, pre2010:89.1, fhsz:40.3, damaged:0, firewise:0, structure:19741, pop:77018 },
+{ zip:'92127', name:'San Diego', fair:10.16,totalPolicies:1496,lowRisk:336,medRisk:1159,highRisk:1, income:19.8, pre2010:75.5, fhsz:73.3, damaged:0, firewise:1, structure:14728, pop:52976 },
+{ zip:'92128', name:'San Diego', fair:3.86,totalPolicies:692,lowRisk:384,medRisk:296,highRisk:12, income:25.5, pre2010:98.8, fhsz:46.4, damaged:0, firewise:0, structure:17908, pop:48816 },
+{ zip:'92129', name:'San Diego', fair:8.95,totalPolicies:1389,lowRisk:115,medRisk:1098,highRisk:176, income:21.7, pre2010:93.9, fhsz:63.2, damaged:0, firewise:0, structure:15514, pop:53642 },
+{ zip:'92130', name:'San Diego', fair:7.06,totalPolicies:1299,lowRisk:426,medRisk:778,highRisk:95, income:19.7, pre2010:77.5, fhsz:61.8, damaged:0, firewise:0, structure:18401, pop:64792 },
+{ zip:'92131', name:'San Diego', fair:11.92,totalPolicies:1396,lowRisk:386,medRisk:769,highRisk:241, income:16.9, pre2010:90.0, fhsz:88.6, damaged:0, firewise:0, structure:11715, pop:36519 },
+{ zip:'92139', name:'San Diego', fair:0.71,totalPolicies:62,lowRisk:62,medRisk:0,highRisk:0, income:52.4, pre2010:97.4, fhsz:0.3, damaged:0, firewise:0, structure:8778, pop:34887 },
+{ zip:'92154', name:'San Diego', fair:2.38,totalPolicies:410,lowRisk:309,medRisk:98,highRisk:3, income:48.3, pre2010:89.0, fhsz:30.2, damaged:0, firewise:0, structure:17213, pop:86755 },
+{ zip:'92173', name:'San Ysidro', fair:1.47,totalPolicies:61,lowRisk:61,medRisk:0,highRisk:0, income:63.8, pre2010:93.8, fhsz:18.9, damaged:0, firewise:0, structure:4158, pop:30063 },
+{ zip:'92536', name:'Aguanga', fair:27.35,totalPolicies:577,lowRisk:0,medRisk:0,highRisk:577, income:56.4, pre2010:93.9, fhsz:99.5, damaged:73, firewise:0, structure:2110, pop:3484 },
+{ zip:'92672', name:'San Clemente', fair:4.99,totalPolicies:620,lowRisk:393,medRisk:221,highRisk:6, income:31.3, pre2010:94.6, fhsz:32.1, damaged:0, firewise:0, structure:12418, pop:43696 },
     ],
     santa_cruz: [
-{ zip:'94060', name:'Pescadero', fair:24.62,totalPolicies:113,lowRisk:35,medRisk:66,highRisk:12, income:130, pre60:9.5, buildYr:1965, pop:4700, units:7100},
-{ zip:'95003', name:'Aptos', fair:11.34,totalPolicies:1221,lowRisk:35,medRisk:438,highRisk:748, income:61, pre60:68, buildYr:1970, pop:8500, units:7100},
-{ zip:'95005', name:'Ben Lomond', fair:42.56,totalPolicies:990,lowRisk:0,medRisk:18,highRisk:972, income:146, pre60:93.6, buildYr:1965, pop:2700, units:2400},
-{ zip:'95006', name:'Boulder Creek', fair:39.63,totalPolicies:1531,lowRisk:0,medRisk:24,highRisk:1507, income:30, pre60:49.7, buildYr:1970, pop:5800, units:1800},
-{ zip:'95007', name:'Brookdale', fair:58.65,totalPolicies:156,lowRisk:0,medRisk:0,highRisk:156, income:20, pre60:2.2, buildYr:1965, pop:6100, units:5000},
-{ zip:'95010', name:'Capitola', fair:0.53,totalPolicies:21,lowRisk:21,medRisk:0,highRisk:0, income:44, pre60:54.8, buildYr:1970, pop:4800, units:7900},
-{ zip:'95017', name:'Davenport', fair:17.22,totalPolicies:26,lowRisk:4,medRisk:21,highRisk:1, income:70, pre60:48.2, buildYr:1965, pop:6500, units:9600},
-{ zip:'95018', name:'Felton', fair:45.45,totalPolicies:1419,lowRisk:4,medRisk:2,highRisk:1413, income:106, pre60:80.1, buildYr:1970, pop:9300, units:6600},
-{ zip:'95019', name:'Freedom', fair:0.90,totalPolicies:13,lowRisk:10,medRisk:3,highRisk:0, income:108, pre60:58.9, buildYr:1971, pop:200, units:9700},
-{ zip:'95033', name:'Los Gatos', fair:59.87,totalPolicies:2017,lowRisk:2,medRisk:11,highRisk:2004, income:33, pre60:88, buildYr:1965, pop:5800, units:1400},
-{ zip:'95041', name:'Mount Hermon', fair:65.52,totalPolicies:95,lowRisk:0,medRisk:0,highRisk:95, income:17, pre60:95.2, buildYr:1965, pop:5500, units:1300},
-{ zip:'95060', name:'Santa Cruz', fair:9.92,totalPolicies:1415,lowRisk:139,medRisk:328,highRisk:948, income:95, pre60:60.4, buildYr:1965, pop:2200, units:3000},
-{ zip:'95062', name:'Santa Cruz', fair:0.63,totalPolicies:80,lowRisk:67,medRisk:12,highRisk:1, income:123, pre60:6.7, buildYr:1965, pop:700, units:100},
-{ zip:'95064', name:'Santa Cruz', fair:3.36,totalPolicies:8,lowRisk:1,medRisk:7,highRisk:0, income:20, pre60:89.6, buildYr:1965, pop:7900, units:9600},
-{ zip:'95065', name:'Santa Cruz', fair:21.35,totalPolicies:539,lowRisk:2,medRisk:126,highRisk:411, income:100, pre60:5.6, buildYr:1965, pop:9700, units:7700},
-{ zip:'95066', name:'Scotts Valley', fair:27.24,totalPolicies:1454,lowRisk:0,medRisk:617,highRisk:837, income:131, pre60:91.7, buildYr:1965, pop:7000, units:9300},
-{ zip:'95073', name:'Soquel', fair:19.15,totalPolicies:738,lowRisk:20,medRisk:320,highRisk:398, income:144, pre60:77, buildYr:1965, pop:1100, units:6800},
-{ zip:'95076', name:'Watsonville', fair:5.07,totalPolicies:994,lowRisk:146,medRisk:251,highRisk:597, income:16, pre60:82.1, buildYr:1965, pop:6900, units:2100},
+{ zip:'94060', name:'Pescadero', fair:24.62,totalPolicies:113,lowRisk:35,medRisk:66,highRisk:12, income:42.8, pre2010:90.7, fhsz:97.6, damaged:117, firewise:0, structure:459, pop:1259 },
+{ zip:'95003', name:'Aptos', fair:11.34,totalPolicies:1221,lowRisk:35,medRisk:438,highRisk:748, income:25.2, pre2010:95.8, fhsz:43.4, damaged:0, firewise:19, structure:10767, pop:24445 },
+{ zip:'95005', name:'Ben Lomond', fair:42.56,totalPolicies:990,lowRisk:0,medRisk:18,highRisk:972, income:34.2, pre2010:99.6, fhsz:100.0, damaged:63, firewise:7, structure:2326, pop:6613 },
+{ zip:'95006', name:'Boulder Creek', fair:39.63,totalPolicies:1531,lowRisk:0,medRisk:24,highRisk:1507, income:51.4, pre2010:94.2, fhsz:100.0, damaged:791, firewise:11, structure:3863, pop:9653 },
+{ zip:'95007', name:'Brookdale', fair:58.65,totalPolicies:156,lowRisk:0,medRisk:0,highRisk:156, income:32.7, pre2010:100.0, fhsz:100.0, damaged:8, firewise:0, structure:266, pop:567 },
+{ zip:'95010', name:'Capitola', fair:0.53,totalPolicies:21,lowRisk:21,medRisk:0,highRisk:0, income:45.7, pre2010:94.7, fhsz:3.8, damaged:0, firewise:0, structure:3945, pop:8862 },
+{ zip:'95017', name:'Davenport', fair:17.22,totalPolicies:26,lowRisk:4,medRisk:21,highRisk:1, income:47.5, pre2010:82.4, fhsz:100.0, damaged:100, firewise:0, structure:151, pop:497 },
+{ zip:'95018', name:'Felton', fair:45.45,totalPolicies:1419,lowRisk:4,medRisk:2,highRisk:1413, income:30.0, pre2010:96.5, fhsz:100.0, damaged:0, firewise:13, structure:3122, pop:7870 },
+{ zip:'95019', name:'Freedom', fair:0.9,totalPolicies:13,lowRisk:10,medRisk:3,highRisk:0, income:72.2, pre2010:98.0, fhsz:0.0, damaged:0, firewise:0, structure:1438, pop:7085 },
+{ zip:'95033', name:'Los Gatos', fair:59.87,totalPolicies:2017,lowRisk:2,medRisk:11,highRisk:2004, income:23.4, pre2010:96.6, fhsz:100.0, damaged:10, firewise:25, structure:3369, pop:9302 },
+{ zip:'95041', name:'Mount Hermon', fair:65.52,totalPolicies:95,lowRisk:0,medRisk:0,highRisk:95, income:44.3, pre2010:100.0, fhsz:100.0, damaged:0, firewise:2, structure:145, pop:376 },
+{ zip:'95060', name:'Santa Cruz', fair:9.92,totalPolicies:1415,lowRisk:139,medRisk:328,highRisk:948, income:31.9, pre2010:94.9, fhsz:26.7, damaged:550, firewise:22, structure:14261, pop:48634 },
+{ zip:'95062', name:'Santa Cruz', fair:0.63,totalPolicies:80,lowRisk:67,medRisk:12,highRisk:1, income:37.6, pre2010:94.5, fhsz:0.0, damaged:0, firewise:0, structure:12664, pop:35629 },
+{ zip:'95064', name:'Santa Cruz', fair:3.36,totalPolicies:8,lowRisk:1,medRisk:7,highRisk:0, income:32.5, pre2010:92.4, fhsz:68.5, damaged:0, firewise:0, structure:238, pop:8780 },
+{ zip:'95065', name:'Santa Cruz', fair:21.35,totalPolicies:539,lowRisk:2,medRisk:126,highRisk:411, income:24.6, pre2010:98.2, fhsz:56.8, damaged:0, firewise:12, structure:2525, pop:8368 },
+{ zip:'95066', name:'Scotts Valley', fair:27.24,totalPolicies:1454,lowRisk:0,medRisk:617,highRisk:837, income:22.8, pre2010:91.5, fhsz:69.3, damaged:0, firewise:8, structure:5337, pop:15729 },
+{ zip:'95073', name:'Soquel', fair:19.15,totalPolicies:738,lowRisk:20,medRisk:320,highRisk:398, income:34.8, pre2010:94.2, fhsz:67.7, damaged:0, firewise:9, structure:3853, pop:10211 },
+{ zip:'95076', name:'Watsonville', fair:5.07,totalPolicies:994,lowRisk:146,medRisk:251,highRisk:597, income:55.2, pre2010:97.3, fhsz:32.8, damaged:0, firewise:4, structure:19613, pop:82340 },
     ],
     tulare: [
-{ zip:'93201', name:'Alpaugh', fair:2.41,totalPolicies:9,lowRisk:9,medRisk:0,highRisk:0, income:138, pre60:88.8, buildYr:1965, pop:8300, units:600},
-{ zip:'93207', name:'California Hot Springs', fair:42.42,totalPolicies:165,lowRisk:0,medRisk:7,highRisk:158, income:52, pre60:86.3, buildYr:1970, pop:1300, units:8500},
-{ zip:'93208', name:'Camp Nelson', fair:100.00,totalPolicies:40,lowRisk:0,medRisk:0,highRisk:40, income:126, pre60:22.3, buildYr:1965, pop:5800, units:3900},
-{ zip:'93212', name:'Corcoran', fair:0.58,totalPolicies:22,lowRisk:22,medRisk:0,highRisk:0, income:112, pre60:61.2, buildYr:1970, pop:2400, units:7900},
-{ zip:'93215', name:'Delano', fair:0.79,totalPolicies:80,lowRisk:80,medRisk:0,highRisk:0, income:21, pre60:79.4, buildYr:1965, pop:6700, units:3900},
-{ zip:'93218', name:'Ducor', fair:2.58,totalPolicies:5,lowRisk:4,medRisk:1,highRisk:0, income:20, pre60:11.5, buildYr:1970, pop:3600, units:1000},
-{ zip:'93219', name:'Earlimart', fair:0.71,totalPolicies:15,lowRisk:15,medRisk:0,highRisk:0, income:82, pre60:70.9, buildYr:1965, pop:8200, units:3800},
-{ zip:'93221', name:'Exeter', fair:1.16,totalPolicies:61,lowRisk:34,medRisk:14,highRisk:13, income:96, pre60:57.8, buildYr:1970, pop:2300, units:4800},
-{ zip:'93223', name:'Farmersville', fair:0.66,totalPolicies:17,lowRisk:17,medRisk:0,highRisk:0, income:108, pre60:19.7, buildYr:1971, pop:5800, units:1000},
-{ zip:'93235', name:'Ivanhoe', fair:0.61,totalPolicies:7,lowRisk:2,medRisk:5,highRisk:0, income:81, pre60:40.8, buildYr:1965, pop:8500, units:4500},
-{ zip:'93244', name:'Lemon Cove', fair:18.39,totalPolicies:16,lowRisk:13,medRisk:3,highRisk:0, income:47, pre60:14.4, buildYr:1965, pop:6000, units:8400},
-{ zip:'93247', name:'Lindsay', fair:0.68,totalPolicies:31,lowRisk:25,medRisk:6,highRisk:0, income:5, pre60:58.5, buildYr:1965, pop:2200, units:8200},
-{ zip:'93256', name:'Pixley', fair:1.14,totalPolicies:17,lowRisk:17,medRisk:0,highRisk:0, income:110, pre60:3.9, buildYr:1965, pop:3900, units:9600},
-{ zip:'93257', name:'Porterville', fair:2.16,totalPolicies:446,lowRisk:311,medRisk:126,highRisk:9, income:10, pre60:55.8, buildYr:1965, pop:7400, units:7200},
-{ zip:'93260', name:'Posey', fair:60.57,totalPolicies:232,lowRisk:0,medRisk:9,highRisk:223, income:85, pre60:66.9, buildYr:1965, pop:5000, units:3800},
-{ zip:'93262', name:'Sequoia National Park', fair:18.75,totalPolicies:6,lowRisk:0,medRisk:6,highRisk:0, income:149, pre60:85.9, buildYr:1965, pop:3800, units:3500},
-{ zip:'93265', name:'Springville', fair:29.51,totalPolicies:736,lowRisk:0,medRisk:204,highRisk:532, income:67, pre60:6.1, buildYr:1965, pop:7000, units:2600},
-{ zip:'93267', name:'Strathmore', fair:1.46,totalPolicies:24,lowRisk:23,medRisk:1,highRisk:0, income:140, pre60:28.6, buildYr:1965, pop:600, units:700},
-{ zip:'93270', name:'Terra Bella', fair:1.11,totalPolicies:18,lowRisk:18,medRisk:0,highRisk:0, income:143, pre60:82.3, buildYr:1965, pop:6700, units:9100},
-{ zip:'93271', name:'Three Rivers', fair:47.55,totalPolicies:632,lowRisk:0,medRisk:21,highRisk:611, income:140, pre60:5.9, buildYr:1965, pop:4600, units:3000},
-{ zip:'93272', name:'Tipton', fair:0.31,totalPolicies:3,lowRisk:3,medRisk:0,highRisk:0, income:38, pre60:10.3, buildYr:1965, pop:3400, units:600},
-{ zip:'93274', name:'Tulare', fair:0.40,totalPolicies:87,lowRisk:87,medRisk:0,highRisk:0, income:50, pre60:3, buildYr:1965, pop:8100, units:3500},
-{ zip:'93277', name:'Visalia', fair:0.41,totalPolicies:67,lowRisk:67,medRisk:0,highRisk:0, income:76, pre60:3.4, buildYr:1965, pop:2800, units:6900},
-{ zip:'93286', name:'Woodlake', fair:2.55,totalPolicies:70,lowRisk:20,medRisk:49,highRisk:1, income:119, pre60:66.6, buildYr:1965, pop:400, units:6400},
-{ zip:'93291', name:'Visalia', fair:0.52,totalPolicies:89,lowRisk:89,medRisk:0,highRisk:0, income:109, pre60:65.8, buildYr:1965, pop:8700, units:1300},
-{ zip:'93292', name:'Visalia', fair:0.30,totalPolicies:40,lowRisk:38,medRisk:2,highRisk:0, income:23, pre60:59.3, buildYr:1965, pop:1500, units:3300},
-{ zip:'93527', name:'Inyokern', fair:5.61,totalPolicies:84,lowRisk:72,medRisk:2,highRisk:10, income:90, pre60:77.7, buildYr:1965, pop:1500, units:4000},
-{ zip:'93603', name:'Badger', fair:38.24,totalPolicies:52,lowRisk:0,medRisk:0,highRisk:52, income:82, pre60:62.1, buildYr:1965, pop:1700, units:600},
-{ zip:'93615', name:'Cutler', fair:0.78,totalPolicies:9,lowRisk:9,medRisk:0,highRisk:0, income:81, pre60:74.6, buildYr:1965, pop:7300, units:3000},
-{ zip:'93618', name:'Dinuba', fair:0.51,totalPolicies:37,lowRisk:37,medRisk:0,highRisk:0, income:135, pre60:16.2, buildYr:1965, pop:3800, units:6400},
-{ zip:'93631', name:'Kingsburg', fair:0.28,totalPolicies:14,lowRisk:14,medRisk:0,highRisk:0, income:137, pre60:34.2, buildYr:1965, pop:1700, units:4100},
-{ zip:'93633', name:'Kings Canyon National Pk', fair:47.70,totalPolicies:83,lowRisk:0,medRisk:0,highRisk:83, income:6, pre60:18.1, buildYr:1965, pop:6600, units:5800},
-{ zip:'93646', name:'Orange Cove', fair:1.01,totalPolicies:19,lowRisk:19,medRisk:0,highRisk:0, income:90, pre60:34.2, buildYr:1965, pop:3300, units:8100},
-{ zip:'93647', name:'Orosi', fair:1.16,totalPolicies:27,lowRisk:24,medRisk:2,highRisk:1, income:62, pre60:28.2, buildYr:1965, pop:6000, units:8800},
-{ zip:'93654', name:'Reedley', fair:0.62,totalPolicies:45,lowRisk:45,medRisk:0,highRisk:0, income:15, pre60:27.4, buildYr:1965, pop:200, units:1500},
-{ zip:'93666', name:'Sultana', fair:9.76,totalPolicies:8,lowRisk:1,medRisk:7,highRisk:0, income:107, pre60:59.4, buildYr:1965, pop:1800, units:9700},
-{ zip:'93673', name:'Traver', fair:0.53,totalPolicies:1,lowRisk:1,medRisk:0,highRisk:0, income:96, pre60:83.3, buildYr:1965, pop:2000, units:1600},
+{ zip:'93201', name:'Alpaugh', fair:2.41,totalPolicies:9,lowRisk:9,medRisk:0,highRisk:0, income:74.2, pre2010:100.0, fhsz:0.3, damaged:0, firewise:0, structure:374, pop:1201 },
+{ zip:'93207', name:'California Hot Springs', fair:42.42,totalPolicies:165,lowRisk:0,medRisk:7,highRisk:158, income:53.7, pre2010:97.6, fhsz:94.9, damaged:0, firewise:0, structure:389, pop:454 },
+{ zip:'93208', name:'Camp Nelson', fair:100.0,totalPolicies:40,lowRisk:0,medRisk:0,highRisk:40, income:0.0, pre2010:96.5, fhsz:0.0, damaged:0, firewise:0, structure:11, pop:19 },
+{ zip:'93212', name:'Corcoran', fair:0.58,totalPolicies:22,lowRisk:22,medRisk:0,highRisk:0, income:46.1, pre2010:94.1, fhsz:0.0, damaged:0, firewise:0, structure:3797, pop:23398 },
+{ zip:'93215', name:'Delano', fair:0.79,totalPolicies:80,lowRisk:80,medRisk:0,highRisk:0, income:42.7, pre2010:91.0, fhsz:0.0, damaged:0, firewise:0, structure:10082, pop:56812 },
+{ zip:'93218', name:'Ducor', fair:2.58,totalPolicies:5,lowRisk:4,medRisk:1,highRisk:0, income:33.5, pre2010:97.8, fhsz:1.0, damaged:0, firewise:0, structure:194, pop:686 },
+{ zip:'93219', name:'Earlimart', fair:0.71,totalPolicies:15,lowRisk:15,medRisk:0,highRisk:0, income:58.8, pre2010:92.2, fhsz:0.0, damaged:0, firewise:0, structure:2100, pop:9568 },
+{ zip:'93221', name:'Exeter', fair:1.16,totalPolicies:61,lowRisk:34,medRisk:14,highRisk:13, income:30.2, pre2010:93.9, fhsz:10.3, damaged:0, firewise:0, structure:5258, pop:15215 },
+{ zip:'93223', name:'Farmersville', fair:0.66,totalPolicies:17,lowRisk:17,medRisk:0,highRisk:0, income:47.2, pre2010:90.6, fhsz:0.0, damaged:0, firewise:0, structure:2591, pop:10324 },
+{ zip:'93235', name:'Ivanhoe', fair:0.61,totalPolicies:7,lowRisk:2,medRisk:5,highRisk:0, income:55.7, pre2010:96.4, fhsz:0.0, damaged:0, firewise:0, structure:1154, pop:4571 },
+{ zip:'93244', name:'Lemon Cove', fair:18.39,totalPolicies:16,lowRisk:13,medRisk:3,highRisk:0, income:0.0, pre2010:91.7, fhsz:60.9, damaged:0, firewise:0, structure:87, pop:226 },
+{ zip:'93247', name:'Lindsay', fair:0.68,totalPolicies:31,lowRisk:25,medRisk:6,highRisk:0, income:46.1, pre2010:90.2, fhsz:1.2, damaged:0, firewise:0, structure:4568, pop:18119 },
+{ zip:'93256', name:'Pixley', fair:1.14,totalPolicies:17,lowRisk:17,medRisk:0,highRisk:0, income:51.4, pre2010:95.4, fhsz:0.0, damaged:0, firewise:0, structure:1488, pop:5627 },
+{ zip:'93257', name:'Porterville', fair:2.16,totalPolicies:446,lowRisk:311,medRisk:126,highRisk:9, income:48.3, pre2010:94.8, fhsz:3.3, damaged:1, firewise:0, structure:20639, pop:81327 },
+{ zip:'93260', name:'Posey', fair:60.57,totalPolicies:232,lowRisk:0,medRisk:9,highRisk:223, income:50.0, pre2010:94.7, fhsz:99.2, damaged:19, firewise:0, structure:383, pop:297 },
+{ zip:'93262', name:'Sequoia National Park', fair:18.75,totalPolicies:6,lowRisk:0,medRisk:6,highRisk:0, income:0.0, pre2010:79.8, fhsz:0.0, damaged:0, firewise:0, structure:32, pop:52 },
+{ zip:'93265', name:'Springville', fair:29.51,totalPolicies:736,lowRisk:0,medRisk:204,highRisk:532, income:20.3, pre2010:94.0, fhsz:97.2, damaged:244, firewise:2, structure:2494, pop:5058 },
+{ zip:'93267', name:'Strathmore', fair:1.46,totalPolicies:24,lowRisk:23,medRisk:1,highRisk:0, income:56.5, pre2010:94.2, fhsz:2.4, damaged:0, firewise:0, structure:1642, pop:5787 },
+{ zip:'93270', name:'Terra Bella', fair:1.11,totalPolicies:18,lowRisk:18,medRisk:0,highRisk:0, income:32.6, pre2010:92.7, fhsz:3.7, damaged:0, firewise:0, structure:1622, pop:5399 },
+{ zip:'93271', name:'Three Rivers', fair:47.55,totalPolicies:632,lowRisk:0,medRisk:21,highRisk:611, income:8.2, pre2010:95.7, fhsz:97.5, damaged:1, firewise:0, structure:1329, pop:2118 },
+{ zip:'93272', name:'Tipton', fair:0.31,totalPolicies:3,lowRisk:3,medRisk:0,highRisk:0, income:52.5, pre2010:86.1, fhsz:0.0, damaged:0, firewise:0, structure:969, pop:3296 },
+{ zip:'93274', name:'Tulare', fair:0.4,totalPolicies:87,lowRisk:87,medRisk:0,highRisk:0, income:38.7, pre2010:86.8, fhsz:0.0, damaged:0, firewise:0, structure:21631, pop:80733 },
+{ zip:'93277', name:'Visalia', fair:0.41,totalPolicies:67,lowRisk:67,medRisk:0,highRisk:0, income:30.4, pre2010:95.8, fhsz:0.0, damaged:0, firewise:0, structure:16477, pop:53582 },
+{ zip:'93286', name:'Woodlake', fair:2.55,totalPolicies:70,lowRisk:20,medRisk:49,highRisk:1, income:51.8, pre2010:90.0, fhsz:14.7, damaged:2, firewise:0, structure:2750, pop:10170 },
+{ zip:'93291', name:'Visalia', fair:0.52,totalPolicies:89,lowRisk:89,medRisk:0,highRisk:0, income:29.7, pre2010:76.2, fhsz:0.0, damaged:0, firewise:0, structure:17242, pop:66445 },
+{ zip:'93292', name:'Visalia', fair:0.3,totalPolicies:40,lowRisk:38,medRisk:2,highRisk:0, income:29.5, pre2010:87.5, fhsz:0.5, damaged:0, firewise:0, structure:13283, pop:44853 },
+{ zip:'93527', name:'Inyokern', fair:5.61,totalPolicies:84,lowRisk:72,medRisk:2,highRisk:10, income:41.0, pre2010:97.3, fhsz:84.8, damaged:0, firewise:0, structure:1496, pop:2291 },
+{ zip:'93603', name:'Badger', fair:38.24,totalPolicies:52,lowRisk:0,medRisk:0,highRisk:52, income:0.0, pre2010:93.2, fhsz:97.1, damaged:0, firewise:1, structure:136, pop:351 },
+{ zip:'93615', name:'Cutler', fair:0.78,totalPolicies:9,lowRisk:9,medRisk:0,highRisk:0, income:46.2, pre2010:100.0, fhsz:0.0, damaged:0, firewise:0, structure:1149, pop:5483 },
+{ zip:'93618', name:'Dinuba', fair:0.51,totalPolicies:37,lowRisk:37,medRisk:0,highRisk:0, income:47.0, pre2010:85.4, fhsz:0.0, damaged:0, firewise:0, structure:7207, pop:32253 },
+{ zip:'93631', name:'Kingsburg', fair:0.28,totalPolicies:14,lowRisk:14,medRisk:0,highRisk:0, income:32.1, pre2010:90.2, fhsz:0.0, damaged:0, firewise:0, structure:4975, pop:17564 },
+{ zip:'93633', name:'Kings Canyon National Pk', fair:47.7,totalPolicies:83,lowRisk:0,medRisk:0,highRisk:83, income:0.0, pre2010:88.7, fhsz:68.4, damaged:0, firewise:0, structure:174, pop:483 },
+{ zip:'93646', name:'Orange Cove', fair:1.01,totalPolicies:19,lowRisk:19,medRisk:0,highRisk:0, income:54.6, pre2010:89.5, fhsz:1.5, damaged:0, firewise:0, structure:1882, pop:10749 },
+{ zip:'93647', name:'Orosi', fair:1.16,totalPolicies:27,lowRisk:24,medRisk:2,highRisk:1, income:54.5, pre2010:95.6, fhsz:1.7, damaged:0, firewise:0, structure:2330, pop:11042 },
+{ zip:'93654', name:'Reedley', fair:0.62,totalPolicies:45,lowRisk:45,medRisk:0,highRisk:0, income:36.9, pre2010:94.2, fhsz:0.5, damaged:1, firewise:0, structure:7264, pop:31713 },
+{ zip:'93666', name:'Sultana', fair:9.76,totalPolicies:8,lowRisk:1,medRisk:7,highRisk:0, income:67.9, pre2010:95.5, fhsz:0.0, damaged:0, firewise:0, structure:82, pop:315 },
+{ zip:'93673', name:'Traver', fair:0.53,totalPolicies:1,lowRisk:1,medRisk:0,highRisk:0, income:63.4, pre2010:91.1, fhsz:0.0, damaged:0, firewise:0, structure:189, pop:715 },
     ],
     tuolumne: [
-{ zip:'95228', name:'Copperopolis', fair:31.84,totalPolicies:893,lowRisk:3,medRisk:550,highRisk:340, income:115, pre60:0.6, buildYr:1965, pop:2200, units:4300},
-{ zip:'95305', name:'Big Oak Flat', fair:30.11,totalPolicies:28,lowRisk:0,medRisk:0,highRisk:28, income:9, pre60:83.8, buildYr:1970, pop:1800, units:7900},
-{ zip:'95310', name:'Columbia', fair:52.96,totalPolicies:393,lowRisk:0,medRisk:0,highRisk:393, income:29, pre60:43.5, buildYr:1965, pop:3200, units:400},
-{ zip:'95311', name:'Coulterville', fair:33.22,totalPolicies:387,lowRisk:0,medRisk:2,highRisk:385, income:121, pre60:82.3, buildYr:1970, pop:3900, units:4400},
-{ zip:'95321', name:'Groveland', fair:58.97,totalPolicies:2108,lowRisk:0,medRisk:10,highRisk:2098, income:38, pre60:6.5, buildYr:1965, pop:5800, units:7000},
-{ zip:'95327', name:'Jamestown', fair:31.73,totalPolicies:817,lowRisk:0,medRisk:153,highRisk:664, income:99, pre60:74.7, buildYr:1970, pop:8900, units:2100},
-{ zip:'95329', name:'La Grange', fair:29.39,totalPolicies:402,lowRisk:1,medRisk:182,highRisk:219, income:144, pre60:14.1, buildYr:1965, pop:5000, units:2400},
-{ zip:'95335', name:'Long Barn', fair:100.00,totalPolicies:907,lowRisk:0,medRisk:2,highRisk:905, income:52, pre60:12.5, buildYr:1970, pop:8200, units:9800},
-{ zip:'95346', name:'MI Wuk Village', fair:73.71,totalPolicies:774,lowRisk:0,medRisk:0,highRisk:774, income:65, pre60:75.4, buildYr:1971, pop:2900, units:3200},
-{ zip:'95364', name:'Pinecrest', fair:45.53,totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:61, pre60:64.1, buildYr:1965, pop:7300, units:2300},
-{ zip:'95370', name:'Sonora', fair:44.36,totalPolicies:5085,lowRisk:6,medRisk:720,highRisk:4359, income:61, pre60:66.5, buildYr:1965, pop:3900, units:2500},
-{ zip:'95372', name:'Soulsbyville', fair:50.43,totalPolicies:413,lowRisk:0,medRisk:67,highRisk:346, income:97, pre60:51.6, buildYr:1965, pop:4300, units:3500},
-{ zip:'95379', name:'Tuolumne', fair:47.93,totalPolicies:774,lowRisk:0,medRisk:82,highRisk:692, income:148, pre60:9.5, buildYr:1965, pop:1700, units:5100},
-{ zip:'95383', name:'Twain Harte', fair:70.62,totalPolicies:2142,lowRisk:0,medRisk:0,highRisk:2142, income:60, pre60:71, buildYr:1965, pop:3500, units:200},
-{ zip:'95389', name:'Yosemite National Park', fair:79.35,totalPolicies:315,lowRisk:0,medRisk:0,highRisk:315, income:125, pre60:74.3, buildYr:1965, pop:2100, units:5800},
+{ zip:'95228', name:'Copperopolis', fair:31.84,totalPolicies:893,lowRisk:3,medRisk:550,highRisk:340, income:25.2, pre2010:93.5, fhsz:100.0, damaged:7, firewise:0, structure:2805, pop:4847 },
+{ zip:'95305', name:'Big Oak Flat', fair:30.11,totalPolicies:28,lowRisk:0,medRisk:0,highRisk:28, income:62.8, pre2010:100.0, fhsz:100.0, damaged:0, firewise:0, structure:93, pop:108 },
+{ zip:'95310', name:'Columbia', fair:52.96,totalPolicies:393,lowRisk:0,medRisk:0,highRisk:393, income:58.4, pre2010:98.6, fhsz:99.9, damaged:0, firewise:1, structure:742, pop:1559 },
+{ zip:'95311', name:'Coulterville', fair:33.22,totalPolicies:387,lowRisk:0,medRisk:2,highRisk:385, income:42.5, pre2010:97.2, fhsz:98.6, damaged:23, firewise:0, structure:1165, pop:1998 },
+{ zip:'95321', name:'Groveland', fair:58.97,totalPolicies:2108,lowRisk:0,medRisk:10,highRisk:2098, income:42.5, pre2010:98.5, fhsz:98.5, damaged:1, firewise:3, structure:3575, pop:4068 },
+{ zip:'95327', name:'Jamestown', fair:31.73,totalPolicies:817,lowRisk:0,medRisk:153,highRisk:664, income:31.8, pre2010:92.8, fhsz:99.8, damaged:112, firewise:1, structure:2575, pop:9124 },
+{ zip:'95329', name:'La Grange', fair:29.39,totalPolicies:402,lowRisk:1,medRisk:182,highRisk:219, income:36.4, pre2010:94.1, fhsz:100.0, damaged:7, firewise:0, structure:1368, pop:2738 },
+{ zip:'95335', name:'Long Barn', fair:100.0,totalPolicies:907,lowRisk:0,medRisk:2,highRisk:905, income:0.0, pre2010:100.0, fhsz:96.6, damaged:0, firewise:1, structure:507, pop:310 },
+{ zip:'95346', name:'MI Wuk Village', fair:73.71,totalPolicies:774,lowRisk:0,medRisk:0,highRisk:774, income:16.4, pre2010:98.8, fhsz:99.1, damaged:1, firewise:2, structure:1050, pop:1324 },
+{ zip:'95364', name:'Pinecrest', fair:45.53,totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:0.0, pre2010:87.3, fhsz:41.8, damaged:0, firewise:0, structure:380, pop:64 },
+{ zip:'95370', name:'Sonora', fair:44.36,totalPolicies:5085,lowRisk:6,medRisk:720,highRisk:4359, income:38.6, pre2010:96.3, fhsz:100.0, damaged:11, firewise:10, structure:11462, pop:27718 },
+{ zip:'95372', name:'Soulsbyville', fair:50.43,totalPolicies:413,lowRisk:0,medRisk:67,highRisk:346, income:24.6, pre2010:100.0, fhsz:100.0, damaged:0, firewise:0, structure:819, pop:1883 },
+{ zip:'95379', name:'Tuolumne', fair:47.93,totalPolicies:774,lowRisk:0,medRisk:82,highRisk:692, income:36.8, pre2010:93.8, fhsz:95.2, damaged:2, firewise:1, structure:1615, pop:3933 },
+{ zip:'95383', name:'Twain Harte', fair:70.62,totalPolicies:2142,lowRisk:0,medRisk:0,highRisk:2142, income:34.8, pre2010:99.8, fhsz:99.7, damaged:0, firewise:3, structure:3033, pop:4289 },
+{ zip:'95389', name:'Yosemite National Park', fair:79.35,totalPolicies:315,lowRisk:0,medRisk:0,highRisk:315, income:49.0, pre2010:93.1, fhsz:80.9, damaged:0, firewise:0, structure:397, pop:552 },
     ],
     hoopa: [
-      { zip:'95546', name:'Hoopa Valley', fair:38.2, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:72, pre60:54, buildYr:1958, pop:2600, units:900 },
-      { zip:'95526', name:'Burnt Ranch',  fair:29.4, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:58, pre60:46, buildYr:1964, pop:350,  units:200 },
-      { zip:'95511', name:'Alderpoint',   fair:26.8, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:61, pre60:48, buildYr:1963, pop:400,  units:220 },
-      { zip:'95514', name:'Blocksburg',   fair:24.2, totalPolicies:173,lowRisk:0,medRisk:4,highRisk:169, income:55, pre60:42, buildYr:1966, pop:280,  units:160 },
+{ zip:'95546', name:'Hoopa Valley', fair:7.04,totalPolicies:39,lowRisk:0,medRisk:0,highRisk:39, income:43.8, pre2010:95.5, fhsz:11.8, damaged:0, firewise:0, structure:554, pop:3643 },
     ],
   };
   return seeds[community] || [];
@@ -1023,10 +1559,10 @@ function generateZIPs(community) {
 /* ════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════ */
-let layers = { income:true, age:true, outline:true, labels:false };
+let layers = { income:true, age:true, outline:true, labels:false, firewise:false, dins:false };
 let thresholds = { fair:15, income:40, age:30 };
-let hlMode = 3;
-let choroMetric = 'fair';
+const hlMode = 3; // High-risk = all 3 thresholds exceeded (driven entirely by Risk Thresholds panel)
+let choroMetric = 'fair'; // Fixed to FAIR plan concentration
 let currentCommunity = '';
 let currentZipData = [];
 let selectedZip = null;
@@ -1034,7 +1570,6 @@ let geoFeatures = null; // Array of GeoJSON features with _data attached
 let currentView = 'map';
 let sortCol = 'score';
 let sortDir = -1;
-let chartInstances = [];
 
 /* Leaflet map (initialized once) */
 let leafletMap = null;
@@ -1045,18 +1580,44 @@ let leafletMap = null;
 function getVal(d, metric) {
   if (metric === 'score')  return getRiskScore(d);
   if (metric === 'income') return d.income;
-  if (metric === 'pre60')  return d.pre60;
+  if (metric === 'pre2010') return d.pre2010;
   return d.fair;
 }
 function getRiskFactors(d) {
   let n = 0;
   if (d.fair   >= thresholds.fair)   n++;
   if (d.income >= thresholds.income) n++;
-  if (d.pre60  >= thresholds.age)    n++;
+  if (d.pre2010 >= thresholds.age)    n++;
   return n;
 }
+// Risk classification level: 3 = High (all 3 exceeded), 2 = Medium (exactly 2
+// exceeded AND FAIR plan rate must be one of them), 1 = Watch (1 factor, or
+// 2 factors that don't include FAIR), 0 = Low risk (none exceeded).
+function getRiskLevel(d) {
+  const factors = getRiskFactors(d);
+  const fairExceeded = d.fair >= thresholds.fair;
+  if (factors === 3) return 3;
+  if (factors === 2 && fairExceeded) return 2;
+  if (factors >= 1) return 1;
+  return 0;
+}
+// Mean & sample standard deviation for FAIR rate, low-income %, and pre-2010 %,
+// computed from the currently selected community's ZIP codes (currentZipData).
+function getZScoreStats() {
+  const fields = ['fair', 'income', 'pre2010'];
+  const stats = {};
+  fields.forEach(f => {
+    const vals = currentZipData.map(d => d[f]);
+    stats[f] = { mean: d3.mean(vals) || 0, sd: d3.deviation(vals) || 0 };
+  });
+  return stats;
+}
+
 function getRiskScore(d) {
-  return Math.round((d.fair/40)*40 + (d.income/80)*30 + (d.pre60/80)*30);
+  const stats = getZScoreStats();
+  const z = (val, f) => stats[f].sd ? (val - stats[f].mean) / stats[f].sd : 0;
+  const avgZ = 0.5 * z(d.fair, 'fair') + 0.25 * z(d.income, 'income') + 0.25 * z(d.pre2010, 'pre2010');
+  return +avgZ.toFixed(2);
 }
 function pct(v) { return v.toFixed(1) + '%'; }
 function fmt(n) {
@@ -1069,7 +1630,7 @@ function fmt(n) {
 const SCHEMES = {
   fair:   ["#FDECEA","#F9CCC8","#F5ACA6","#EF8B84","#E86A62","#DC5249","#CC4438","#B83528","#992620","#7B1818"],
   income: ["#E4F4F4","#BEE8E8","#98DDDD","#6DCBCB","#40B6B6","#259E9E","#1C8282","#146767","#0E4E4E","#083535"],
-  pre60:  ["#FEF3E6","#FCE1BA","#FBCF8F","#F4B764","#EC9C38","#DB831C","#C26D10","#A85707","#894405","#6B3204"],
+  pre2010:["#FEF3E6","#FCE1BA","#FBCF8F","#F4B764","#EC9C38","#DB831C","#C26D10","#A85707","#894405","#6B3204"],
   score:  ["#E6F0FA","#CADFF4","#AECFEE","#8CB9E4","#67A1D9","#4789C9","#2D71B4","#185B9F","#114D8A","#0B3F75"],
 };
 function makeColorScale(metric, data) {
@@ -1083,7 +1644,7 @@ function gradCSS(metric) {
   return `linear-gradient(to right, ${s[0]}, ${s[s.length-1]})`;
 }
 function metricLabel(m) {
-  return { fair:'FAIR plan rate', income:'Low-income pop.', pre60:'Pre-1960 units', score:'Combined risk score' }[m] || m;
+  return { fair:'FAIR plan rate', income:'LMI population', pre2010:'Pre-2010 structures', score:'Combined risk score' }[m] || m;
 }
 
 /* ════════════════════════════════════════════
@@ -1096,6 +1657,8 @@ let outlineLayer = null;  // L.geoJSON for high-risk dashed borders
 let dotLayer     = null;  // L.layerGroup for income/age dots
 let labelLayer   = null;  // L.layerGroup for ZIP labels
 let boundaryLayer= null;  // L.geoJSON for county boundary
+let firewiseLayer= null;  // L.layerGroup for Firewise site markers
+let dinsLayer    = null;  // L.layerGroup for DINS fire-damaged structure points
 
 function initLeafletMap() {
   if (leafletMap) return;
@@ -1123,10 +1686,10 @@ function initLeafletMap() {
 ════════════════════════════════════════════ */
 
 function clearAllLayers() {
-  [zipLayer, outlineLayer, dotLayer, labelLayer, boundaryLayer].forEach(l => {
+  [zipLayer, outlineLayer, dotLayer, labelLayer, boundaryLayer, firewiseLayer, dinsLayer].forEach(l => {
     if (l) leafletMap.removeLayer(l);
   });
-  zipLayer = outlineLayer = dotLayer = labelLayer = boundaryLayer = null;
+  zipLayer = outlineLayer = dotLayer = labelLayer = boundaryLayer = firewiseLayer = dinsLayer = null;
 }
 
 // Return the geographic centroid [lat, lng] of a GeoJSON geometry
@@ -1239,7 +1802,7 @@ function redrawOverlay() {
     }
 
     // Age dot (slightly offset east)
-    if (layers.age && d.pre60 >= thresholds.age) {
+    if (layers.age && d.pre2010 >= thresholds.age) {
       const offsetLng = ctr[1] + 0.005;
       markers.push(L.circleMarker([ctr[0], offsetLng], {
         radius: 4, color: 'white', weight: 1,
@@ -1269,6 +1832,43 @@ function redrawOverlay() {
 
   dotLayer = L.layerGroup(markers).addTo(leafletMap);
 
+  /* ── 5. Firewise sites In Good Standing ── */
+  if (layers.firewise) {
+    const sites = FIREWISE_SITES[currentCommunity] || [];
+    const fwMarkers = sites.map(s => L.marker([s.lat, s.lng], {
+      icon: L.divIcon({
+        className: 'firewise-marker-div',
+        html: '🔥',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      }),
+      pane: 'markerPane',
+    }).bindTooltip(
+      `<strong>${s.name}</strong><br>${s.description}`,
+      { direction: 'top', offset: [0, -6] }
+    ));
+    firewiseLayer = L.layerGroup(fwMarkers).addTo(leafletMap);
+  }
+
+  /* ── 6. DINS fire-damaged structure points ── */
+  if (layers.dins && dinsData) {
+    const zipSet = new Set(currentZipData.map(d => d.zip));
+    const pts = dinsData.filter(p => zipSet.has(p.zip));
+    const dinsMarkers = pts.map(p => L.marker([p.lat, p.lng], {
+      icon: L.divIcon({
+        className: 'dins-triangle-icon',
+        html: `<div class="dins-triangle-sm" style="border-bottom:9px solid ${dinsColor(p.damage)};"></div>`,
+        iconSize: [10, 9],
+        iconAnchor: [5, 8],
+      }),
+      pane: 'markerPane',
+    }).bindTooltip(
+      `<strong>${p.year}</strong><br>${p.damage}`,
+      { direction: 'top', offset: [0, -8] }
+    ));
+    dinsLayer = L.layerGroup(dinsMarkers).addTo(leafletMap);
+  }
+
   /* ── Update legend UI ── */
   const grad = gradCSS(choroMetric);
   document.getElementById('legend-grad').style.background = grad;
@@ -1279,6 +1879,8 @@ function redrawOverlay() {
   document.getElementById('leg-income').style.display = layers.income ? 'flex' : 'none';
   document.getElementById('leg-age').style.display    = layers.age    ? 'flex' : 'none';
   document.getElementById('leg-outline').style.display= layers.outline? 'flex' : 'none';
+  document.getElementById('leg-firewise').style.display = layers.firewise ? 'flex' : 'none';
+  document.getElementById('leg-dins').style.display = layers.dins ? 'flex' : 'none';
 }
 
 // Efficiently restyle ZIP paths without full rebuild (used when selection changes)
@@ -1307,10 +1909,12 @@ function showTooltip(event, cd) {
   document.getElementById('tt-name').textContent = 'ZIP ' + cd.zip + ' · ' + cd.name;
   document.getElementById('tt-fair').textContent  = cd.fair.toFixed(1) + '%';
   document.getElementById('tt-income').textContent = cd.income + '%';
-  document.getElementById('tt-age').textContent    = cd.pre60 + '%';
-  document.getElementById('tt-year').textContent   = cd.buildYr;
+  document.getElementById('tt-age').textContent    = cd.pre2010 + '%';
+  document.getElementById('tt-fhsz').textContent   = cd.fhsz + '%';
+  document.getElementById('tt-structures').textContent = cd.structure.toLocaleString();
+  document.getElementById('tt-damaged').textContent    = cd.damaged.toLocaleString();
+  document.getElementById('tt-fw-count').textContent   = cd.firewise.toLocaleString();
   document.getElementById('tt-pop').textContent    = cd.pop.toLocaleString();
-  document.getElementById('tt-score').textContent  = getRiskScore(cd) + ' / 100';
 
   // Bar chart values
   const total = cd.totalPolicies || 1;
@@ -1331,6 +1935,16 @@ function showTooltip(event, cd) {
   setBar('tt-bar-med',  'tt-bar-med-rest',  cd.medRisk  || 0);
   setBar('tt-bar-high', 'tt-bar-high-rest', cd.highRisk || 0);
 
+  // Top admitted insurers
+  const insurers = generateInsurers(cd.zip);
+  document.getElementById('tt-insurers').innerHTML = insurers.map((ins, i) => `
+    <div class="tt-ins-row">
+      <span class="tt-ins-rank">${i+1}</span>
+      <span class="tt-ins-name">${ins.name}</span>
+      <div class="tt-ins-track"><div class="tt-ins-fill" style="width:${Math.min(100, ins.share*1.3)}%"></div></div>
+      <span class="tt-ins-pct">${ins.share}%</span>
+    </div>`).join('');
+
   tt.style.display = 'block';
   moveTooltip(event);
 }
@@ -1341,7 +1955,7 @@ function moveTooltip(event) {
   let x = event.clientX - rect.left + 16;
   let y = event.clientY - rect.top  + 16;
   if (x + 520 > wrap.clientWidth)  x = event.clientX - rect.left - 536;
-  if (y + 220 > wrap.clientHeight) y = event.clientY - rect.top  - 230;
+  if (y + 360 > wrap.clientHeight) y = Math.max(4, event.clientY - rect.top - 370);
   tt.style.left = x + 'px';
   tt.style.top  = y + 'px';
 }
@@ -1353,19 +1967,22 @@ function hideTooltip() { document.getElementById('tooltip').style.display = 'non
 function selectZip(cd) {
   document.getElementById('spotlight-empty').style.display   = 'none';
   document.getElementById('spotlight-content').style.display = 'block';
-  const factors = getRiskFactors(cd);
+  const factors = getRiskLevel(cd);
   const score   = getRiskScore(cd);
   document.getElementById('sp-name').textContent   = cd.zip + ' – ' + cd.name;
   document.getElementById('sp-sub').textContent    = `Score: ${score}/100 · ${factors} factor${factors!==1?'s':''} flagged`;
   document.getElementById('sp-fair').textContent   = pct(cd.fair);
   document.getElementById('sp-income').textContent = cd.income + '%';
-  document.getElementById('sp-age').textContent    = cd.pre60 + '%';
-  document.getElementById('sp-year').textContent   = cd.buildYr;
+  document.getElementById('sp-age').textContent    = cd.pre2010 + '%';
+  document.getElementById('sp-fhsz').textContent   = cd.fhsz + '%';
+  document.getElementById('sp-structures').textContent = cd.structure.toLocaleString();
+  document.getElementById('sp-damaged').textContent     = cd.damaged.toLocaleString();
+  document.getElementById('sp-fw-count').textContent    = cd.firewise.toLocaleString();
   document.getElementById('sp-pop').textContent    = cd.pop.toLocaleString();
-  document.getElementById('sp-units').textContent  = cd.units.toLocaleString();
   document.getElementById('bar-fair').style.width   = Math.min(100, cd.fair/40*100) + '%';
   document.getElementById('bar-income').style.width = Math.min(100, cd.income/80*100) + '%';
-  document.getElementById('bar-age').style.width    = Math.min(100, cd.pre60/80*100) + '%';
+  document.getElementById('bar-age').style.width    = Math.min(100, cd.pre2010/80*100) + '%';
+  document.getElementById('bar-fhsz').style.width   = Math.min(100, cd.fhsz) + '%';
   const badge = document.getElementById('sp-badge');
   badge.innerHTML = factors === 3
     ? `<span class="risk-badge risk-high">⚠ High risk — all 3 factors</span>`
@@ -1373,7 +1990,23 @@ function selectZip(cd) {
     ? `<span class="risk-badge risk-med">◉ Medium risk — 2 factors</span>`
     : factors === 1
     ? `<span class="risk-badge risk-low">✓ Watch — 1 factor</span>`
-    : `<span class="risk-badge risk-low">✓ Lower risk</span>`;
+    : `<span class="risk-badge risk-low">✓ Low risk</span>`;
+
+  // Top admitted insurers
+  const insurers = generateInsurers(cd.zip);
+  document.getElementById('sp-insurers').innerHTML = insurers.map((ins, i) => `
+    <div class="sp-ins-row">
+      <span class="sp-ins-rank">${i+1}</span>
+      <span class="sp-ins-name">${ins.name}</span>
+      <div class="sp-ins-track"><div class="sp-ins-fill" style="width:${Math.min(100, ins.share*1.3)}%"></div></div>
+      <span class="sp-ins-pct">${ins.share}%</span>
+    </div>`).join('');
+
+  // Firewise sites
+  const fwSites = firewiseSitesForZip(cd);
+  document.getElementById('sp-firewise').innerHTML = fwSites.length
+    ? fwSites.map(s => `<span class="sp-fw-chip">🔥 ${s.name}</span>`).join('')
+    : `<span class="sp-fw-empty">No Firewise sites recorded in this ZIP</span>`;
 }
 
 /* ════════════════════════════════════════════
@@ -1386,8 +2019,24 @@ function updateMetrics() {
     ? d3.mean(currentZipData, d => d.fair).toFixed(1) + '%' : '—';
   const pop = high.reduce((s,d) => s + d.pop, 0);
   document.getElementById('m-pop').textContent  = currentZipData.length ? fmt(pop) : '—';
-  const medYr = high.length ? Math.round(d3.median(high, d => d.buildYr)) : '—';
-  document.getElementById('m-year').textContent = medYr;
+
+  // Fire Risk Reduction Community list status for the selected community
+  const meta = COMMUNITY_META[currentCommunity];
+  const frrcEl = document.getElementById('m-frrc');
+  const frrcSubEl = document.getElementById('m-frrc-sub');
+  if (!meta) {
+    frrcEl.textContent = '—';
+    frrcEl.className = 'metric-value mv-white metric-value-sm';
+    frrcSubEl.textContent = 'Select a community';
+  } else if (meta.frrc && meta.frrc.length) {
+    frrcEl.textContent = `Yes — ${meta.frrc.length} area${meta.frrc.length!==1?'s':''}`;
+    frrcEl.className = 'metric-value mv-fire-yes metric-value-sm';
+    frrcSubEl.textContent = meta.frrc.join(' · ');
+  } else {
+    frrcEl.textContent = 'Not listed';
+    frrcEl.className = 'metric-value mv-fire-no metric-value-sm';
+    frrcSubEl.textContent = 'No areas currently on the list';
+  }
 }
 
 function updateTopZips() {
@@ -1397,15 +2046,21 @@ function updateTopZips() {
     container.innerHTML = '<div class="empty-state"><div class="es-icon">📊</div><span>Select a community</span></div>';
     return;
   }
-  const sorted = [...currentZipData].sort((a,b) => getRiskScore(b)-getRiskScore(a)).slice(0,8);
+  const sorted = [...currentZipData].sort((a,b) => {
+    const lvlDiff = getRiskLevel(b) - getRiskLevel(a);
+    if (lvlDiff !== 0) return lvlDiff;
+    if (b.fair !== a.fair) return b.fair - a.fair;
+    if (b.income !== a.income) return b.income - a.income;
+    return b.pre2010 - a.pre2010;
+  }).slice(0,8);
   container.innerHTML = '';
   sorted.forEach((cd, i) => {
-    const score   = getRiskScore(cd);
-    const factors = getRiskFactors(cd);
-    const cls     = factors===3?'score-red':factors===2?'score-amber':'score-green';
+    const factors = getRiskLevel(cd);
+    const cls     = factors===3?'score-red':factors===2?'score-amber':factors===1?'score-teal':'score-green';
+    const label   = { 3:'High', 2:'Medium', 1:'Watch', 0:'Low' }[factors];
     const div = document.createElement('div');
     div.className = 'zip-item' + (selectedZip===cd.zip ? ' selected' : '');
-    div.innerHTML = `<span class="zip-rank">#${i+1}</span><span class="zip-code">${cd.zip}<br><span style="font-size:10px;font-weight:400;color:var(--text2);">${cd.name}</span></span><span class="zip-score ${cls}">${score}</span>`;
+    div.innerHTML = `<span class="zip-rank">#${i+1}</span><span class="zip-code">${cd.zip}<br><span style="font-size:10px;font-weight:400;color:var(--text2);">${cd.name}</span></span><span class="zip-score ${cls}">${label}</span>`;
 div.onclick = () => {
   selectedZip = cd.zip;
   refreshZipStyles();
@@ -1429,10 +2084,15 @@ div.onclick = () => {
 ════════════════════════════════════════════ */
 function toggleLayer(name) {
   layers[name] = !layers[name];
-  const colorMap = { income:'on-teal', age:'on-amber', outline:'on-red', labels:'on-forest' };
+  const colorMap = { income:'on-teal', age:'on-amber', outline:'on-red', labels:'on-forest', firewise:'on-fire', dins:'on-dins' };
   const tog = document.getElementById('tog-'+name);
   if (tog) tog.className = 'toggle' + (layers[name] ? ' ' + colorMap[name] : '');
-  redrawOverlay();
+
+  if (name === 'dins' && layers.dins) {
+    loadDinsData().then(() => redrawOverlay());
+  } else {
+    redrawOverlay();
+  }
 }
 
 /* ════════════════════════════════════════════
@@ -1579,9 +2239,7 @@ function setView(v) {
       document.getElementById('view-chart').classList.add('active');
     }
 
-    // Destroy old chart instances before re-rendering
-    chartInstances.forEach(c => { try { c.destroy(); } catch(e){} });
-    chartInstances = [];
+
 
     renderCurrentNonMapView();
   }
@@ -1589,7 +2247,7 @@ function setView(v) {
 
 function renderCurrentNonMapView() {
   if (currentView === 'table') renderTableView();
-  else if (currentView === 'chart') renderChartView();
+  else if (currentView === 'chart') renderDefinitionsView();
 }
 
 ['map','table','chart'].forEach(v => {
@@ -1599,10 +2257,6 @@ function renderCurrentNonMapView() {
 /* ════════════════════════════════════════════
    CONTROLS
 ════════════════════════════════════════════ */
-document.getElementById('choro-metric').addEventListener('change', function() {
-  choroMetric = this.value;
-  redrawOverlay();
-});
 document.getElementById('sl-fair').addEventListener('input', function() {
   thresholds.fair = +this.value;
   document.getElementById('sv-fair').textContent = this.value + '%';
@@ -1617,12 +2271,6 @@ document.getElementById('sl-age').addEventListener('input', function() {
   thresholds.age = +this.value;
   document.getElementById('sv-age').textContent = this.value + '%';
   redrawOverlay(); updateMetrics(); updateTopZips();
-});
-document.querySelectorAll('input[name=hl]').forEach(r => {
-  r.addEventListener('change', function() {
-    hlMode = +this.value;
-    redrawOverlay();
-  });
 });
 
 /* ════════════════════════════════════════════
@@ -1640,16 +2288,17 @@ function renderTableView() {
   }
 
   const cols = [
-    { key:'zip',     label:'ZIP Code',      numeric:false },
-    { key:'name',    label:'Area Name',     numeric:false },
-    { key:'fair',    label:'FAIR Rate',     numeric:true  },
-    { key:'income',  label:'Low Income',    numeric:true  },
-    { key:'pre60',   label:'Pre-1960 %',    numeric:true  },
-    { key:'buildYr', label:'Build Year',    numeric:true  },
-    { key:'pop',     label:'Population',    numeric:true  },
-    { key:'units',   label:'Housing Units', numeric:true  },
-    { key:'score',   label:'Risk Score',    numeric:true  },
-    { key:'factors', label:'Risk Level',    numeric:true  },
+    { key:'zip',      label:'ZIP Code',      numeric:false },
+    { key:'name',     label:'Area Name',     numeric:false },
+    { key:'fair',     label:'FAIR Rate',     numeric:true  },
+    { key:'income',   label:'LMI %',    numeric:true  },
+    { key:'pre2010',  label:'Pre-2010 %',    numeric:true  },
+    { key:'fhsz',     label:'FHSZ %',        numeric:true  },
+    { key:'structure',label:'Structures',    numeric:true  },
+    { key:'damaged',  label:'Damaged (DINS)',numeric:true  },
+    { key:'firewise', label:'Firewise Sites',numeric:true  },
+    { key:'pop',      label:'Population',    numeric:true  },
+    { key:'factors',  label:'Risk Level',    numeric:true  },
   ];
 
   function sortData(data) {
@@ -1668,24 +2317,24 @@ function renderTableView() {
       return `<th class="${cls}" data-key="${c.key}">${c.label}</th>`;
     }).join('');
     const rows = sorted.map(d => {
-      const score   = getRiskScore(d);
-      const factors = getRiskFactors(d);
+      const factors = getRiskLevel(d);
       const rowCls  = factors===3?'high-risk':factors===2?'med-risk':'';
-      const badgeCls= factors===3?'tbl-high':factors===2?'tbl-med':'tbl-low';
-      const badgeLbl= factors===3?'High':factors===2?'Medium':'Low';
+      const badgeCls= {3:'tbl-high', 2:'tbl-med', 1:'tbl-watch', 0:'tbl-lower'}[factors];
+      const badgeLbl= {3:'High', 2:'Medium', 1:'Watch', 0:'Low'}[factors];
       const fairCls = d.fair>=thresholds.fair   ? 'flag'       : '';
       const incCls  = d.income>=thresholds.income? 'flag-amber' : '';
-      const ageCls  = d.pre60>=thresholds.age    ? 'flag-amber' : '';
+      const ageCls  = d.pre2010>=thresholds.age    ? 'flag-amber' : '';
       return `<tr class="${rowCls}">
         <td class="mono" style="font-weight:700;color:var(--forest);">${d.zip}</td>
         <td>${d.name}</td>
         <td class="mono ${fairCls}">${pct(d.fair)}</td>
         <td class="mono ${incCls}">${d.income}%</td>
-        <td class="mono ${ageCls}">${d.pre60}%</td>
-        <td class="mono" style="color:var(--text2);">${d.buildYr}</td>
+        <td class="mono ${ageCls}">${d.pre2010}%</td>
+        <td class="mono" style="color:var(--text2);">${d.fhsz}%</td>
+        <td class="mono" style="color:var(--text2);">${d.structure.toLocaleString()}</td>
+        <td class="mono" style="color:var(--text2);">${d.damaged.toLocaleString()}</td>
+        <td class="mono" style="color:var(--text2);">${d.firewise.toLocaleString()}</td>
         <td class="mono" style="color:var(--text2);">${d.pop.toLocaleString()}</td>
-        <td class="mono" style="color:var(--text2);">${d.units.toLocaleString()}</td>
-        <td class="mono" style="font-weight:700;color:${factors===3?'var(--red)':factors===2?'var(--amber)':'var(--text2)'};">${score}</td>
         <td><span class="tbl-badge ${badgeCls}">${badgeLbl}</span></td>
       </tr>`;
     }).join('');
@@ -1719,130 +2368,30 @@ function renderTableView() {
 /* ════════════════════════════════════════════
    CHART VIEW
 ════════════════════════════════════════════ */
-function renderChartView() {
+function renderDefinitionsView() {
   const area = document.getElementById('view-chart');
   if (!area) return;
-  const meta = COMMUNITY_META[currentCommunity];
-  const title = meta ? meta.label : '';
 
-  if (!currentZipData.length) {
-    area.style.gridTemplateColumns = '1fr';
-    area.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text3);font-size:13px;">Select a community to view charts.</div>`;
-    return;
-  }
-
-  area.style.gridTemplateColumns = '1fr 1fr';
-  const barH = d => `${Math.max(200, d.length * 26)}px`;
+  const rows = VARIABLE_DEFINITIONS.map(d => `
+    <tr>
+      <td style="font-weight:700;color:var(--forest);white-space:nowrap;">${d.variable}</td>
+      <td>${d.definition}</td>
+      <td style="color:var(--text2);">${d.source}</td>
+    </tr>`).join('');
 
   area.innerHTML = `
-    <div class="chart-panel">
-      <div class="chart-title">FAIR Plan Rate by ZIP Code</div>
-      <div class="chart-subtitle">${title} · sorted by rate</div>
-      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch1"></canvas></div>
+    <div class="table-header-bar">
+      <div>
+        <div class="table-title">Variable Definitions &amp; Data Sources</div>
+        <div class="table-subtitle">Reference for every metric used across the Map and Table views</div>
+      </div>
     </div>
-    <div class="chart-panel">
-      <div class="chart-title">Risk Score vs Low-Income Population</div>
-      <div class="chart-subtitle">Bubble size = pre-1960 share</div>
-      <div style="height:240px;position:relative;"><canvas id="ch2"></canvas></div>
-      <div class="chart-title" style="margin-top:22px;">ZIP Codes by Risk Level</div>
-      <div class="chart-subtitle">Based on current threshold settings</div>
-      <div style="height:150px;position:relative;"><canvas id="ch3"></canvas></div>
-    </div>
-    <div class="chart-panel">
-      <div class="chart-title">Low-Income Population by ZIP</div>
-      <div class="chart-subtitle">${title} · threshold at ${thresholds.income}%</div>
-      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch4"></canvas></div>
-    </div>
-    <div class="chart-panel">
-      <div class="chart-title">Pre-1960 Building Stock by ZIP</div>
-      <div class="chart-subtitle">${title} · threshold at ${thresholds.age}%</div>
-      <div style="height:${barH(currentZipData)};position:relative;"><canvas id="ch5"></canvas></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Variable</th><th>Definition</th><th>Data Source</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
     </div>`;
-
-  const tc = '#4B5563';
-  const gc = 'rgba(0,0,0,0.05)';
-
-  const sorted = [...currentZipData].sort((a,b) => b.fair-a.fair);
-  const labels = sorted.map(d => d.zip);
-
-  const c1 = new Chart(document.getElementById('ch1'), {
-    type:'bar',
-    data:{
-      labels,
-      datasets:[{
-        data:sorted.map(d=>d.fair),
-        backgroundColor:sorted.map(d=>getRiskFactors(d)>=3?'rgba(192,57,43,0.80)':getRiskFactors(d)>=2?'rgba(224,123,42,0.75)':'rgba(26,95,165,0.65)'),
-        borderRadius:4,borderWidth:0
-      }]
-    },
-    options:{
-      indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'%'}}},
-      scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'FAIR plan rate',color:tc}},
-        y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}
-      }
-    }
-  });
-
-  const c2 = new Chart(document.getElementById('ch2'), {
-    type:'bubble',
-    data:{
-      datasets:[{
-        data:currentZipData.map(d=>({x:d.income,y:getRiskScore(d),r:Math.sqrt(d.pre60)*0.9,label:d.zip+' '+d.name})),
-        backgroundColor:currentZipData.map(d=>getRiskFactors(d)>=3?'rgba(192,57,43,0.7)':getRiskFactors(d)>=2?'rgba(224,123,42,0.65)':'rgba(27,142,142,0.55)'),
-        borderWidth:0
-      }]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const d=currentZipData[c.dataIndex];return[d.zip+' '+d.name,`Low income: ${d.income}%`,`FAIR rate: ${d.fair.toFixed(1)}%`,`Score: ${getRiskScore(d)}`];}}}},
-      scales:{
-        x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},title:{display:true,text:'Low-income population %',color:tc}},
-        y:{grid:{color:gc},ticks:{color:tc},title:{display:true,text:'Risk score',color:tc}}
-      }
-    }
-  });
-
-  const counts = [0,1,2,3].map(n=>currentZipData.filter(d=>getRiskFactors(d)===n).length);
-  const c3 = new Chart(document.getElementById('ch3'), {
-    type:'doughnut',
-    data:{
-      labels:['0 factors','1 factor','2 factors','All 3 factors'],
-      datasets:[{data:counts,backgroundColor:['#B4B2A9','#1B8E8E','#E07B2A','#C0392B'],borderWidth:2,borderColor:'#fff'}]
-    },
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:tc,font:{size:10},boxWidth:12}}}}
-  });
-
-  const sorted2 = [...currentZipData].sort((a,b)=>b.income-a.income);
-  const c4 = new Chart(document.getElementById('ch4'), {
-    type:'bar',
-    data:{
-      labels:sorted2.map(d=>d.zip),
-      datasets:[{data:sorted2.map(d=>d.income),backgroundColor:sorted2.map(d=>d.income>=thresholds.income?'rgba(27,142,142,0.80)':'rgba(27,142,142,0.30)'),borderRadius:4,borderWidth:0}]
-    },
-    options:{
-      indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},
-      scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},max:100},y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}}
-    }
-  });
-
-  const sorted3 = [...currentZipData].sort((a,b)=>b.pre60-a.pre60);
-  const c5 = new Chart(document.getElementById('ch5'), {
-    type:'bar',
-    data:{
-      labels:sorted3.map(d=>d.zip),
-      datasets:[{data:sorted3.map(d=>d.pre60),backgroundColor:sorted3.map(d=>d.pre60>=thresholds.age?'rgba(224,123,42,0.80)':'rgba(224,123,42,0.30)'),borderRadius:4,borderWidth:0}]
-    },
-    options:{
-      indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}},
-      scales:{x:{grid:{color:gc},ticks:{color:tc,callback:v=>v+'%'},max:100},y:{grid:{display:false},ticks:{color:tc,font:{size:10}}}}
-    }
-  });
-
-  chartInstances = [c1,c2,c3,c4,c5];
 }
 
 /* ════════════════════════════════════════════
@@ -1850,10 +2399,11 @@ function renderChartView() {
 ════════════════════════════════════════════ */
 document.getElementById('export-csv').addEventListener('click', () => {
   if (!currentZipData.length) { alert('Select a community first.'); return; }
-  const header = 'ZIP,Area Name,FAIR Plan Rate,Low Income %,Pre-1960 %,Build Year,Population,Housing Units,Risk Score,Risk Factors\n';
-  const rows = currentZipData.map(d =>
-    `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre60},${d.buildYr},${d.pop},${d.units},${getRiskScore(d)},${getRiskFactors(d)}`
-  ).join('\n');
+  const header = 'ZIP,Area Name,FAIR Plan Rate,LMI %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Level\n';
+  const rows = currentZipData.map(d => {
+  const levelLabel = { 3:'High', 2:'Medium', 1:'Watch', 0:'Low' }[getRiskLevel(d)];
+  return `"${d.zip}","${d.name}",${d.fair},${d.income},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${levelLabel}`;
+}).join('\n');
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([header+rows],{type:'text/csv'})),
     download: `fair-plan-${currentCommunity||'data'}.csv`
@@ -1861,15 +2411,6 @@ document.getElementById('export-csv').addEventListener('click', () => {
   a.click();
 });
 
-document.getElementById('export-svg').addEventListener('click', () => {
-  const svg = document.getElementById('overlay-svg');
-  if (!svg) return;
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(new Blob([svg.outerHTML],{type:'image/svg+xml'})),
-    download: `fair-plan-overlay-${currentCommunity||'map'}.svg`
-  });
-  a.click();
-});
 
 /* ════════════════════════════════════════════
    INIT — run on page load
