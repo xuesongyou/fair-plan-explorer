@@ -142,19 +142,21 @@ function adaptiveTrials(n) {
   return Math.min(5000, Math.max(1000, Math.round(2000000 / n)));
 }
 
-function histFromCdf(cdf, bins, maxLoss) {
-  const binW = maxLoss / bins;
-  const counts = new Array(bins).fill(0);
-  let prevProb = 0;
+function pmfFromCdf(cdf) {
+  const data = [];
+  let prev = 0;
+
   for (const pt of cdf) {
-    const mass = pt.prob - prevProb;
-    prevProb = pt.prob;
-    let b = Math.floor(pt.losses / binW);
-    if (b >= bins) b = bins - 1;
-    if (b < 0) b = 0;
-    counts[b] += mass;
+    const prob = pt.prob - prev;
+    prev = pt.prob;
+
+    data.push({
+      x: pt.losses,
+      y: prob
+    });
   }
-  return counts;
+
+  return data;
 }
 
 let chartHist;
@@ -227,13 +229,14 @@ function update() {
   document.getElementById('corrPenaltyOut').textContent = fmt(penalty) + '  (+' + Math.round(penaltyPct) + '% above expected loss)';
 
   const maxLoss = Math.max(varCorr * 1.5, varIndep * 1.6, expected * 2, 1);
-  const BINS = 44;
-  const countsIndep = histFromCdf(cdfIndep, BINS, maxLoss);
-  const countsCorr = histFromCdf(cdfCorr, BINS, maxLoss);
-  const binW = maxLoss / BINS;
-  const barIndep = countsIndep.map((c, i) => ({ x: i * binW + binW / 2, y: c }));
-  const barCorr = countsCorr.map((c, i) => ({ x: i * binW + binW / 2, y: c }));
-  const maxCount = Math.max(...countsIndep, ...countsCorr, 0.001);
+  const lineDataA = pmfFromCdf(cdfA);
+const lineDataB = pmfFromCdf(cdfB);
+
+const maxCount = Math.max(
+    ...lineDataA.map(d => d.y),
+    ...lineDataB.map(d => d.y),
+    0.001
+);
 
   const lineExp = [{ x: expected, y: 0 }, { x: expected, y: maxCount * 1.25 }];
   const lineIndep = [{ x: varIndep, y: 0 }, { x: varIndep, y: maxCount * 1.25 }];
@@ -243,9 +246,30 @@ function update() {
   chartHist = new Chart(document.getElementById('chartHist'), {
     data: {
       datasets: [
-        { type: 'bar', label: 'Independent', data: barIndep, backgroundColor: 'rgba(15,110,86,0.45)', borderWidth: 0, barPercentage: 1.0, categoryPercentage: 1.0, order: 3 },
-        { type: 'bar', label: 'Correlated', data: barCorr, backgroundColor: 'rgba(153,60,29,0.45)', borderWidth: 0, barPercentage: 1.0, categoryPercentage: 1.0, order: 3 },
-        { type: 'line', label: 'Expected loss', data: lineExp, borderColor: '#5C5A54', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, order: 1 },
+        {
+    type: 'line',
+    label: 'Portfolio A',
+    data: lineDataA,
+    borderColor: '#0F6E56',
+    backgroundColor: 'rgba(15,110,86,0.18)',
+    pointRadius: 0,
+    borderWidth: 2,
+    tension: 0.25,
+    fill: true,
+    order: 3
+},
+{
+    type: 'line',
+    label: 'Portfolio B',
+    data: lineDataB,
+    borderColor: '#993C1D',
+    backgroundColor: 'rgba(153,60,29,0.18)',
+    pointRadius: 0,
+    borderWidth: 2,
+    tension: 0.25,
+    fill: true,
+    order: 3
+},        { type: 'line', label: 'Expected loss', data: lineExp, borderColor: '#5C5A54', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, order: 1 },
         { type: 'line', label: 'Independent VaR', data: lineIndep, borderColor: '#0F6E56', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, order: 1 },
         { type: 'line', label: 'Correlated VaR', data: lineCorr, borderColor: '#993C1D', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, order: 1 }
       ]
