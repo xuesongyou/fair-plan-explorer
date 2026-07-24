@@ -145,39 +145,8 @@ const corrGrid = [];
 for (let i = 0; i <= N_CORR_POINTS; i++) corrGrid.push(CORR_MAX * i / N_CORR_POINTS);
 
 let chartCorr;
-let bracketMarks = { y100: 100, yIndep: 120 };
 
-const bracketPlugin = {
-  id: 'bracketPlugin',
-  afterDraw(chart) {
-    const { ctx, chartArea, scales } = chart;
-    if (!scales.y) return;
-    const yTopVal = Math.max(bracketMarks.y100, bracketMarks.yIndep);
-    const yBotVal = Math.min(bracketMarks.y100, bracketMarks.yIndep);
-    const yTop = scales.y.getPixelForValue(yTopVal);
-    const yBot = scales.y.getPixelForValue(yBotVal);
-    const x = chartArea.right + 14;
-    const yMid = (yTop + yBot) / 2;
-    ctx.save();
-    ctx.strokeStyle = '#5C5A54';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(x - 6, yTop); ctx.lineTo(x, yTop);
-    ctx.moveTo(x, yTop); ctx.lineTo(x, yBot);
-    ctx.moveTo(x - 6, yBot); ctx.lineTo(x, yBot);
-    ctx.stroke();
-    ctx.fillStyle = '#3D3D3A';
-    ctx.font = '700 11px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    const gapPts = Math.round(yTopVal - yBotVal);
-    const lineHeight = 13;
-    // Two short horizontal lines instead of one long rotated label
-    ctx.fillText('+' + gapPts + ' pts', x + 8, yMid - lineHeight / 2);
-    ctx.fillText('buffer', x + 8, yMid + lineHeight / 2);
-    ctx.restore();
-  }
-};
+
 
 function update() {
   const n = +document.getElementById('n').value;
@@ -195,7 +164,6 @@ function update() {
   const curve = corrGrid.map(c => ({ x: c * 100, y: premiumPctAt(n, invP, c, p) }));
   const premIndepPct = curve[0].y;
 
-  bracketMarks = { y100: 100, yIndep: premIndepPct };
 
   document.getElementById('expOut').textContent = fmt(expectedPerPolicy);
   document.getElementById('premIndepOut').textContent = fmt(expectedPerPolicy * premIndepPct / 100);
@@ -220,7 +188,6 @@ function update() {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
-      layout: { padding: { right: 90 } },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -258,8 +225,7 @@ function update() {
           grid: { drawOnChartArea: false }
         }
       }
-    },
-    plugins: [bracketPlugin]
+    }
   });
 }
 
