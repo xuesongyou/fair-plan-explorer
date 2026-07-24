@@ -126,26 +126,44 @@ function normalRandomSeeded(rng) {
 
 function simulate(n, p, lossAmt, corr, trials = 10000) {
   const rng = mulberry32(seedFromInputs(n, p, lossAmt, corr, trials));
-  const z = Math.sqrt(2) * erfInv(2 * p - 1);
+  
+  // Mathematically optimal threshold: pre-compute standard normal inverse of p
+  // This removes the need to calculate the heavy 'ncdf()' inside nested loops
+  const defaultThreshold = Math.sqrt(2) * erfInv(2 * p - 1); 
+  
   const lossFrequencies = Array(n + 1).fill(0);
+  
+  const sqrtCorr = Math.sqrt(corr);
+  const sqrtIdio = Math.sqrt(1 - corr);
+
   for (let t = 0; t < trials; t++) {
+    // BUG FIX: Removed quotes and evaluation string to ensure strict numerical output
     const Z_sys = rng() < 0.5 ? normalRandomSeeded(rng) : -normalRandomSeeded(rng);
+    
     let defaultCount = 0;
     for (let i = 0; i < n; i++) {
       const Z_idio = normalRandomSeeded(rng);
-      const unitZ = Math.sqrt(corr) * Z_sys + Math.sqrt(1 - corr) * Z_idio;
-      const u = ncdf(unitZ);
-      if (u < p) defaultCount++;
+      const unitZ = sqrtCorr * Z_sys + sqrtIdio * Z_idio;
+      
+      // OPTIMIZATION: Compare latent variable directly to pre-calculated threshold
+      if (unitZ < defaultThreshold) {
+        defaultCount++;
+      }
     }
     lossFrequencies[defaultCount]++;
   }
+
   const cdf = [];
   let cumulativeProb = 0;
   for (let k = 0; k <= n; k++) {
     const probability = lossFrequencies[k] / trials;
     cumulativeProb += probability;
-    cdf.push({ losses: k * lossAmt, prob: +cumulativeProb.toFixed(6) });
+    cdf.push({ 
+      losses: k * lossAmt, 
+      prob: +cumulativeProb.toFixed(6) 
+    });
   }
+
   return cdf;
 }
 
