@@ -175,46 +175,12 @@ function adaptiveTrials(n) {
   return Math.min(5000, Math.max(1000, Math.round(2000000 / n)));
 }
 
-function histFromCdf(cdf, maxLoss, maxBins = 100) {
-    const len = cdf.length;
-    if (len === 0) return [];
-
-    // 1. Adaptive Bin Selection: Use exact values if small, otherwise compress to maxBins
-    // If the CDF has fewer points than our target bins, map every point exactly.
-    const useExactValues = len <= maxBins;
-    const bins = useExactValues ? len : maxBins;
-    
-    // 2. Initialize flat array for V8 engine optimization
-    const counts = new Array(bins).fill(0);
-    const binW = maxLoss / bins;
-    
-    let prevProb = 0;
-
-    // 3. High-performance linear scan
-    for (let i = 0; i < len; i++) {
-        const pt = cdf[i];
-        const mass = pt.prob - prevProb;
-        prevProb = pt.prob;
-
-        // Dynamic bin allocation strategy
-        let b;
-        if (useExactValues) {
-            b = i; // Map 1:1 to the current index
-        } else {
-            b = Math.floor(pt.losses / binW);
-            if (b >= bins) b = bins - 1;
-            else if (b < 0) b = 0;
-        }
-
-        counts[b] += mass;
-    }
-
-    // 4. Return both the counts and the bin metadata for rendering
-    return {
-        isExact: useExactValues,
-        binWidth: useExactValues ? (maxLoss / (len - 1)) : binW,
-        data: counts
-    };
+function histFromCdf(cdf, bins, maxLoss) { 
+  const binW = maxLoss / bins; 
+  const counts = new Array(bins).fill(0); 
+  let prevProb = 0; 
+  for (const pt of cdf) { const mass = pt.prob - prevProb; prevProb = pt.prob; let b = Math.floor(pt.losses / binW); 
+                         if (b >= bins) b = bins - 1; if (b < 0) b = 0; counts[b] += mass; } return counts; 
 }
 
 let chartHist;
