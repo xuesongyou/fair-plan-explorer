@@ -91,7 +91,7 @@ function erfInv(x) {
   const ln1mx2 = Math.log(1 - x*x);
   const part1 = 2/(Math.PI*a) + ln1mx2/2;
   const sign = x < 0 ? -1 : 1;
-  return sign * Math.sqrt(Math.sqrt(part1*part1 - ln1mx2/a) - part1);
+  return sign * Math.sqrt(Math.sqrt(part1 * part1 - ln1mx2 / a) - part1);
 }
 
 // Deterministic PRNG (mulberry32), seeded per-simulation so identical inputs
@@ -123,33 +123,40 @@ function normalRandomSeeded(rng) {
 
 function simulate(n, p, lossAmt, corr, trials = 10000) {
   const rng = mulberry32(seedFromInputs(n, p, lossAmt, corr, trials));
-  
-  // Mathematically optimal threshold: pre-compute standard normal inverse of p
-  // This removes the need to calculate the heavy 'ncdf()' inside nested loops
-  const defaultThreshold = Math.sqrt(2) * erfInv(2 * p - 1); 
-  
   const lossFrequencies = Array(n + 1).fill(0);
-  
-  const sqrtCorr = Math.sqrt(corr);
-  const sqrtIdio = Math.sqrt(1 - corr);
 
-  for (let t = 0; t < trials; t++) {
-    // BUG FIX: Removed quotes and evaluation string to ensure strict numerical output
-    const Z_sys = rng() < 0.5 ? normalRandomSeeded(rng) : -normalRandomSeeded(rng);
-    
-    let defaultCount = 0;
-    for (let i = 0; i < n; i++) {
-      const Z_idio = normalRandomSeeded(rng);
-      const unitZ = sqrtCorr * Z_sys + sqrtIdio * Z_idio;
-      
-      // OPTIMIZATION: Compare latent variable directly to pre-calculated threshold
-      if (unitZ < defaultThreshold) {
-        defaultCount++;
+  // OPTIMIZATION: If correlation is 0, use strict independent Bernoulli trials
+  if (corr === 0) {
+    for (let t = 0; t < trials; t++) {
+      let defaultCount = 0;
+      for (let i = 0; i < n; i++) {
+        if (rng() < p) { // Strict independent binomial check
+          defaultCount++;
+        }
       }
+      lossFrequencies[defaultCount]++;
     }
-    lossFrequencies[defaultCount]++;
+  } else {
+    // Keep your latent copula model here for corr > 0
+    const defaultThreshold = Math.sqrt(2) * erfInv(2 * p - 1);
+    const sqrtCorr = Math.sqrt(corr);
+    const sqrtIdio = Math.sqrt(1 - corr);
+
+    for (let t = 0; t < trials; t++) {
+      const Z_sys = rng() < 0.5 ? normalRandomSeeded(rng) : -normalRandomSeeded(rng);
+      let defaultCount = 0;
+      for (let i = 0; i < n; i++) {
+        const Z_idio = normalRandomSeeded(rng);
+        const unitZ = sqrtCorr * Z_sys + sqrtIdio * Z_idio;
+        if (unitZ < defaultThreshold) {
+          defaultCount++;
+        }
+      }
+      lossFrequencies[defaultCount]++;
+    }
   }
 
+  // Generate CDF safely
   const cdf = [];
   let cumulativeProb = 0;
   for (let k = 0; k <= n; k++) {
@@ -157,12 +164,13 @@ function simulate(n, p, lossAmt, corr, trials = 10000) {
     cumulativeProb += probability;
     cdf.push({ 
       losses: k * lossAmt, 
-      prob: +cumulativeProb.toFixed(6) 
+      prob: Math.min(1, +cumulativeProb.toFixed(6)) // Bound check to prevent floating-point bleed
     });
   }
-
   return cdf;
 }
+
+
 
 function var99Loss(cdf) {
   for (const pt of cdf) {
