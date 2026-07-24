@@ -1,0 +1,309 @@
+<h2 class="sr-only">Side-by-side comparison of two independent-policy portfolios, A and B, showing how their distributions of total losses differ in width, and how the extra capital needed above expected loss to survive a 1-in-100-year event compares between them.</h2>
+
+<div style="padding:1rem 0 0;">
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:1.25rem;">
+    <div style="background:#E1F5EE; border-radius:12px; padding:14px;">
+      <h3 style="font-size:14px; font-weight:500; margin:0 0 10px; color:#085041;">Portfolio A</h3>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <label style="font-size:12px; color:#0F6E56; min-width:100px; font-weight:600;">Policies</label>
+        <input type="range" min="1" max="3000" value="20" step="1" id="nA" style="flex:1">
+        <span style="font-size:12px; font-weight:600; min-width:40px;" id="nOutA">20</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <label style="font-size:12px; color:#0F6E56; min-width:100px;">Loss probability</label>
+        <input type="range" min="1" max="40" value="10" step="1" id="probA" style="flex:1">
+        <span style="font-size:12px; font-weight:500; min-width:40px;" id="probOutA">10%</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <label style="font-size:12px; color:#0F6E56; min-width:100px;">Loss per policy</label>
+        <input type="range" min="10" max="500" value="100" step="10" id="lossA" style="flex:1">
+        <span style="font-size:12px; font-weight:500; min-width:40px;" id="lossOutA">$100</span>
+      </div>
+    </div>
+    <div style="background:#FAECE7; border-radius:12px; padding:14px;">
+      <h3 style="font-size:14px; font-weight:500; margin:0 0 10px; color:#712B13;">Portfolio B</h3>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <label style="font-size:12px; color:#993C1D; min-width:100px; font-weight:600;">Policies</label>
+        <input type="range" min="1" max="3000" value="200" step="1" id="nB" style="flex:1">
+        <span style="font-size:12px; font-weight:600; min-width:40px;" id="nOutB">200</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <label style="font-size:12px; color:#993C1D; min-width:100px;">Loss probability</label>
+        <input type="range" min="1" max="40" value="10" step="1" id="probB" style="flex:1">
+        <span style="font-size:12px; font-weight:500; min-width:40px;" id="probOutB">10%</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <label style="font-size:12px; color:#993C1D; min-width:100px;">Loss per policy</label>
+        <input type="range" min="10" max="500" value="100" step="10" id="lossB" style="flex:1">
+        <span style="font-size:12px; font-weight:500; min-width:40px;" id="lossOutB">$100</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1.25rem;">
+    <div style="background:#E1F5EE; border-radius:var(--radius); padding:1rem;">
+      <div style="font-size:12px; color:#0F6E56;">Expected loss</div>
+      <div style="font-size:18px; font-weight:500; color:#085041;" id="expOutA">—</div>
+      <div style="font-size:12px; color:#0F6E56; margin-top:8px;">Money needed (1-in-100 yr)</div>
+      <div style="font-size:18px; font-weight:500; color:#085041;" id="varOutA">—</div>
+      <div style="font-size:12px; color:#0F6E56; margin-top:8px;">Extra needed, above expected</div>
+      <div style="font-size:18px; font-weight:500; color:#085041;" id="gapOutA">—</div>
+    </div>
+    <div style="background:#FAECE7; border-radius:var(--radius); padding:1rem;">
+      <div style="font-size:12px; color:#993C1D;">Expected loss</div>
+      <div style="font-size:18px; font-weight:500; color:#712B13;" id="expOutB">—</div>
+      <div style="font-size:12px; color:#993C1D; margin-top:8px;">Money needed (1-in-100 yr)</div>
+      <div style="font-size:18px; font-weight:500; color:#712B13;" id="varOutB">—</div>
+      <div style="font-size:12px; color:#993C1D; margin-top:8px;">Extra needed, above expected</div>
+      <div style="font-size:18px; font-weight:500; color:#712B13;" id="gapOutB">—</div>
+    </div>
+  </div>
+
+  <div style="font-size:12px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.05em; margin:0 0 8px;">Distributions of possible total losses — 10,000 simulated years each</div>
+  <div style="display:flex; gap:16px; margin-bottom:8px; font-size:12px; color:var(--text-secondary); flex-wrap:wrap;">
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; border-radius:2px; background:#0F6E56;"></span>Portfolio A</span>
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:10px; border-radius:2px; background:#993C1D;"></span>Portfolio B</span>
+    <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px; height:2px; background:var(--text-muted); border-top:2px dashed var(--text-muted);"></span>Expected loss / money needed</span>
+  </div>
+  <div style="position:relative; height:340px;">
+    <canvas id="chartHist" role="img" aria-label="Overlaid histograms of simulated total losses for Portfolio A and Portfolio B, with brackets showing each portfolio's gap between expected loss and money needed for a 1-in-100-year event"></canvas>
+  </div>
+
+  <p style="font-size:12px; color:var(--text-secondary); margin-top:10px; line-height:1.6;">
+    Both distributions share the same dollar axis, so the width difference is directly comparable. Each portfolio's simulation is seeded from its own inputs, so moving one portfolio's sliders never changes the other portfolio's numbers.
+  </p>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function fmt(v) { return '$' + Math.round(v).toLocaleString(); }
+
+function erf(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+  return sign * y;
+}
+function ncdf(x) { return 0.5 * (1 + erf(x / Math.sqrt(2))); }
+function erfInv(x) {
+  const a = 0.147;
+  const ln1mx2 = Math.log(1 - x*x);
+  const part1 = 2/(Math.PI*a) + ln1mx2/2;
+  const sign = x < 0 ? -1 : 1;
+  return sign * Math.sqrt(Math.sqrt(part1*part1 - ln1mx2/a) - part1);
+}
+
+// Deterministic PRNG (mulberry32), seeded per-simulation so identical inputs
+// always give identical output — no jitter when only the OTHER portfolio's
+// sliders move and this portfolio gets re-simulated with the same inputs.
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function seedFromInputs(n, p, lossAmt, corr, trials) {
+  const str = n + '_' + p.toFixed(6) + '_' + lossAmt + '_' + corr.toFixed(6) + '_' + trials;
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function normalRandomSeeded(rng) {
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function simulate(n, p, lossAmt, corr, trials = 10000) {
+  const rng = mulberry32(seedFromInputs(n, p, lossAmt, corr, trials));
+  const z = Math.sqrt(2) * erfInv(2 * p - 1);
+  const lossFrequencies = Array(n + 1).fill(0);
+  for (let t = 0; t < trials; t++) {
+    const Z_sys = rng() < 0.5 ? normalRandomSeeded(rng) : -normalRandomSeeded(rng);
+    let defaultCount = 0;
+    for (let i = 0; i < n; i++) {
+      const Z_idio = normalRandomSeeded(rng);
+      const unitZ = Math.sqrt(corr) * Z_sys + Math.sqrt(1 - corr) * Z_idio;
+      const u = ncdf(unitZ);
+      if (u < p) defaultCount++;
+    }
+    lossFrequencies[defaultCount]++;
+  }
+  const cdf = [];
+  let cumulativeProb = 0;
+  for (let k = 0; k <= n; k++) {
+    const probability = lossFrequencies[k] / trials;
+    cumulativeProb += probability;
+    cdf.push({ losses: k * lossAmt, prob: +cumulativeProb.toFixed(6) });
+  }
+  return cdf;
+}
+
+function var99Loss(cdf) {
+  for (const pt of cdf) {
+    if (pt.prob >= 0.99) return pt.losses;
+  }
+  return cdf.length ? cdf[cdf.length - 1].losses : 0;
+}
+
+function adaptiveTrials(n) {
+  return Math.min(5000, Math.max(1000, Math.round(2000000 / n)));
+}
+
+function histFromCdf(cdf, bins, maxLoss) {
+  const binW = maxLoss / bins;
+  const counts = new Array(bins).fill(0);
+  let prevProb = 0;
+  for (const pt of cdf) {
+    const mass = pt.prob - prevProb;
+    prevProb = pt.prob;
+    let b = Math.floor(pt.losses / binW);
+    if (b >= bins) b = bins - 1;
+    if (b < 0) b = 0;
+    counts[b] += mass;
+  }
+  return counts;
+}
+
+let chartHist;
+let markA = { exp: 0, v99: 0 }, markB = { exp: 0, v99: 0 };
+
+const bracketPlugin = {
+  id: 'bracketPlugin',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!scales.x) return;
+    function drawBracket(mark, color, yOffset) {
+      const xExp = scales.x.getPixelForValue(mark.exp);
+      const xVar = scales.x.getPixelForValue(mark.v99);
+      const y = chartArea.top + yOffset;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xExp, y - 6); ctx.lineTo(xExp, y + 6);
+      ctx.moveTo(xExp, y); ctx.lineTo(xVar, y);
+      ctx.moveTo(xVar, y - 6); ctx.lineTo(xVar, y + 6);
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.font = '600 11px sans-serif';
+      ctx.textAlign = 'center';
+      const gapDollar = mark.v99 - mark.exp;
+      const gapPct = mark.exp > 0 ? (gapDollar / mark.exp * 100) : 0;
+      ctx.fillText(fmt(gapDollar) + ' extra (' + Math.round(gapPct) + '%)', (xExp + xVar) / 2, y - 9);
+      ctx.restore();
+    }
+    drawBracket(markA, '#0F6E56', 18);
+    drawBracket(markB, '#993C1D', 40);
+  }
+};
+
+function update() {
+  const nA = +document.getElementById('nA').value;
+  const pAraw = +document.getElementById('probA').value;
+  const lossA = +document.getElementById('lossA').value;
+  const nB = +document.getElementById('nB').value;
+  const pBraw = +document.getElementById('probB').value;
+  const lossB = +document.getElementById('lossB').value;
+
+  document.getElementById('nOutA').textContent = nA;
+  document.getElementById('probOutA').textContent = pAraw + '%';
+  document.getElementById('lossOutA').textContent = '$' + lossA;
+  document.getElementById('nOutB').textContent = nB;
+  document.getElementById('probOutB').textContent = pBraw + '%';
+  document.getElementById('lossOutB').textContent = '$' + lossB;
+
+  const pA = pAraw / 100, pB = pBraw / 100;
+
+  const cdfA = simulate(nA, pA, lossA, 0, adaptiveTrials(nA));
+  const cdfB = simulate(nB, pB, lossB, 0, adaptiveTrials(nB));
+
+  const expA = nA * pA * lossA, expB = nB * pB * lossB;
+  const varA = var99Loss(cdfA), varB = var99Loss(cdfB);
+
+  markA = { exp: expA, v99: varA };
+  markB = { exp: expB, v99: varB };
+
+  document.getElementById('expOutA').textContent = fmt(expA);
+  document.getElementById('varOutA').textContent = fmt(varA);
+  document.getElementById('gapOutA').textContent = fmt(varA - expA) + ' (' + Math.round(expA > 0 ? (varA-expA)/expA*100 : 0) + '%)';
+  document.getElementById('expOutB').textContent = fmt(expB);
+  document.getElementById('varOutB').textContent = fmt(varB);
+  document.getElementById('gapOutB').textContent = fmt(varB - expB) + ' (' + Math.round(expB > 0 ? (varB-expB)/expB*100 : 0) + '%)';
+
+  const maxLoss = Math.max(varA * 1.6, expA * 2, varB * 1.6, expB * 2, 1);
+  const BINS = 44;
+  const countsA = histFromCdf(cdfA, BINS, maxLoss);
+  const countsB = histFromCdf(cdfB, BINS, maxLoss);
+  const binW = maxLoss / BINS;
+  const barDataA = countsA.map((c, i) => ({ x: i * binW + binW / 2, y: c }));
+  const barDataB = countsB.map((c, i) => ({ x: i * binW + binW / 2, y: c }));
+  const maxCount = Math.max(...countsA, ...countsB, 0.001);
+
+  const lineExpA = [{ x: expA, y: 0 }, { x: expA, y: maxCount * 1.2 }];
+  const lineVarA = [{ x: varA, y: 0 }, { x: varA, y: maxCount * 1.2 }];
+  const lineExpB = [{ x: expB, y: 0 }, { x: expB, y: maxCount * 1.2 }];
+  const lineVarB = [{ x: varB, y: 0 }, { x: varB, y: maxCount * 1.2 }];
+
+  if (chartHist) chartHist.destroy();
+  chartHist = new Chart(document.getElementById('chartHist'), {
+    data: {
+      datasets: [
+        { type: 'bar', label: 'Portfolio A', data: barDataA, backgroundColor: 'rgba(15,110,86,0.45)', borderWidth: 0, barPercentage: 1.0, categoryPercentage: 1.0, order: 3 },
+        { type: 'bar', label: 'Portfolio B', data: barDataB, backgroundColor: 'rgba(153,60,29,0.45)', borderWidth: 0, barPercentage: 1.0, categoryPercentage: 1.0, order: 3 },
+        { type: 'line', label: 'A expected', data: lineExpA, borderColor: '#0F6E56', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, order: 1 },
+        { type: 'line', label: 'A needed', data: lineVarA, borderColor: '#0F6E56', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, order: 1 },
+        { type: 'line', label: 'B expected', data: lineExpB, borderColor: '#993C1D', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, order: 1 },
+        { type: 'line', label: 'B needed', data: lineVarB, borderColor: '#993C1D', borderDash: [5,4], borderWidth: 1.5, pointRadius: 0, order: 1 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      layout: { padding: { top: 50 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          filter: (item) => item.dataset.label === 'Portfolio A' || item.dataset.label === 'Portfolio B',
+          callbacks: {
+            title: (items) => fmt(items[0].parsed.x),
+            label: (item) => item.dataset.label + ': ' + (item.parsed.y * 100).toFixed(2) + '% of simulated years'
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 0,
+          max: maxLoss,
+          title: { display: true, text: 'Total loss ($)', color: '#898781', font: { size: 11 } },
+          ticks: { color: '#898781', font: { size: 10 }, callback: (v) => fmt(v) },
+          grid: { color: 'rgba(137,135,129,0.15)' }
+        },
+        y: {
+          min: 0,
+          max: maxCount * 1.2,
+          title: { display: true, text: 'Share of simulated years', color: '#898781', font: { size: 11 } },
+          ticks: { color: '#898781', font: { size: 10 }, callback: (v) => (v*100).toFixed(0) + '%' },
+          grid: { color: 'rgba(137,135,129,0.15)' }
+        }
+      }
+    },
+    plugins: [bracketPlugin]
+  });
+}
+
+document.querySelectorAll('input[type=range]').forEach(inp => inp.addEventListener('input', update));
+update();
+</script>
