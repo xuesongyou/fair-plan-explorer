@@ -688,10 +688,10 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       </div>
 
 
-<div class="tt-stat-grid">
-  <div class="tt-stat"><div class="tt-stat-key">Population</div><div class="tt-stat-val" id="tt-pop"></div></div>
-  <div class="tt-stat"><div class="tt-stat-key">LMI Population</div><div class="tt-stat-val" id="tt-lmi"></div></div>
-</div>
+      <div class="tt-stat-grid">
+        <div class="tt-stat"><div class="tt-stat-key">Population</div><div class="tt-stat-val" id="tt-pop"></div></div>
+        <div class="tt-stat"><div class="tt-stat-key">LMI Population</div><div class="tt-stat-val" id="tt-lmi"></div></div>
+      </div>
 
   </div>
 
@@ -1294,9 +1294,7 @@ function showTooltip(event, d) {
   setHBar('tt-bar-nfip-all',     d.nfipAll,     100);
   setHBar('tt-bar-nfip-sfha',    d.nfipSFHA,    100);
   setHBar('tt-bar-nfip-nonsfha', d.nfipNonSFHA, 100);
-  setHBar('tt-bar-lmi',          d.lmi,         100);
 
-  document.getElementById('tt-structures').textContent = d.structures.toLocaleString();
   document.getElementById('tt-pop').textContent         = d.population.toLocaleString();
 
   renderCrsBlock(document.getElementById('tt-crs'), d.geoid);
