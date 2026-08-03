@@ -796,13 +796,13 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
    exactly as it appears in CA_bg_tool.json.
 ════════════════════════════════════════════ */
 const COMMUNITY_META = {
-  monterey:   { label:'Monterey County',      fips:'06053', detail:'Central Coast · 434K population',               center:[36.2,-121.3], zoom:9 },
-  san_benito: { label:'San Benito County',    fips:'06069', detail:'Inland Central Coast · 63K population',          center:[36.8,-121.1], zoom:10 },
-  san_diego:  { label:'San Diego County',     fips:'06073', detail:'Southern California · 3.3M population',          center:[32.9,-116.9], zoom:9 },
-  santa_cruz: { label:'Santa Cruz County',    fips:'06087', detail:'Central Coast · 271K population',               center:[37.05,-122.0],zoom:10 },
-  tulare:     { label:'Tulare County',        fips:'06107', detail:'San Joaquin Valley · 473K population',           center:[36.2,-119.0], zoom:9 },
-  tuolumne:   { label:'Tuolumne County',      fips:'06109', detail:'Sierra Nevada Foothills · 55K population',      center:[37.9,-120.0], zoom:10 },
-  hoopa:      { label:'Hoopa Valley Tribe',   fips:'130821',detail:'Northwestern California · Tribal Nation',        center:[41.05,-123.7],zoom:11 },
+  monterey:   { label:'Monterey County',      fips:'06053', detail:'Central Coast · 434K population',               center:[36.2,-121.3], zoom:9,  crsCounty:'Monterey' },
+  san_benito: { label:'San Benito County',    fips:'06069', detail:'Inland Central Coast · 63K population',          center:[36.8,-121.1], zoom:10, crsCounty:'San Benito' },
+  san_diego:  { label:'San Diego County',     fips:'06073', detail:'Southern California · 3.3M population',          center:[32.9,-116.9], zoom:9,  crsCounty:'San Diego' },
+  santa_cruz: { label:'Santa Cruz County',    fips:'06087', detail:'Central Coast · 271K population',               center:[37.05,-122.0],zoom:10, crsCounty:'Santa Cruz' },
+  tulare:     { label:'Tulare County',        fips:'06107', detail:'San Joaquin Valley · 473K population',           center:[36.2,-119.0], zoom:9,  crsCounty:'Tulare' },
+  tuolumne:   { label:'Tuolumne County',      fips:'06109', detail:'Sierra Nevada Foothills · 55K population',      center:[37.9,-120.0], zoom:10, crsCounty:'Tuolumne' },
+  hoopa:      { label:'Hoopa Valley Tribe',   fips:'130821',detail:'Northwestern California · Tribal Nation',        center:[41.05,-123.7],zoom:11, crsCounty:'Hoopa' },
 };
 
 const VARIABLE_DEFINITIONS = [
@@ -1484,12 +1484,12 @@ function loadCrsData() {
 function filterCrsFeaturesForCommunity(features, communityKey) {
   if (!features || !features.length) return [];
   const meta = COMMUNITY_META[communityKey];
-  if (!meta) return features;
-  const sample = features[0].properties || {};
-  const candidateKeys = ['Community', 'COMMUNITY', 'County', 'COUNTY', 'community'];
-  const key = candidateKeys.find(k => k in sample);
-  if (!key) return features;
-  return features.filter(f => f.properties && String(f.properties[key]).trim() === meta.label);
+  if (!meta || !meta.crsCounty) return [];
+  const target = meta.crsCounty.trim().toLowerCase();
+  return features.filter(f => {
+    const v = f.properties && f.properties.county_name;
+    return v && String(v).trim().toLowerCase() === target;
+  });
 }
 
 /* ════════════════════════════════════════════
