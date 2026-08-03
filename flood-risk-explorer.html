@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flood Risk Community Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --forest: #0A2816;
+  --forest2: #1F3C0F;
+  --forest-light: #1A522E;
+  --amber: #E07B2A;
+  --amber-light: #F5A44A;
+  --amber-pale: #FFF3E6;
+  --teal: #1B8E8E;
+  --teal-light: #26BFBF;
+  --teal-pale: #E6F6F6;
+  --red: #C0392B;
+  --red-pale: #FDEDEC;
+  --green: #1E7E46;
+  --green-pale: #E8F5EE;
+  --blue: #1B5FA8;
+  --blue-light: #4A8FD6;
+  --blue-pale: #E7F0FA;
+  --navy: #0E2A47;
+  --purple: #6B4A9E;
+  --purple-pale: #F1ECF8;
+  --slate: #F0F2F5;
+  --slate2: #E2E6EB;
+  --white: #FFFFFF;
+  --text: #111827;
+  --text2: #4B5563;
+  --text3: #9CA3AF;
+  --border: rgba(15,31,60,0.1);
+  --border2: rgba(15,31,60,0.18);
+  --radius: 8px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'DM Mono', 'Courier New', monospace;
+}
+
+body { font-family: var(--font); background: var(--slate); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+.app { display: flex; flex-direction: column; height: 100vh; max-height: 100vh; overflow: hidden; }
+
+/* ── Header ── */
+.header {
+  background: var(--navy);
+  padding: 0 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 58px; flex-shrink: 0; gap: 12px;
+}
+.header-brand { display: flex; align-items: center; gap: 12px; }
+.header-logo {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-light) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.header-title { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.view-tabs {
+  display: flex; background: rgba(255,255,255,0.08);
+  border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(255,255,255,0.12);
+}
+.view-tab {
+  padding: 6px 14px; font-size: 12px; font-weight: 500; font-family: var(--font);
+  background: transparent; border: none; color: rgba(255,255,255,0.6);
+  cursor: pointer; transition: all .15s; letter-spacing: 0.01em;
+}
+.view-tab.active { background: var(--blue); color: #fff; }
+.view-tab:hover:not(.active) { background: rgba(255,255,255,0.12); color: #fff; }
+
+/* ── Metrics bar ── */
+.metrics {
+  display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 0; background: #16324F; flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.metric { padding: 10px 20px; border-right: 1px solid rgba(255,255,255,0.06); }
+.metric:last-child { border-right: none; }
+.metric-label { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .08em; font-weight: 500; }
+.metric-value { font-size: 22px; font-weight: 700; margin-top: 1px; font-family: var(--mono); }
+.metric-value.metric-value-sm { font-size: 15px; line-height: 1.3; }
+.metric-sub { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+.mv-amber { color: var(--amber-light); }
+.mv-teal { color: var(--teal-light); }
+.mv-blue { color: var(--blue-light); }
+.mv-red { color: #F07066; }
+.mv-white { color: #E8EDF4; }
+.mv-crs-yes { color: #8FD6D6; }
+.mv-crs-no { color: rgba(232,237,244,0.55); }
+
+/* ── Body layout ── */
+.body {
+  display: grid;
+  grid-template-columns: 232px 1fr 280px;
+  flex: 1; overflow: hidden; min-height: 0;
+}
+
+/* Left sidebar always visible */
+.sidebar {
+  background: var(--white); border-right: 1px solid var(--border);
+  overflow-y: auto; padding: 0; display: flex; flex-direction: column;
+  grid-row: 1; grid-column: 1;
+}
+
+/* Center + right area — views stacked, only one visible */
+.view-area {
+  grid-row: 1; grid-column: 2 / 4;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  min-height: 0; overflow: hidden;
+  position: relative;
+}
+
+/* Table & Chart views take full width */
+.view-area.table-active,
+.view-area.chart-active {
+  grid-template-columns: 1fr;
+}
+
+/* ── Map view ── */
+#view-map {
+  display: contents; /* children participate in view-area grid */
+}
+#view-map.hidden { display: none; }
+
+.map-wrap {
+  position: relative; overflow: hidden; background: #dbe6ee;
+  grid-column: 1; grid-row: 1;
+}
+
+/* Leaflet map fills container */
+#leaflet-map { width: 100%; height: 100%; }
+
+/* Leaflet GeoJSON layer styles — applied via Leaflet's SVG pane */
+.leaflet-overlay-pane svg { pointer-events: auto; }
+.bg-label-div {
+  font-size: 9.5px; font-weight: 700; color: #1a1a2e;
+  font-family: 'Inter', sans-serif; pointer-events: none;
+  text-shadow: 0 0 3px white, 0 0 3px white, 0 0 3px white;
+  white-space: nowrap;
+}
+
+/* Legend over map */
+.choro-legend {
+  position: absolute; bottom: 40px; left: 14px; z-index: 500;
+  background: rgba(255,255,255,0.94); border: 1px solid rgba(0,0,0,0.12);
+  border-radius: var(--radius-lg); padding: 10px 12px;
+  font-size: 10px; font-family: var(--font); color: #333; min-width: 150px;
+  box-shadow: var(--shadow-md);
+}
+.legend-title { font-weight: 700; font-size: 11px; margin-bottom: 5px; color: var(--navy); }
+.legend-grad { height: 8px; border-radius: 4px; margin: 4px 0 3px; }
+.legend-ends-row { display: flex; justify-content: space-between; color: var(--text2); }
+.legend-nodata-row { display: flex; align-items: center; gap: 5px; margin-top: 6px; color: var(--text2); }
+.legend-nodata-swatch { width: 10px; height: 10px; border-radius: 2px; background: repeating-linear-gradient(45deg, #d7dbe0, #d7dbe0 2px, #eceff2 2px, #eceff2 5px); border: 1px solid #c7cdd4; flex-shrink: 0; }
+
+/* Tooltip */
+.map-tooltip {
+  display: none;
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid rgba(15,31,60,0.14);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 12px;
+  color: #111827;
+  pointer-events: none;
+  z-index: 600;
+  min-width: 460px;
+  max-width: 500px;
+  overflow: hidden;
+}
+
+.tt-header {
+  background: var(--navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 14px;
+  letter-spacing: -0.01em;
+}
+.tt-header .tt-header-sub { display: block; font-size: 10.5px; font-weight: 500; color: rgba(255,255,255,0.55); margin-top: 1px; }
+
+.tt-body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.tt-left {
+  flex: 0 0 168px;
+  padding: 14px 12px;
+  background: #fafafa;
+  display: flex; flex-direction: column; align-items: center;
+}
+
+.tt-panel-divider {
+  width: 1px;
+  background: rgba(15,31,60,0.1);
+  flex-shrink: 0;
+}
+
+.tt-right {
+  flex: 1;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+/* Left panel — donut chart */
+.tt-pie-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+.tt-pie-center-pct {
+  font-family: 'DM Mono', monospace;
+  font-weight: 800;
+}
+.tt-pie-legend { margin-top: 10px; width: 100%; }
+.tt-pie-legend-row { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #374151; margin-bottom: 4px; }
+.tt-pie-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tt-pie-legend-val { margin-left: auto; font-family: 'DM Mono', monospace; font-weight: 700; }
+
+/* Right panel — horizontal bars */
+.tt-bar-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+.tt-hbar-row { margin-bottom: 8px; }
+.tt-hbar-meta { display: flex; justify-content: space-between; font-size: 10px; color: #6b7280; margin-bottom: 3px; }
+.tt-hbar-meta .tt-hbar-val { font-family: 'DM Mono', monospace; font-weight: 700; color: #111827; }
+.tt-hbar-track { height: 7px; border-radius: 4px; background: #eef0f3; overflow: hidden; }
+.tt-hbar-fill { height: 100%; border-radius: 4px; transition: width .3s ease; }
+
+.tt-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(15,31,60,0.08); }
+.tt-stat { }
+.tt-stat-key { font-size: 9.5px; color: #6b7280; text-transform: uppercase; letter-spacing: .03em; }
+.tt-stat-val { font-size: 12px; font-weight: 700; font-family: 'DM Mono', monospace; color: #111827; }
+
+/* Extra full-width section: CRS */
+.tt-extra {
+  border-top: 1px solid rgba(15,31,60,0.1);
+  padding: 10px 14px;
+  background: var(--purple-pale);
+}
+.tt-extra-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--purple);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tt-crs-row { font-size: 11px; color: var(--text); display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
+.tt-crs-name { font-weight: 600; }
+.tt-crs-count { font-family: 'DM Mono', monospace; font-weight: 700; color: var(--purple); flex-shrink: 0; }
+.tt-crs-empty { font-size: 10.5px; color: #9ca3af; font-style: italic; }
+
+/* Map source attribution override */
+.map-source { position: absolute; bottom: 10px; right: 12px; font-size: 10px; color: rgba(0,0,0,0.45); background: rgba(255,255,255,0.82); padding: 3px 7px; border-radius: 4px; z-index: 500; }
+
+/* No community / loading states */
+.no-community-msg {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px; color: var(--navy);
+  background: rgba(200,217,232,0.85); z-index: 700;
+}
+.no-community-msg.hidden { display: none; }
+.no-community-msg .big-icon { font-size: 48px; opacity: .4; }
+.no-community-msg h3 { font-size: 16px; font-weight: 700; color: var(--navy); }
+.no-community-msg p { font-size: 12px; color: var(--text2); text-align: center; max-width: 260px; }
+
+.map-loading {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  background: rgba(200,217,232,0.7); flex-direction: column; gap: 10px; font-size: 13px;
+  color: var(--navy); z-index: 700;
+}
+.map-loading.show { display: flex; }
+.spinner { width: 26px; height: 26px; border: 3px solid rgba(15,31,60,0.15); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Sidebar ── */
+.sidebar-section { padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
+.sec-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+
+.community-select-wrap { position: relative; }
+.community-select-wrap::after {
+  content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--blue); font-size: 11px; pointer-events: none;
+}
+select.community-sel {
+  width: 100%; padding: 9px 28px 9px 12px; font-size: 13px; font-weight: 500;
+  font-family: var(--font); border: 1.5px solid var(--border2); border-radius: var(--radius);
+  background: var(--white); color: var(--text); cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+select.community-sel:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(27,95,168,0.15); }
+.community-info {
+  margin-top: 8px; padding: 8px 10px; background: var(--blue-pale);
+  border-radius: var(--radius); border-left: 3px solid var(--blue);
+}
+.community-info-name { font-size: 11px; font-weight: 600; color: var(--blue); margin-bottom: 2px; }
+.community-info-detail { font-size: 10px; color: var(--text2); }
+
+.radio-group { display: flex; flex-direction: column; gap: 8px; }
+.radio-row { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 12px; color: var(--text); line-height: 1.3; }
+.radio-row input[type=radio] { accent-color: var(--blue); cursor: pointer; margin-top: 2px; flex-shrink: 0; }
+.radio-row .radio-note { display: block; font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+.layer-row { display: flex; align-items: center; gap: 9px; padding: 5px 0; cursor: pointer; user-select: none; }
+.toggle { width: 32px; height: 18px; border-radius: 9px; border: 1.5px solid var(--border2); background: var(--slate2); position: relative; flex-shrink: 0; transition: background .2s, border-color .2s; cursor: pointer; }
+.toggle-knob { width: 12px; height: 12px; border-radius: 50%; background: var(--text3); position: absolute; top: 2px; left: 2px; transition: all .2s; }
+.toggle.on-teal { background: var(--teal); border-color: var(--teal); }
+.toggle.on-teal .toggle-knob { background: white; left: 16px; }
+.toggle.on-amber { background: var(--amber); border-color: var(--amber); }
+.toggle.on-amber .toggle-knob { background: white; left: 16px; }
+.toggle.on-red { background: var(--red); border-color: var(--red); }
+.toggle.on-red .toggle-knob { background: white; left: 16px; }
+.toggle.on-navy { background: var(--navy); border-color: var(--navy); }
+.toggle.on-navy .toggle-knob { background: white; left: 16px; }
+.toggle.on-purple { background: var(--purple); border-color: var(--purple); }
+.toggle.on-purple .toggle-knob { background: white; left: 16px; }
+.layer-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.layer-hatch { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; background: repeating-linear-gradient(45deg, var(--purple), var(--purple) 1.5px, transparent 1.5px, transparent 5px); border: 1px solid var(--purple); }
+.layer-name { font-size: 12px; color: var(--text); }
+.layer-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+.layer-note { font-size: 10px; color: var(--text3); margin-top: 6px; line-height: 1.4; }
+
+.slider-wrap { margin-bottom: 12px; }
+.slider-meta { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.slider-name { font-size: 11px; color: var(--text2); }
+.slider-val { font-size: 11px; font-weight: 700; color: var(--navy); font-family: var(--mono); }
+input[type=range] {
+  width: 100%; height: 4px; border-radius: 2px;
+  appearance: none; -webkit-appearance: none; background: var(--slate2);
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--blue); border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer;
+}
+input[type=range]:focus { outline: none; }
+.slider-bounds { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+/* ── Right sidebar ── */
+.sidebar-right {
+  background: var(--white); border-left: 1px solid var(--border);
+  overflow-y: auto; padding: 0; display: flex; flex-direction: column;
+  grid-column: 2; grid-row: 1;
+}
+.spot-card { background: var(--slate); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 10px; }
+.spot-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.spot-row:last-child { border-bottom: none; }
+.spot-key { font-size: 11px; color: var(--text2); }
+.spot-val { font-size: 12px; font-weight: 700; font-family: var(--mono); }
+.spot-name { font-size: 13.5px; font-weight: 700; color: var(--navy); }
+.spot-sub { font-size: 11px; color: var(--text2); margin-top: 1px; margin-bottom: 10px; }
+
+.risk-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-top: 10px; text-transform: uppercase; letter-spacing: .04em; }
+.risk-high { background: var(--red-pale); color: var(--red); }
+.risk-med { background: var(--amber-pale); color: var(--amber); }
+.risk-watch { background: var(--teal-pale); color: var(--teal); }
+.risk-low { background: var(--green-pale); color: var(--green); }
+
+.bar-track { background: var(--slate2); border-radius: 3px; height: 5px; overflow: hidden; margin: 3px 0 7px; }
+.bar-fill { height: 5px; border-radius: 3px; transition: width .4s ease; }
+
+.legend-ramp { height: 9px; border-radius: 4px; margin: 5px 0; }
+.legend-ends { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); }
+.legend-items { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text2); }
+.legend-swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-outline-sym { width: 14px; height: 10px; border-radius: 2px; border: 2px dashed var(--red); flex-shrink: 0; }
+.legend-hatch-sym { width: 14px; height: 10px; border-radius: 2px; flex-shrink: 0; background: repeating-linear-gradient(45deg, var(--purple), var(--purple) 1.5px, transparent 1.5px, transparent 5px); border: 1px solid var(--purple); }
+
+.bg-list { display: flex; flex-direction: column; gap: 4px; }
+.bg-item { display: flex; align-items: center; justify-content: space-between; background: var(--slate); border-radius: var(--radius); padding: 7px 10px; cursor: pointer; font-size: 11px; border: 1.5px solid transparent; transition: border-color .15s, background .15s; }
+.bg-item:hover { background: var(--slate2); border-color: var(--blue); }
+.bg-item.selected { border-color: var(--blue); background: var(--blue-pale); }
+.bg-rank { font-size: 10px; font-weight: 700; color: var(--text3); font-family: var(--mono); width: 16px; flex-shrink: 0; }
+.bg-code { font-weight: 600; color: var(--navy); flex: 1; padding-left: 4px; min-width: 0; }
+.bg-code .bg-sub { display: block; font-size: 10px; font-weight: 400; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bg-score { font-family: var(--mono); font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.score-red { color: var(--red); } .score-amber { color: var(--amber); } .score-teal { color: var(--teal); } .score-green { color: var(--green); }
+
+/* Spotlight extra sections */
+.sp-section-title {
+  font-size: 10px; font-weight: 700; color: var(--navy); text-transform: uppercase;
+  letter-spacing: .05em; margin: 12px 0 8px; display: flex; align-items: center; gap: 5px;
+}
+.sp-crs-card { background: var(--purple-pale); border: 1px solid #E0D3F0; border-radius: var(--radius); padding: 9px 10px; }
+.sp-crs-row { font-size: 11px; color: var(--text); display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; }
+.sp-crs-name { font-weight: 600; }
+.sp-crs-count { font-family: var(--mono); font-weight: 700; color: var(--purple); flex-shrink: 0; }
+.sp-crs-empty { font-size: 11px; color: var(--text3); font-style: italic; }
+
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text3); font-size: 12px; gap: 8px; padding: 20px 10px; text-align: center; }
+.empty-state .es-icon { font-size: 28px; opacity: .5; }
+
+/* ── Table view ── */
+#view-table { display: none; grid-column: 1 / 3; grid-row: 1; overflow: auto; background: var(--slate); flex-direction: column; }
+#view-table.active { display: flex; }
+
+.table-header-bar {
+  background: var(--white); padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 5;
+  flex-shrink: 0;
+}
+.table-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+.table-subtitle { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.table-wrap { padding: 16px; }
+table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--white); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
+table.data-table thead tr { background: var(--navy); }
+table.data-table th { padding: 10px 13px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.75); text-align: left; user-select: none; cursor: pointer; white-space: nowrap; transition: background .15s; letter-spacing: .03em; }
+table.data-table th:hover { background: #16324F; color: white; }
+table.data-table th.sort-asc::after { content: ' ↑'; color: var(--blue-light); font-size: 10px; }
+table.data-table th.sort-desc::after { content: ' ↓'; color: var(--blue-light); font-size: 10px; }
+table.data-table td { padding: 9px 13px; border-bottom: 1px solid var(--border); }
+table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:hover td { background: var(--slate); }
+table.data-table tr.high-risk td { background: rgba(192,57,43,0.04); }
+table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
+.tbl-badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; font-family: var(--mono); }
+.tbl-high { background: var(--red-pale); color: var(--red); }
+.tbl-med { background: var(--amber-pale); color: var(--amber); }
+.tbl-watch { background: var(--teal-pale); color: var(--teal); }
+.tbl-lower { background: var(--green-pale); color: var(--green); }
+.mono { font-family: var(--mono); }
+.flag { color: var(--red); font-weight: 700; }
+.flag-amber { color: var(--amber); font-weight: 700; }
+
+/* ── Definitions view ── */
+#view-chart { display: none; grid-column: 1 / 3; grid-row: 1; overflow: auto; background: var(--slate); }
+#view-chart.active { display: flex; flex-direction: column; }
+
+/* ── Footer ── */
+.footer {
+  background: var(--white); border-top: 1px solid var(--border);
+  padding: 8px 20px; display: flex; align-items: center; gap: 12px;
+  font-size: 11px; color: var(--text3); flex-shrink: 0;
+}
+.footer a { color: var(--blue); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+.footer-right { margin-left: auto; display: flex; gap: 8px; }
+.export-btn { background: transparent; border: 1.5px solid var(--border2); border-radius: var(--radius); padding: 5px 12px; font-size: 11px; font-family: var(--font); color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all .15s; font-weight: 500; }
+.export-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
+
+/* Leaflet attribution positioning */
+.leaflet-control-attribution { font-size: 9px !important; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <div class="header-logo">🌊</div>
+      <div>
+        <div class="header-title">Flood Risk Community Explorer</div>
+        <div class="header-sub">SFHA exposure · NFIP take-up · Income by census block group</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="view-tabs">
+        <button class="view-tab active" id="btn-map">Map</button>
+        <button class="view-tab" id="btn-table">Table</button>
+        <button class="view-tab" id="btn-chart">Definitions</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- METRICS -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">High-risk block groups</div>
+      <div class="metric-value mv-red" id="m-high">—</div>
+      <div class="metric-sub">All 3 thresholds flagged</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Avg % Structures in SFHA</div>
+      <div class="metric-value mv-blue" id="m-rate">—</div>
+      <div class="metric-sub">Selected community</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Population in high-risk BGs</div>
+      <div class="metric-value mv-teal" id="m-pop">—</div>
+      <div class="metric-sub">High-risk block groups</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Community Rating System</div>
+      <div class="metric-value mv-white metric-value-sm" id="m-crs">—</div>
+      <div class="metric-sub" id="m-crs-sub">Select a community</div>
+    </div>
+  </div>
+
+  <!-- BODY: Left sidebar always present; right area switches views -->
+  <div class="body" id="main-body">
+
+    <!-- LEFT SIDEBAR (always visible) -->
+    <aside class="sidebar" aria-label="Community and filters">
+
+      <div class="sidebar-section">
+        <div class="sec-label">Community</div>
+        <div class="community-select-wrap">
+          <select class="community-sel" id="community-select">
+            <option value="">— Select a community —</option>
+            <option value="monterey">Monterey County</option>
+            <option value="san_benito">San Benito County</option>
+            <option value="san_diego">San Diego County</option>
+            <option value="santa_cruz">Santa Cruz County</option>
+            <option value="tulare">Tulare County</option>
+            <option value="tuolumne">Tuolumne County</option>
+            <option value="hoopa">Hoopa Valley Tribe</option>
+          </select>
+        </div>
+        <div class="community-info" id="community-info" style="display:none;">
+          <div class="community-info-name" id="ci-name"></div>
+          <div class="community-info-detail" id="ci-detail"></div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sec-label">Choropleth metric</div>
+        <div class="radio-group">
+          <label class="radio-row">
+            <input type="radio" name="choro-metric" value="pctSFHA" checked>
+            <span>% Residential Structures in SFHA<span class="radio-note">Share of residential structures inside the Special Flood Hazard Area</span></span>
+          </label>
+          <label class="radio-row">
+            <input type="radio" name="choro-metric" value="nfipSFHA">
+            <span>NFIP Take-up Rate (in SFHA)<span class="radio-note">Share of SFHA residential structures with an NFIP policy</span></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sec-label">Overlay layers</div>
+        <div class="layer-row" onclick="toggleLayer('income')">
+          <div class="toggle on-teal" id="tog-income"><div class="toggle-knob"></div></div>
+          <div class="layer-dot" style="background:var(--teal)"></div>
+          <span class="layer-name">LMI overlay</span>
+        </div>
+        <div class="layer-row" onclick="toggleLayer('lowtakeup')">
+          <div class="toggle on-amber" id="tog-lowtakeup"><div class="toggle-knob"></div></div>
+          <div class="layer-dot" style="background:var(--amber)"></div>
+          <span class="layer-name">Low NFIP take-up overlay</span>
+        </div>
+        <hr class="layer-divider">
+        <div class="layer-row" onclick="toggleLayer('outline')">
+          <div class="toggle on-red" id="tog-outline"><div class="toggle-knob"></div></div>
+          <div class="layer-dot" style="border:2px dashed var(--red);background:transparent;border-radius:2px;width:9px;height:9px;"></div>
+          <span class="layer-name">High-risk border</span>
+        </div>
+        <div class="layer-row" onclick="toggleLayer('labels')">
+          <div class="toggle" id="tog-labels"><div class="toggle-knob"></div></div>
+          <div class="layer-dot" style="background:var(--navy)"></div>
+          <span class="layer-name">Block group labels</span>
+        </div>
+        <hr class="layer-divider">
+        <div class="layer-row" onclick="toggleLayer('crs')">
+          <div class="toggle" id="tog-crs"><div class="toggle-knob"></div></div>
+          <div class="layer-hatch"></div>
+          <span class="layer-name">Community Rating System</span>
+        </div>
+        <div class="layer-note" id="crs-note">Cross-hatched areas participate in FEMA's Community Rating System.</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sec-label">Risk thresholds</div>
+        <div class="slider-wrap">
+          <div class="slider-meta">
+            <span class="slider-name">% Structures in SFHA ≥</span>
+            <span class="slider-val" id="sv-pctsfha">50%</span>
+          </div>
+          <input type="range" id="sl-pctsfha" min="0" max="100" step="1" value="50">
+          <div class="slider-bounds"><span>0%</span><span>100%</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-meta">
+            <span class="slider-name">LMI population ≥</span>
+            <span class="slider-val" id="sv-lmi">40%</span>
+          </div>
+          <input type="range" id="sl-lmi" min="0" max="100" step="1" value="40">
+          <div class="slider-bounds"><span>0%</span><span>100%</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="slider-meta">
+            <span class="slider-name">NFIP take-up (in SFHA) ≤</span>
+            <span class="slider-val" id="sv-nfip">40%</span>
+          </div>
+          <input type="range" id="sl-nfip" min="0" max="100" step="1" value="40">
+          <div class="slider-bounds"><span>0%</span><span>100%</span></div>
+        </div>
+        <div class="layer-note">A block group is <strong>high-risk</strong> when all three thresholds above are exceeded. Priority order when 2 of 3 are exceeded: % in SFHA &gt; LMI &gt; NFIP take-up.</div>
+      </div>
+
+    </aside>
+
+    <!-- VIEW AREA (right of sidebar) -->
+    <div class="view-area" id="view-area">
+
+      <!-- MAP VIEW (persistent, never destroyed) -->
+      <div id="view-map">
+        <!-- Map fills the left column of view-area -->
+        <div class="map-wrap" id="map-container">
+          <!-- Leaflet base map (overlay drawn natively inside Leaflet SVG pane) -->
+          <div id="leaflet-map"></div>
+          <!-- States -->
+          <div class="no-community-msg" id="no-community">
+            <div class="big-icon">🌊</div>
+            <h3>Select a Community</h3>
+            <p>Choose a community from the left panel to load its block group map and flood risk analysis.</p>
+          </div>
+          <div class="map-loading" id="map-loading">
+            <div class="spinner"></div>
+            <span>Loading block group geography…</span>
+          </div>
+          <!-- Legend -->
+          <div class="choro-legend" id="choro-legend" style="display:none;">
+            <div class="legend-title" id="legend-title">% Structures in SFHA</div>
+            <div class="legend-grad" id="legend-grad"></div>
+            <div class="legend-ends-row"><span>Low</span><span>High</span></div>
+            <div class="legend-nodata-row" id="legend-nodata-row" style="display:none;">
+              <div class="legend-nodata-swatch"></div><span>No structures in SFHA</span>
+            </div>
+          </div>
+          <!-- Tooltip -->
+          <div class="map-tooltip" id="tooltip">
+  <div class="tt-header" id="tt-name">
+    <span class="tt-header-sub" id="tt-community"></span>
+  </div>
+  <div class="tt-body">
+
+    <!-- LEFT PANEL: donut chart -->
+    <div class="tt-left">
+      <div class="tt-pie-label">Residential structures<br>inside vs. outside SFHA</div>
+      <svg id="tt-pie" width="120" height="120" viewBox="0 0 120 120"></svg>
+      <div class="tt-pie-legend">
+        <div class="tt-pie-legend-row"><div class="tt-pie-dot" style="background:var(--blue)"></div>In SFHA<span class="tt-pie-legend-val" id="tt-pie-in"></span></div>
+        <div class="tt-pie-legend-row"><div class="tt-pie-dot" style="background:var(--teal-light)"></div>Outside SFHA<span class="tt-pie-legend-val" id="tt-pie-out"></span></div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="tt-panel-divider"></div>
+
+    <!-- RIGHT PANEL: horizontal bars + stats -->
+    <div class="tt-right">
+      <div class="tt-bar-section-label">NFIP Take-up &amp; Income</div>
+
+      <div class="tt-hbar-row">
+        <div class="tt-hbar-meta"><span>NFIP take-up · overall</span><span class="tt-hbar-val" id="tt-nfip-all"></span></div>
+        <div class="tt-hbar-track"><div class="tt-hbar-fill" id="tt-bar-nfip-all" style="background:var(--blue);"></div></div>
+      </div>
+      <div class="tt-hbar-row">
+        <div class="tt-hbar-meta"><span>NFIP take-up · in SFHA</span><span class="tt-hbar-val" id="tt-nfip-sfha"></span></div>
+        <div class="tt-hbar-track"><div class="tt-hbar-fill" id="tt-bar-nfip-sfha" style="background:var(--navy);"></div></div>
+      </div>
+      <div class="tt-hbar-row">
+        <div class="tt-hbar-meta"><span>NFIP take-up · outside SFHA</span><span class="tt-hbar-val" id="tt-nfip-nonsfha"></span></div>
+        <div class="tt-hbar-track"><div class="tt-hbar-fill" id="tt-bar-nfip-nonsfha" style="background:var(--teal);"></div></div>
+      </div>
+      <div class="tt-hbar-row">
+        <div class="tt-hbar-meta"><span>LMI population</span><span class="tt-hbar-val" id="tt-lmi"></span></div>
+        <div class="tt-hbar-track"><div class="tt-hbar-fill" id="tt-bar-lmi" style="background:var(--amber);"></div></div>
+      </div>
+
+      <div class="tt-stat-grid">
+        <div class="tt-stat"><div class="tt-stat-key">Residential Structures</div><div class="tt-stat-val" id="tt-structures"></div></div>
+        <div class="tt-stat"><div class="tt-stat-key">Population</div><div class="tt-stat-val" id="tt-pop"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- EXTRA: CRS -->
+  <div class="tt-extra">
+    <div class="tt-extra-title">🛡 Community Rating System</div>
+    <div id="tt-crs"></div>
+  </div>
+</div>
+        </div>
+
+        <!-- Right sidebar (part of map view) -->
+        <aside class="sidebar-right" aria-label="Block group details and legend">
+          <div class="sidebar-section">
+            <div class="sec-label">Block Group Spotlight</div>
+            <div id="spotlight-empty" class="empty-state">
+              <div class="es-icon">📍</div>
+              <span>Click a block group on the map</span>
+            </div>
+            <div id="spotlight-content" style="display:none;">
+              <div class="spot-name" id="sp-name"></div>
+              <div class="spot-sub" id="sp-sub"></div>
+              <div class="spot-card">
+                <div class="spot-row"><span class="spot-key">% Structures in SFHA</span><span class="spot-val" id="sp-pctsfha" style="color:var(--blue);"></span></div>
+                <div class="bar-track"><div class="bar-fill" id="bar-pctsfha" style="background:var(--blue);"></div></div>
+                <div class="spot-row"><span class="spot-key">NFIP take-up (in SFHA)</span><span class="spot-val" id="sp-nfipsfha"></span></div>
+                <div class="bar-track"><div class="bar-fill" id="bar-nfipsfha" style="background:var(--navy);"></div></div>
+                <div class="spot-row"><span class="spot-key">NFIP take-up (outside SFHA)</span><span class="spot-val" id="sp-nfipnonsfha"></span></div>
+                <div class="bar-track"><div class="bar-fill" id="bar-nfipnonsfha" style="background:var(--teal);"></div></div>
+                <div class="spot-row"><span class="spot-key">LMI population</span><span class="spot-val" id="sp-lmi"></span></div>
+                <div class="bar-track"><div class="bar-fill" id="bar-lmi" style="background:var(--amber);"></div></div>
+                <div class="spot-row"><span class="spot-key">Residential structures</span><span class="spot-val" id="sp-structures"></span></div>
+                <div class="spot-row"><span class="spot-key">Structures in SFHA</span><span class="spot-val" id="sp-structures-sfha"></span></div>
+                <div class="spot-row"><span class="spot-key">Population</span><span class="spot-val" id="sp-pop"></span></div>
+              </div>
+              <div id="sp-badge"></div>
+
+              <div class="sp-section-title">🛡 Community Rating System</div>
+              <div class="sp-crs-card" id="sp-crs"></div>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <div class="sec-label">Map Legend</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:3px;" id="sidebar-legend-label">% Structures in SFHA</div>
+            <div class="legend-ramp" id="sidebar-legend-ramp"></div>
+            <div class="legend-ends"><span>Low</span><span>High</span></div>
+            <div class="legend-items">
+              <div class="legend-item" id="leg-income"><div class="legend-swatch" style="background:var(--teal)"></div>LMI overlay dot</div>
+              <div class="legend-item" id="leg-lowtakeup"><div class="legend-swatch" style="background:var(--amber)"></div>Low NFIP take-up dot</div>
+              <div class="legend-item" id="leg-outline"><div class="legend-outline-sym"></div>High-risk block group border</div>
+              <div class="legend-item" id="leg-crs"><div class="legend-hatch-sym"></div>Community Rating System area</div>
+            </div>
+          </div>
+          <div class="sidebar-section" style="flex:1;">
+            <div class="sec-label">Top At-Risk Block Groups</div>
+            <div class="bg-list" id="top-bgs">
+              <div class="empty-state">
+                <div class="es-icon">📊</div>
+                <span>Select a community to see rankings</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div><!-- #view-map -->
+
+      <!-- TABLE VIEW (hidden until activated) -->
+      <div id="view-table"></div>
+
+      <!-- CHART VIEW (hidden until activated) -->
+      <div id="view-chart"></div>
+
+    </div><!-- #view-area -->
+  </div><!-- .body -->
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>🌊</span>
+    <a href="https://www.fema.gov/flood-maps/national-flood-hazard-layer" target="_blank">FEMA SFHA / NFHL</a>
+    <a href="https://www.fema.gov/flood-insurance/work-with-nfip/community-rating-system" target="_blank">FEMA CRS</a>
+    <a href="https://www.hec.usace.army.mil/confluence/nsi" target="_blank">National Structure Inventory</a>
+    <a href="https://data.census.gov" target="_blank">ACS 5-yr</a>
+    <div class="footer-right">
+      <button class="export-btn" id="export-csv">⬇ Export CSV</button>
+    </div>
+  </footer>
+
+</div><!-- .app -->
+
+<!-- Libraries -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+
+<script>
+/* ════════════════════════════════════════════
+   COMMUNITY DEFINITIONS
+   NOTE: `label` must match the "Community" property
+   exactly as it appears in CA_bg_tool.json.
+════════════════════════════════════════════ */
+const COMMUNITY_META = {
+  monterey:   { label:'Monterey County',      fips:'06053', detail:'Central Coast · 434K population',               center:[36.2,-121.3], zoom:9 },
+  san_benito: { label:'San Benito County',    fips:'06069', detail:'Inland Central Coast · 63K population',          center:[36.8,-121.1], zoom:10 },
+  san_diego:  { label:'San Diego County',     fips:'06073', detail:'Southern California · 3.3M population',          center:[32.9,-116.9], zoom:9 },
+  santa_cruz: { label:'Santa Cruz County',    fips:'06087', detail:'Central Coast · 271K population',               center:[37.05,-122.0],zoom:10 },
+  tulare:     { label:'Tulare County',        fips:'06107', detail:'San Joaquin Valley · 473K population',           center:[36.2,-119.0], zoom:9 },
+  tuolumne:   { label:'Tuolumne County',      fips:'06109', detail:'Sierra Nevada Foothills · 55K population',      center:[37.9,-120.0], zoom:10 },
+  hoopa:      { label:'Hoopa Valley Tribe',   fips:'130821',detail:'Northwestern California · Tribal Nation',        center:[41.05,-123.7],zoom:11 },
+};
+
+const VARIABLE_DEFINITIONS = [
+  { variable: '% Structures in SFHA', definition: 'Percent of residential structures located inside the Special Flood Hazard Area (the FEMA-mapped 1%-annual-chance floodplain)', source: 'FEMA National Flood Hazard Layer (NFHL); residential structure counts from the National Structure Inventory (NSI).' },
+  { variable: 'NFIP Take-up · Overall', definition: 'Percent of all residential structures in the block group with an active NFIP flood insurance policy', source: 'FEMA National Flood Insurance Program (NFIP) policy data; NSI structure counts.' },
+  { variable: 'NFIP Take-up · in SFHA', definition: 'Percent of residential structures inside the SFHA with an active NFIP policy. Shown as N/A where a block group has zero residential structures in the SFHA.', source: 'FEMA NFIP policy data; NSI structure counts.' },
+  { variable: 'NFIP Take-up · outside SFHA', definition: 'Percent of residential structures outside the SFHA with an active NFIP policy', source: 'FEMA NFIP policy data; NSI structure counts.' },
+  { variable: 'LMI %', definition: 'Percent of population earning ≤ 80% of the area median family income', source: 'US Census Bureau\'s 2020–2024 American Community Survey (ACS) 5-year data' },
+  { variable: 'Residential Structures', definition: 'Total number of residential structures in the block group, and the split inside vs. outside the SFHA', source: 'National Structure Inventory (NSI)' },
+  { variable: 'Population', definition: 'Total population of the block group', source: 'US Census Bureau\'s 2020–2024 American Community Survey (ACS) 5-year data' },
+  { variable: 'Community Rating System (CRS)', definition: 'FEMA program that reduces NFIP premiums in communities that adopt floodplain management practices beyond federal minimum requirements. Shown as cross-hatched areas and as residential structure counts by participating CRS community.', source: 'FEMA Community Rating System (CRS) community list.' },
+  { variable: 'Risk Level', definition: '= High (all 3 risk thresholds exceeded);<br>= Medium (2 thresholds exceeded AND % Structures in SFHA is one of them);<br>= Watch (1 threshold exceeded, or 2 exceeded that don\'t include % in SFHA);<br>= Low (none exceeded).', source: 'Three risk thresholds, in priority order: % Structures in SFHA; LMI %; NFIP take-up (in SFHA).' },
+];
+
+/* ════════════════════════════════════════════
+   CRS (Community Rating System) RESIDENTIAL STRUCTURE COUNTS
+   Keyed by block group GEOID. Source: CA_residentialstructure_CRS.csv
+   Each entry is a list of [CRS community name, residential structure count]
+   — a block group can straddle more than one CRS-rated community.
+════════════════════════════════════════════ */
+const CRS_LOOKUP = {"060530001011":[["SALINAS, CITY OF",3]],"060530001012":[["MONTEREY COUNTY *",342]],"060530001013":[["MONTEREY COUNTY *",263]],"060530001031":[["SALINAS, CITY OF",360]],"060530001032":[["SALINAS, CITY OF",217]],"060530001033":[["SALINAS, CITY OF",68]],"060530001041":[["SALINAS, CITY OF",565]],"060530001042":[["MONTEREY COUNTY *",8],["SALINAS, CITY OF",440]],"060530001051":[["SALINAS, CITY OF",515]],"060530001052":[["SALINAS, CITY OF",374]],"060530001061":[["SALINAS, CITY OF",384]],"060530001062":[["SALINAS, CITY OF",430]],"060530001063":[["SALINAS, CITY OF",466]],"060530002001":[["SALINAS, CITY OF",311]],"060530002002":[["SALINAS, CITY OF",447]],"060530002003":[["SALINAS, CITY OF",375]],"060530002004":[["SALINAS, CITY OF",342]],"060530003001":[["SALINAS, CITY OF",521]],"060530003002":[["SALINAS, CITY OF",579]],"060530004001":[["SALINAS, CITY OF",149]],"060530004002":[["SALINAS, CITY OF",588]],"060530004003":[["SALINAS, CITY OF",12]],"060530004004":[["SALINAS, CITY OF",284]],"060530004005":[["SALINAS, CITY OF",238]],"060530005011":[["SALINAS, CITY OF",180]],"060530005012":[["SALINAS, CITY OF",139]],"060530005013":[["SALINAS, CITY OF",214]],"060530005021":[["SALINAS, CITY OF",391]],"060530005022":[["SALINAS, CITY OF",495]],"060530006001":[["SALINAS, CITY OF",276]],"060530006002":[["SALINAS, CITY OF",202]],"060530006003":[["SALINAS, CITY OF",289]],"060530006004":[["SALINAS, CITY OF",220]],"060530007011":[["SALINAS, CITY OF",242]],"060530007012":[["SALINAS, CITY OF",216]],"060530007013":[["SALINAS, CITY OF",157]],"060530007014":[["SALINAS, CITY OF",134]],"060530007021":[["SALINAS, CITY OF",151]],"060530007022":[["SALINAS, CITY OF",136]],"060530007023":[["SALINAS, CITY OF",297]],"060530008001":[["SALINAS, CITY OF",356]],"060530008002":[["SALINAS, CITY OF",364]],"060530008003":[["SALINAS, CITY OF",250]],"060530009001":[["SALINAS, CITY OF",286]],"060530009002":[["SALINAS, CITY OF",139]],"060530009003":[["SALINAS, CITY OF",378]],"060530012001":[["SALINAS, CITY OF",585]],"060530012002":[["SALINAS, CITY OF",397]],"060530013001":[["SALINAS, CITY OF",139]],"060530013002":[["SALINAS, CITY OF",143]],"060530014001":[["SALINAS, CITY OF",451]],"060530014002":[["SALINAS, CITY OF",430]],"060530015001":[["MONTEREY COUNTY *",10],["SALINAS, CITY OF",574]],"060530015002":[["SALINAS, CITY OF",432]],"060530015003":[["SALINAS, CITY OF",734]],"060530016001":[["SALINAS, CITY OF",462]],"060530016002":[["SALINAS, CITY OF",387]],"060530017001":[["SALINAS, CITY OF",500]],"060530017002":[["SALINAS, CITY OF",513]],"060530018011":[["MONTEREY COUNTY *",197],["SALINAS, CITY OF",107]],"060530018012":[["SALINAS, CITY OF",746]],"060530018013":[["SALINAS, CITY OF",17]],"060530018021":[["SALINAS, CITY OF",306]],"060530018022":[["SALINAS, CITY OF",198]],"060530018023":[["SALINAS, CITY OF",394]],"060530101011":[["MONTEREY COUNTY *",346]],"060530101012":[["MONTEREY COUNTY *",99]],"060530101013":[["MONTEREY COUNTY *",205]],"060530101021":[["MONTEREY COUNTY *",484]],"060530101022":[["MONTEREY COUNTY *",597]],"060530102021":[["MONTEREY COUNTY *",288]],"060530102022":[["MONTEREY COUNTY *",561]],"060530102023":[["MONTEREY COUNTY *",513]],"060530103051":[["MONTEREY COUNTY *",604]],"060530103052":[["MONTEREY COUNTY *",745]],"060530103053":[["MONTEREY COUNTY *",293]],"060530103061":[["MONTEREY COUNTY *",431]],"060530104001":[["MONTEREY COUNTY *",323]],"060530104002":[["MONTEREY COUNTY *",347]],"060530104003":[["MONTEREY COUNTY *",320]],"060530104004":[["MONTEREY COUNTY *",223]],"060530105011":[["MONTEREY COUNTY *",418]],"060530105012":[["MONTEREY COUNTY *",360]],"060530105013":[["MONTEREY COUNTY *",1507]],"060530105041":[["SALINAS, CITY OF",668]],"060530105042":[["SALINAS, CITY OF",244]],"060530105043":[["MONTEREY COUNTY *",275]],"060530105044":[["SALINAS, CITY OF",1]],"060530105051":[["SALINAS, CITY OF",439]],"060530105052":[["SALINAS, CITY OF",515]],"060530105053":[["SALINAS, CITY OF",241]],"060530105061":[["SALINAS, CITY OF",393]],"060530105062":[["SALINAS, CITY OF",67]],"060530105063":[["SALINAS, CITY OF",79]],"060530106031":[["SALINAS, CITY OF",278]],"060530106032":[["SALINAS, CITY OF",699]],"060530106033":[["SALINAS, CITY OF",490]],"060530106034":[["SALINAS, CITY OF",415]],"060530106041":[["SALINAS, CITY OF",524]],"060530106042":[["SALINAS, CITY OF",377]],"060530106043":[["SALINAS, CITY OF",289]],"060530106051":[["SALINAS, CITY OF",412]],"060530106052":[["SALINAS, CITY OF",391]],"060530106061":[["MONTEREY COUNTY *",638],["SALINAS, CITY OF",12]],"060530106062":[["SALINAS, CITY OF",405]],"060530106063":[["MONTEREY COUNTY *",10],["SALINAS, CITY OF",615]],"060530106071":[["SALINAS, CITY OF",163]],"060530106072":[["SALINAS, CITY OF",331]],"060530106081":[["SALINAS, CITY OF",294]],"060530106082":[["SALINAS, CITY OF",252]],"060530107021":[["MONTEREY COUNTY *",876]],"060530107022":[["MONTEREY COUNTY *",892]],"060530108042":[["MONTEREY COUNTY *",103]],"060530108043":[["MONTEREY COUNTY *",11]],"060530110011":[["MONTEREY COUNTY *",510]],"060530110012":[["MONTEREY COUNTY *",595]],"060530110013":[["MONTEREY COUNTY *",410]],"060530110021":[["MONTEREY COUNTY *",838]],"060530110022":[["MONTEREY COUNTY *",479]],"060530111011":[["MONTEREY COUNTY *",281]],"060530111061":[["MONTEREY COUNTY *",106]],"060530112021":[["MONTEREY COUNTY *",2]],"060530112024":[["MONTEREY COUNTY *",6]],"060530112041":[["MONTEREY COUNTY *",196]],"060530112042":[["MONTEREY COUNTY *",18]],"060530113032":[["MONTEREY COUNTY *",559]],"060530113033":[["MONTEREY COUNTY *",442]],"060530113051":[["MONTEREY COUNTY *",153]],"060530114001":[["MONTEREY COUNTY *",913]],"060530114002":[["MONTEREY COUNTY *",587]],"060530115021":[["MONTEREY COUNTY *",600]],"060530116041":[["MONTEREY COUNTY *",742]],"060530116042":[["MONTEREY COUNTY *",562]],"060530116051":[["MONTEREY COUNTY *",678]],"060530116052":[["MONTEREY COUNTY *",715]],"060530116061":[["MONTEREY COUNTY *",464]],"060530116062":[["MONTEREY COUNTY *",693]],"060530117001":[["MONTEREY COUNTY *",672]],"060530117002":[["MONTEREY COUNTY *",736]],"060530117003":[["MONTEREY COUNTY *",786]],"060530118012":[["MONTEREY COUNTY *",4]],"060530118021":[["MONTEREY COUNTY *",21]],"060530119011":[["MONTEREY COUNTY *",363]],"060530119012":[["MONTEREY COUNTY *",498]],"060530119013":[["MONTEREY COUNTY *",793]],"060530119021":[["MONTEREY COUNTY *",736]],"060530119022":[["MONTEREY COUNTY *",482]],"060530128002":[["MONTEREY COUNTY *",53]],"060530132001":[["MONTEREY COUNTY *",1043]],"060530132002":[["MONTEREY COUNTY *",299]],"060530133001":[["MONTEREY COUNTY *",7]],"060530141051":[["MONTEREY COUNTY *",7]],"060530141052":[["MONTEREY COUNTY *",312]],"060530141053":[["MONTEREY COUNTY *",17]],"060530141093":[["MONTEREY COUNTY *",518]],"060530141094":[["MONTEREY COUNTY *",7]],"060530141101":[["MONTEREY COUNTY *",672]],"060530141102":[["MONTEREY COUNTY *",1131]],"060530141103":[["MONTEREY COUNTY *",516]],"060530141104":[["MONTEREY COUNTY *",282]],"060530143022":[["MONTEREY COUNTY *",4]],"060530145001":[["MONTEREY COUNTY *",111],["SALINAS, CITY OF",60]],"060530145002":[["SALINAS, CITY OF",493]],"060530145003":[["SALINAS, CITY OF",467]],"060530146011":[["MONTEREY COUNTY *",486]],"060530146012":[["MONTEREY COUNTY *",481]],"060530146013":[["MONTEREY COUNTY *",366]],"060530147001":[["MONTEREY COUNTY *",401]],"060530147002":[["MONTEREY COUNTY *",691]],"060530147003":[["MONTEREY COUNTY *",502]],"060530147004":[["MONTEREY COUNTY *",488]],"060530148001":[["MONTEREY COUNTY *",283]],"060530148002":[["MONTEREY COUNTY *",191]],"060539800001":[["MONTEREY COUNTY *",2]],"060730001001":[["SAN DIEGO, CITY OF",493]],"060730001002":[["SAN DIEGO, CITY OF",751]],"060730002011":[["SAN DIEGO, CITY OF",327]],"060730002012":[["SAN DIEGO, CITY OF",321]],"060730002021":[["SAN DIEGO, CITY OF",466]],"060730002022":[["SAN DIEGO, CITY OF",344]],"060730002023":[["SAN DIEGO, CITY OF",474]],"060730002024":[["SAN DIEGO, CITY OF",334]],"060730003011":[["SAN DIEGO, CITY OF",171]],"060730003012":[["SAN DIEGO, CITY OF",158]],"060730003013":[["SAN DIEGO, CITY OF",310]],"060730003021":[["SAN DIEGO, CITY OF",614]],"060730003022":[["SAN DIEGO, CITY OF",304]],"060730004001":[["SAN DIEGO, CITY OF",234]],"060730004002":[["SAN DIEGO, CITY OF",319]],"060730004003":[["SAN DIEGO, CITY OF",95]],"060730004004":[["SAN DIEGO, CITY OF",214]],"060730005001":[["SAN DIEGO, CITY OF",327]],"060730005002":[["SAN DIEGO, CITY OF",450]],"060730005003":[["SAN DIEGO, CITY OF",282]],"060730006001":[["SAN DIEGO, CITY OF",250]],"060730006002":[["SAN DIEGO, CITY OF",324]],"060730006003":[["SAN DIEGO, CITY OF",552]],"060730007001":[["SAN DIEGO, CITY OF",457]],"060730007002":[["SAN DIEGO, CITY OF",588]],"060730007003":[["SAN DIEGO, CITY OF",270]],"060730008001":[["SAN DIEGO, CITY OF",177]],"060730008002":[["SAN DIEGO, CITY OF",267]],"060730008003":[["SAN DIEGO, CITY OF",405]],"060730008004":[["SAN DIEGO, CITY OF",425]],"060730008005":[["SAN DIEGO, CITY OF",159]],"060730009011":[["SAN DIEGO, CITY OF",304]],"060730009012":[["SAN DIEGO, CITY OF",235]],"060730009013":[["SAN DIEGO, CITY OF",227]],"060730009021":[["SAN DIEGO, CITY OF",138]],"060730009022":[["SAN DIEGO, CITY OF",167]],"060730009023":[["SAN DIEGO, CITY OF",182]],"060730010001":[["SAN DIEGO, CITY OF",394]],"060730010002":[["SAN DIEGO, CITY OF",361]],"060730010003":[["SAN DIEGO, CITY OF",352]],"060730010004":[["SAN DIEGO, CITY OF",224]],"060730011001":[["SAN DIEGO, CITY OF",446]],"060730011002":[["SAN DIEGO, CITY OF",310]],"060730011003":[["SAN DIEGO, CITY OF",291]],"060730012011":[["SAN DIEGO, CITY OF",251]],"060730012012":[["SAN DIEGO, CITY OF",257]],"060730012021":[["SAN DIEGO, CITY OF",355]],"060730012022":[["SAN DIEGO, CITY OF",441]],"060730013011":[["SAN DIEGO, CITY OF",217]],"060730013012":[["SAN DIEGO, CITY OF",556]],"060730013021":[["SAN DIEGO, CITY OF",205]],"060730013022":[["SAN DIEGO, CITY OF",318]],"060730013023":[["SAN DIEGO, CITY OF",262]],"060730014001":[["SAN DIEGO, CITY OF",232]],"060730014002":[["SAN DIEGO, CITY OF",258]],"060730014003":[["SAN DIEGO, CITY OF",576]],"060730015001":[["SAN DIEGO, CITY OF",375]],"060730015002":[["SAN DIEGO, CITY OF",366]],"060730015003":[["SAN DIEGO, CITY OF",345]],"060730015004":[["SAN DIEGO, CITY OF",223]],"060730016001":[["SAN DIEGO, CITY OF",325]],"060730016002":[["SAN DIEGO, CITY OF",253]],"060730016003":[["SAN DIEGO, CITY OF",187]],"060730016004":[["SAN DIEGO, CITY OF",211]],"060730017001":[["SAN DIEGO, CITY OF",493]],"060730017002":[["SAN DIEGO, CITY OF",374]],"060730017003":[["SAN DIEGO, CITY OF",371]],"060730017004":[["SAN DIEGO, CITY OF",163]],"060730018011":[["SAN DIEGO, CITY OF",143]],"060730018012":[["SAN DIEGO, CITY OF",276]],"060730018021":[["SAN DIEGO, CITY OF",141]],"060730018022":[["SAN DIEGO, CITY OF",180]],"060730018023":[["SAN DIEGO, CITY OF",216]],"060730018024":[["SAN DIEGO, CITY OF",163]],"060730019001":[["SAN DIEGO, CITY OF",402]],"060730019002":[["SAN DIEGO, CITY OF",596]],"060730019003":[["SAN DIEGO, CITY OF",313]],"060730020011":[["SAN DIEGO, CITY OF",435]],"060730020012":[["SAN DIEGO, CITY OF",742]],"060730020013":[["SAN DIEGO, CITY OF",374]],"060730020021":[["SAN DIEGO, CITY OF",429]],"060730020022":[["SAN DIEGO, CITY OF",499]],"060730021001":[["SAN DIEGO, CITY OF",325]],"060730021002":[["SAN DIEGO, CITY OF",234]],"060730021003":[["SAN DIEGO, CITY OF",150]],"060730021004":[["SAN DIEGO, CITY OF",318]],"060730021005":[["SAN DIEGO, CITY OF",328]],"060730022011":[["SAN DIEGO, CITY OF",254]],"060730022012":[["SAN DIEGO, CITY OF",233]],"060730022021":[["SAN DIEGO, CITY OF",117]],"060730022022":[["SAN DIEGO, CITY OF",216]],"060730022023":[["SAN DIEGO, CITY OF",168]],"060730023011":[["SAN DIEGO, CITY OF",196]],"060730023012":[["SAN DIEGO, CITY OF",103]],"060730023013":[["SAN DIEGO, CITY OF",101]],"060730023021":[["SAN DIEGO, CITY OF",397]],"060730023022":[["SAN DIEGO, CITY OF",266]],"060730023023":[["SAN DIEGO, CITY OF",237]],"060730024011":[["SAN DIEGO, CITY OF",210]],"060730024012":[["SAN DIEGO, CITY OF",385]],"060730024013":[["SAN DIEGO, CITY OF",286]],"060730024021":[["SAN DIEGO, CITY OF",337]],"060730024022":[["SAN DIEGO, CITY OF",199]],"060730024023":[["SAN DIEGO, CITY OF",122]],"060730025011":[["SAN DIEGO, CITY OF",523]],"060730025012":[["SAN DIEGO, CITY OF",390]],"060730025013":[["SAN DIEGO, CITY OF",313]],"060730025021":[["SAN DIEGO, CITY OF",830]],"060730025022":[["SAN DIEGO, CITY OF",298]],"060730025023":[["SAN DIEGO, CITY OF",144]],"060730025024":[["SAN DIEGO, CITY OF",375]],"060730026011":[["SAN DIEGO, CITY OF",381]],"060730026012":[["SAN DIEGO, CITY OF",362]],"060730026013":[["SAN DIEGO, CITY OF",81]],"060730026014":[["SAN DIEGO, CITY OF",285]],"060730026021":[["SAN DIEGO, CITY OF",242]],"060730026022":[["SAN DIEGO, CITY OF",293]],"060730026023":[["SAN DIEGO, CITY OF",209]],"060730027021":[["SAN DIEGO, CITY OF",444]],"060730027022":[["SAN DIEGO, CITY OF",351]],"060730027023":[["SAN DIEGO, CITY OF",390]],"060730027031":[["SAN DIEGO, CITY OF",686]],"060730027032":[["SAN DIEGO, CITY OF",321]],"060730027033":[["SAN DIEGO, CITY OF",275]],"060730027034":[["SAN DIEGO, CITY OF",564]],"060730027051":[["SAN DIEGO, CITY OF",668]],"060730027052":[["SAN DIEGO, CITY OF",705]],"060730027071":[["SAN DIEGO, CITY OF",190]],"060730027072":[["SAN DIEGO, CITY OF",137]],"060730027073":[["SAN DIEGO, CITY OF",114]],"060730027074":[["SAN DIEGO, CITY OF",128]],"060730027081":[["SAN DIEGO, CITY OF",240]],"060730027082":[["SAN DIEGO, CITY OF",28]],"060730027083":[["SAN DIEGO, CITY OF",183]],"060730027084":[["SAN DIEGO, CITY OF",182]],"060730027091":[["SAN DIEGO, CITY OF",218]],"060730027092":[["SAN DIEGO, CITY OF",362]],"060730027101":[["SAN DIEGO, CITY OF",300]],"060730027102":[["SAN DIEGO, CITY OF",122]],"060730027103":[["SAN DIEGO, CITY OF",234]],"060730027111":[["SAN DIEGO, CITY OF",202]],"060730027112":[["SAN DIEGO, CITY OF",363]],"060730027121":[["SAN DIEGO, CITY OF",384]],"060730027122":[["SAN DIEGO, CITY OF",398]],"060730027123":[["SAN DIEGO, CITY OF",538]],"060730028011":[["SAN DIEGO, CITY OF",488]],"060730028012":[["SAN DIEGO, CITY OF",45]],"060730028031":[["SAN DIEGO, CITY OF",232]],"060730028032":[["SAN DIEGO, CITY OF",411]],"060730028033":[["SAN DIEGO, CITY OF",282]],"060730028034":[["SAN DIEGO, CITY OF",634]],"060730028041":[["SAN DIEGO, CITY OF",363]],"060730028042":[["SAN DIEGO, CITY OF",615]],"060730028043":[["SAN DIEGO, CITY OF",311]],"060730029021":[["SAN DIEGO, CITY OF",1051]],"060730029022":[["SAN DIEGO, CITY OF",195]],"060730029023":[["SAN DIEGO, CITY OF",423]],"060730029031":[["SAN DIEGO, CITY OF",391]],"060730029032":[["SAN DIEGO, CITY OF",375]],"060730029033":[["SAN DIEGO, CITY OF",388]],"060730029041":[["SAN DIEGO, CITY OF",210]],"060730029042":[["SAN DIEGO, CITY OF",213]],"060730029043":[["SAN DIEGO, CITY OF",192]],"060730029044":[["SAN DIEGO, CITY OF",182]],"060730029045":[["SAN DIEGO, CITY OF",410]],"060730029051":[["SAN DIEGO, CITY OF",327]],"060730029052":[["SAN DIEGO, CITY OF",259]],"060730029053":[["SAN DIEGO, CITY OF",705]],"060730030011":[["SAN DIEGO, CITY OF",300]],"060730030012":[["SAN DIEGO, CITY OF",536]],"060730030013":[["SAN DIEGO, CITY OF",453]],"060730030031":[["SAN DIEGO, CITY OF",549]],"060730030032":[["SAN DIEGO, CITY OF",391]],"060730030033":[["SAN DIEGO, CITY OF",311]],"060730030034":[["SAN DIEGO, CITY OF",183]],"060730030041":[["SAN DIEGO, CITY OF",558]],"060730030042":[["SAN DIEGO, CITY OF",502]],"060730031011":[["SAN DIEGO, CITY OF",291]],"060730031012":[["SAN DIEGO, CITY OF",393]],"060730031013":[["SAN DIEGO, CITY OF",401]],"060730031031":[["SAN DIEGO, CITY OF",602]],"060730031032":[["SAN DIEGO, CITY OF",675]],"060730031033":[["SAN DIEGO, CITY OF",371]],"060730031051":[["SAN DIEGO, CITY OF",632]],"060730031052":[["SAN DIEGO, CITY OF",431]],"060730031071":[["SAN DIEGO COUNTY *",166],["SAN DIEGO, CITY OF",612]],"060730031072":[["SAN DIEGO COUNTY *",17],["SAN DIEGO, CITY OF",506]],"060730031073":[["SAN DIEGO COUNTY *",189],["SAN DIEGO, CITY OF",87]],"060730031081":[["SAN DIEGO COUNTY *",557]],"060730031082":[["SAN DIEGO COUNTY *",348]],"060730031091":[["SAN DIEGO, CITY OF",234]],"060730031092":[["SAN DIEGO, CITY OF",234]],"060730031093":[["SAN DIEGO, CITY OF",314]],"060730031111":[["SAN DIEGO, CITY OF",253]],"060730031112":[["SAN DIEGO, CITY OF",351]],"060730031113":[["SAN DIEGO, CITY OF",507]],"060730031121":[["SAN DIEGO, CITY OF",367]],"060730031122":[["SAN DIEGO, CITY OF",1113]],"060730031123":[["SAN DIEGO, CITY OF",318]],"060730031131":[["SAN DIEGO, CITY OF",693]],"060730031132":[["SAN DIEGO, CITY OF",592]],"060730031141":[["SAN DIEGO, CITY OF",305]],"060730031142":[["SAN DIEGO, CITY OF",509]],"060730031151":[["SAN DIEGO, CITY OF",236]],"060730031152":[["SAN DIEGO, CITY OF",312]],"060730031153":[["SAN DIEGO, CITY OF",409]],"060730031154":[["SAN DIEGO, CITY OF",476]],"060730032011":[["SAN DIEGO, CITY OF",270]],"060730032012":[["SAN DIEGO, CITY OF",405]],"060730032013":[["SAN DIEGO, CITY OF",83]],"060730032014":[["SAN DIEGO, CITY OF",42]],"060730032021":[["SAN DIEGO, CITY OF",537]],"060730032022":[["SAN DIEGO, CITY OF",736]],"060730032041":[["SAN DIEGO COUNTY *",464]],"060730032042":[["SAN DIEGO COUNTY *",33]],"060730032071":[["SAN DIEGO COUNTY *",276]],"060730032072":[["SAN DIEGO COUNTY *",734]],"060730032073":[["SAN DIEGO COUNTY *",492]],"060730032081":[["SAN DIEGO, CITY OF",29]],"060730032082":[["SAN DIEGO, CITY OF",179]],"060730032083":[["SAN DIEGO, CITY OF",475]],"060730032084":[["SAN DIEGO, CITY OF",302]],"060730032085":[["SAN DIEGO, CITY OF",701]],"060730032091":[["SAN DIEGO, CITY OF",272]],"060730032092":[["SAN DIEGO COUNTY *",1],["SAN DIEGO, CITY OF",587]],"060730032093":[["SAN DIEGO, CITY OF",353]],"060730032111":[["SAN DIEGO, CITY OF",581]],"060730032112":[["SAN DIEGO, CITY OF",249]],"060730032121":[["SAN DIEGO, CITY OF",384]],"060730032122":[["SAN DIEGO, CITY OF",728]],"060730032131":[["SAN DIEGO, CITY OF",525]],"060730032132":[["SAN DIEGO, CITY OF",559]],"060730032141":[["SAN DIEGO COUNTY *",236],["SAN DIEGO, CITY OF",369]],"060730032142":[["SAN DIEGO COUNTY *",343]],"060730032143":[["SAN DIEGO, CITY OF",407]],"060730033011":[["SAN DIEGO, CITY OF",353]],"060730033012":[["SAN DIEGO, CITY OF",306]],"060730033031":[["SAN DIEGO, CITY OF",192]],"060730033032":[["SAN DIEGO, CITY OF",551]],"060730033041":[["SAN DIEGO, CITY OF",191]],"060730033042":[["SAN DIEGO, CITY OF",221]],"060730033051":[["SAN DIEGO, CITY OF",342]],"060730033052":[["SAN DIEGO, CITY OF",280]],"060730033053":[["SAN DIEGO, CITY OF",440]],"060730034011":[["SAN DIEGO, CITY OF",449]],"060730034012":[["SAN DIEGO, CITY OF",126]],"060730034013":[["SAN DIEGO, CITY OF",233]],"060730034014":[["SAN DIEGO, CITY OF",800]],"060730034031":[["SAN DIEGO, CITY OF",236]],"060730034032":[["SAN DIEGO, CITY OF",415]],"060730034033":[["SAN DIEGO, CITY OF",224]],"060730034041":[["SAN DIEGO, CITY OF",335]],"060730034042":[["SAN DIEGO, CITY OF",239]],"060730034043":[["SAN DIEGO, CITY OF",230]],"060730035011":[["SAN DIEGO, CITY OF",416]],"060730035012":[["SAN DIEGO, CITY OF",202]],"060730035013":[["SAN DIEGO, CITY OF",136]],"060730035021":[["SAN DIEGO, CITY OF",129]],"060730035022":[["SAN DIEGO, CITY OF",408]],"060730035023":[["SAN DIEGO, CITY OF",369]],"060730036011":[["SAN DIEGO, CITY OF",311]],"060730036012":[["SAN DIEGO, CITY OF",250]],"060730036021":[["SAN DIEGO, CITY OF",300]],"060730036022":[["SAN DIEGO, CITY OF",294]],"060730036031":[["SAN DIEGO, CITY OF",313]],"060730036032":[["SAN DIEGO, CITY OF",276]],"060730036033":[["SAN DIEGO, CITY OF",219]],"060730039011":[["SAN DIEGO, CITY OF",200]],"060730039012":[["SAN DIEGO, CITY OF",240]],"060730039013":[["SAN DIEGO, CITY OF",292]],"060730039021":[["SAN DIEGO, CITY OF",166]],"060730039022":[["SAN DIEGO, CITY OF",252]],"060730039023":[["SAN DIEGO, CITY OF",186]],"060730039024":[["SAN DIEGO, CITY OF",170]],"060730040001":[["SAN DIEGO, CITY OF",273]],"060730040002":[["SAN DIEGO, CITY OF",130]],"060730040003":[["SAN DIEGO, CITY OF",204]],"060730040004":[["SAN DIEGO, CITY OF",206]],"060730041011":[["SAN DIEGO, CITY OF",186]],"060730041012":[["SAN DIEGO, CITY OF",358]],"060730041013":[["SAN DIEGO, CITY OF",432]],"060730041021":[["SAN DIEGO, CITY OF",332]],"060730042001":[["SAN DIEGO, CITY OF",837]],"060730042002":[["SAN DIEGO, CITY OF",696]],"060730042003":[["SAN DIEGO, CITY OF",313]],"060730042004":[["SAN DIEGO, CITY OF",348]],"060730043001":[["SAN DIEGO, CITY OF",222]],"060730043002":[["SAN DIEGO, CITY OF",656]],"060730043003":[["SAN DIEGO, CITY OF",394]],"060730044001":[["SAN DIEGO, CITY OF",325]],"060730044002":[["SAN DIEGO, CITY OF",361]],"060730044003":[["SAN DIEGO, CITY OF",271]],"060730044004":[["SAN DIEGO, CITY OF",234]],"060730045011":[["SAN DIEGO, CITY OF",407]],"060730045012":[["SAN DIEGO, CITY OF",152]],"060730045013":[["SAN DIEGO, CITY OF",77]],"060730046001":[["SAN DIEGO, CITY OF",260]],"060730046002":[["SAN DIEGO, CITY OF",99]],"060730047001":[["SAN DIEGO, CITY OF",97]],"060730047002":[["SAN DIEGO, CITY OF",186]],"060730048001":[["SAN DIEGO, CITY OF",168]],"060730048002":[["SAN DIEGO, CITY OF",276]],"060730048003":[["SAN DIEGO, CITY OF",252]],"060730049001":[["SAN DIEGO, CITY OF",231]],"060730049002":[["SAN DIEGO, CITY OF",280]],"060730049003":[["SAN DIEGO, CITY OF",454]],"060730050001":[["SAN DIEGO, CITY OF",271]],"060730051011":[["SAN DIEGO, CITY OF",89]],"060730051012":[["SAN DIEGO, CITY OF",16]],"060730051021":[["SAN DIEGO, CITY OF",120]],"060730051022":[["SAN DIEGO, CITY OF",739]],"060730051023":[["SAN DIEGO, CITY OF",532]],"060730051031":[["SAN DIEGO, CITY OF",46]],"060730051032":[["SAN DIEGO, CITY OF",10]],"060730052011":[["SAN DIEGO, CITY OF",283]],"060730052012":[["SAN DIEGO, CITY OF",16]],"060730052021":[["SAN DIEGO, CITY OF",4]],"060730052022":[["SAN DIEGO, CITY OF",70]],"060730052023":[["SAN DIEGO, CITY OF",253]],"060730053011":[["SAN DIEGO, CITY OF",144]],"060730053012":[["SAN DIEGO, CITY OF",53]],"060730053013":[["SAN DIEGO, CITY OF",174]],"060730053021":[["SAN DIEGO, CITY OF",5]],"060730053022":[["SAN DIEGO, CITY OF",500]],"060730054011":[["SAN DIEGO, CITY OF",643]],"060730054012":[["SAN DIEGO, CITY OF",400]],"060730054021":[["SAN DIEGO, CITY OF",777]],"060730054022":[["SAN DIEGO, CITY OF",609]],"060730054023":[["SAN DIEGO, CITY OF",650]],"060730054031":[["SAN DIEGO, CITY OF",515]],"060730054032":[["SAN DIEGO, CITY OF",923]],"060730055001":[["SAN DIEGO, CITY OF",1]],"060730056011":[["SAN DIEGO, CITY OF",565]],"060730056012":[["SAN DIEGO, CITY OF",248]],"060730056021":[["SAN DIEGO, CITY OF",312]],"060730056022":[["SAN DIEGO, CITY OF",562]],"060730057001":[["SAN DIEGO, CITY OF",116]],"060730057002":[["SAN DIEGO, CITY OF",63]],"060730058011":[["SAN DIEGO, CITY OF",210]],"060730058012":[["SAN DIEGO, CITY OF",281]],"060730058021":[["SAN DIEGO, CITY OF",129]],"060730058022":[["SAN DIEGO, CITY OF",626]],"060730059001":[["SAN DIEGO, CITY OF",314]],"060730059002":[["SAN DIEGO, CITY OF",214]],"060730059003":[["SAN DIEGO, CITY OF",234]],"060730060001":[["SAN DIEGO, CITY OF",361]],"060730060002":[["SAN DIEGO, CITY OF",367]],"060730060003":[["SAN DIEGO, CITY OF",717]],"060730061001":[["SAN DIEGO, CITY OF",612]],"060730061002":[["SAN DIEGO, CITY OF",258]],"060730062001":[["SAN DIEGO, CITY OF",2]],"060730065001":[["SAN DIEGO, CITY OF",98]],"060730065002":[["SAN DIEGO, CITY OF",257]],"060730065003":[["SAN DIEGO, CITY OF",200]],"060730066001":[["SAN DIEGO, CITY OF",143]],"060730066002":[["SAN DIEGO, CITY OF",72]],"060730068011":[["SAN DIEGO, CITY OF",606]],"060730068012":[["SAN DIEGO, CITY OF",191]],"060730068021":[["SAN DIEGO, CITY OF",306]],"060730068022":[["SAN DIEGO, CITY OF",236]],"060730068023":[["SAN DIEGO, CITY OF",456]],"060730069001":[["SAN DIEGO, CITY OF",798]],"060730069002":[["SAN DIEGO, CITY OF",328]],"060730069003":[["SAN DIEGO, CITY OF",601]],"060730070021":[["SAN DIEGO, CITY OF",609]],"060730070022":[["SAN DIEGO, CITY OF",641]],"060730071001":[["SAN DIEGO, CITY OF",795]],"060730071002":[["SAN DIEGO, CITY OF",1004]],"060730071003":[["SAN DIEGO, CITY OF",305]],"060730072001":[["SAN DIEGO, CITY OF",487]],"060730072002":[["SAN DIEGO, CITY OF",799]],"060730072003":[["SAN DIEGO, CITY OF",331]],"060730073021":[["SAN DIEGO, CITY OF",301]],"060730073022":[["SAN DIEGO, CITY OF",285]],"060730073023":[["SAN DIEGO, CITY OF",274]],"060730073031":[["SAN DIEGO, CITY OF",381]],"060730073032":[["SAN DIEGO, CITY OF",303]],"060730073041":[["SAN DIEGO, CITY OF",431]],"060730073042":[["SAN DIEGO, CITY OF",445]],"060730074011":[["SAN DIEGO, CITY OF",258]],"060730074012":[["SAN DIEGO, CITY OF",236]],"060730074013":[["SAN DIEGO, CITY OF",503]],"060730074021":[["SAN DIEGO, CITY OF",422]],"060730074022":[["SAN DIEGO, CITY OF",396]],"060730074023":[["SAN DIEGO, CITY OF",317]],"060730075011":[["SAN DIEGO, CITY OF",309]],"060730075012":[["SAN DIEGO, CITY OF",215]],"060730075013":[["SAN DIEGO, CITY OF",253]],"060730075014":[["SAN DIEGO, CITY OF",226]],"060730075015":[["SAN DIEGO, CITY OF",177]],"060730075021":[["SAN DIEGO, CITY OF",386]],"060730075022":[["SAN DIEGO, CITY OF",271]],"060730075023":[["SAN DIEGO, CITY OF",242]],"060730076011":[["SAN DIEGO, CITY OF",415]],"060730076012":[["SAN DIEGO, CITY OF",433]],"060730076013":[["SAN DIEGO, CITY OF",382]],"060730076014":[["SAN DIEGO, CITY OF",311]],"060730076021":[["SAN DIEGO, CITY OF",295]],"060730076022":[["SAN DIEGO, CITY OF",345]],"060730076023":[["SAN DIEGO, CITY OF",405]],"060730077011":[["SAN DIEGO, CITY OF",732]],"060730077012":[["SAN DIEGO, CITY OF",376]],"060730077013":[["SAN DIEGO, CITY OF",203]],"060730077014":[["SAN DIEGO, CITY OF",35]],"060730077021":[["SAN DIEGO, CITY OF",331]],"060730077022":[["SAN DIEGO, CITY OF",314]],"060730077023":[["SAN DIEGO, CITY OF",356]],"060730077024":[["SAN DIEGO, CITY OF",22]],"060730078001":[["SAN DIEGO, CITY OF",217]],"060730078002":[["SAN DIEGO, CITY OF",354]],"060730078003":[["SAN DIEGO, CITY OF",270]],"060730078004":[["SAN DIEGO, CITY OF",160]],"060730078005":[["SAN DIEGO, CITY OF",163]],"060730079051":[["SAN DIEGO, CITY OF",392]],"060730079052":[["SAN DIEGO, CITY OF",434]],"060730079071":[["SAN DIEGO, CITY OF",485]],"060730079072":[["SAN DIEGO, CITY OF",318]],"060730079081":[["SAN DIEGO, CITY OF",168]],"060730079082":[["SAN DIEGO, CITY OF",319]],"060730079083":[["SAN DIEGO, CITY OF",328]],"060730079101":[["SAN DIEGO, CITY OF",488]],"060730079102":[["SAN DIEGO, CITY OF",347]],"060730079111":[["SAN DIEGO, CITY OF",382]],"060730079112":[["SAN DIEGO, CITY OF",665]],"060730079113":[["SAN DIEGO, CITY OF",94]],"060730079121":[["SAN DIEGO, CITY OF",263]],"060730079122":[["SAN DIEGO, CITY OF",218]],"060730080021":[["SAN DIEGO, CITY OF",297]],"060730080022":[["SAN DIEGO, CITY OF",417]],"060730080023":[["SAN DIEGO, CITY OF",307]],"060730080031":[["SAN DIEGO, CITY OF",328]],"060730080032":[["SAN DIEGO, CITY OF",462]],"060730080033":[["SAN DIEGO, CITY OF",296]],"060730080061":[["SAN DIEGO, CITY OF",422]],"060730080062":[["SAN DIEGO, CITY OF",229]],"060730080063":[["SAN DIEGO, CITY OF",212]],"060730080064":[["SAN DIEGO, CITY OF",286]],"060730080065":[["SAN DIEGO, CITY OF",259]],"060730081011":[["SAN DIEGO, CITY OF",299]],"060730081012":[["SAN DIEGO, CITY OF",328]],"060730081013":[["SAN DIEGO, CITY OF",357]],"060730081014":[["SAN DIEGO, CITY OF",392]],"060730081015":[["SAN DIEGO, CITY OF",365]],"060730081021":[["SAN DIEGO, CITY OF",410]],"060730081022":[["SAN DIEGO, CITY OF",516]],"060730081023":[["SAN DIEGO, CITY OF",574]],"060730082011":[["SAN DIEGO, CITY OF",424]],"060730082012":[["SAN DIEGO, CITY OF",382]],"060730082021":[["SAN DIEGO, CITY OF",274]],"060730082022":[["SAN DIEGO, CITY OF",342]],"060730083011":[["SAN DIEGO, CITY OF",523]],"060730083012":[["SAN DIEGO, CITY OF",381]],"060730083013":[["SAN DIEGO, CITY OF",337]],"060730083031":[["SAN DIEGO, CITY OF",690]],"060730083032":[["SAN DIEGO, CITY OF",742]],"060730083033":[["SAN DIEGO, CITY OF",262]],"060730083052":[["SAN DIEGO, CITY OF",148]],"060730083061":[["SAN DIEGO, CITY OF",239]],"060730083062":[["SAN DIEGO, CITY OF",362]],"060730083063":[["SAN DIEGO, CITY OF",605]],"060730083071":[["SAN DIEGO, CITY OF",349]],"060730083072":[["SAN DIEGO, CITY OF",723]],"060730083073":[["SAN DIEGO, CITY OF",476]],"060730083101":[["SAN DIEGO, CITY OF",654]],"060730083102":[["SAN DIEGO, CITY OF",769]],"060730083103":[["SAN DIEGO, CITY OF",1107]],"060730083111":[["SAN DIEGO, CITY OF",695]],"060730083112":[["SAN DIEGO, CITY OF",475]],"060730083121":[["SAN DIEGO, CITY OF",274]],"060730083122":[["SAN DIEGO, CITY OF",575]],"060730083123":[["SAN DIEGO, CITY OF",278]],"060730083124":[["SAN DIEGO, CITY OF",574]],"060730083131":[["SAN DIEGO, CITY OF",458]],"060730083132":[["SAN DIEGO, CITY OF",457]],"060730083241":[["SAN DIEGO, CITY OF",840]],"060730083242":[["SAN DIEGO, CITY OF",251]],"060730083243":[["SAN DIEGO, CITY OF",620]],"060730083244":[["SAN DIEGO, CITY OF",513]],"060730083245":[["SAN DIEGO, CITY OF",666]],"060730083271":[["SAN DIEGO, CITY OF",788]],"060730083272":[["SAN DIEGO, CITY OF",863]],"060730083273":[["SAN DIEGO, CITY OF",385]],"060730083281":[["SAN DIEGO, CITY OF",724]],"060730083282":[["SAN DIEGO, CITY OF",1931]],"060730083301":[["SAN DIEGO, CITY OF",722]],"060730083302":[["SAN DIEGO, CITY OF",411]],"060730083303":[["SAN DIEGO, CITY OF",595]],"060730083311":[["SAN DIEGO, CITY OF",907]],"060730083361":[["SAN DIEGO, CITY OF",278]],"060730083362":[["SAN DIEGO, CITY OF",457]],"060730083371":[["SAN DIEGO, CITY OF",566]],"060730083372":[["SAN DIEGO, CITY OF",294]],"060730083373":[["SAN DIEGO, CITY OF",486]],"060730083391":[["SAN DIEGO, CITY OF",516]],"060730083431":[["SAN DIEGO, CITY OF",611]],"060730083432":[["SAN DIEGO, CITY OF",436]],"060730083433":[["SAN DIEGO, CITY OF",20]],"060730083441":[["SAN DIEGO, CITY OF",625]],"060730083442":[["SAN DIEGO, CITY OF",589]],"060730083451":[["SAN DIEGO, CITY OF",297]],"060730083452":[["SAN DIEGO, CITY OF",290]],"060730083453":[["SAN DIEGO, CITY OF",592]],"060730083461":[["SAN DIEGO, CITY OF",492]],"060730083462":[["SAN DIEGO, CITY OF",262]],"060730083463":[["SAN DIEGO, CITY OF",1028]],"060730083471":[["SAN DIEGO, CITY OF",463]],"060730083472":[["SAN DIEGO, CITY OF",375]],"060730083473":[["SAN DIEGO, CITY OF",225]],"060730083474":[["SAN DIEGO, CITY OF",286]],"060730083475":[["SAN DIEGO, CITY OF",785]],"060730083481":[["SAN DIEGO, CITY OF",724]],"060730083482":[["SAN DIEGO, CITY OF",313]],"060730083483":[["SAN DIEGO, CITY OF",771]],"060730083491":[["SAN DIEGO, CITY OF",402]],"060730083492":[["SAN DIEGO, CITY OF",563]],"060730083501":[["SAN DIEGO, CITY OF",661]],"060730083502":[["SAN DIEGO, CITY OF",360]],"060730083503":[["SAN DIEGO, CITY OF",294]],"060730083504":[["SAN DIEGO, CITY OF",238]],"060730083511":[["SAN DIEGO, CITY OF",213]],"060730083512":[["SAN DIEGO, CITY OF",247]],"060730083513":[["SAN DIEGO, CITY OF",209]],"060730083514":[["SAN DIEGO, CITY OF",435]],"060730083521":[["SAN DIEGO, CITY OF",275]],"060730083522":[["SAN DIEGO, CITY OF",395]],"060730083523":[["SAN DIEGO, CITY OF",264]],"060730083531":[["SAN DIEGO, CITY OF",373]],"060730083532":[["SAN DIEGO, CITY OF",933]],"060730083533":[["SAN DIEGO, CITY OF",247]],"060730083551":[["SAN DIEGO, CITY OF",263]],"060730083552":[["SAN DIEGO, CITY OF",658]],"060730083561":[["SAN DIEGO, CITY OF",705]],"060730083562":[["SAN DIEGO, CITY OF",534]],"060730083571":[["SAN DIEGO, CITY OF",399]],"060730083572":[["SAN DIEGO, CITY OF",256]],"060730083573":[["SAN DIEGO, CITY OF",807]],"060730083581":[["SAN DIEGO, CITY OF",553]],"060730083582":[["SAN DIEGO, CITY OF",292]],"060730083583":[["SAN DIEGO, CITY OF",567]],"060730083584":[["SAN DIEGO, CITY OF",512]],"060730083591":[["SAN DIEGO, CITY OF",142]],"060730083592":[["SAN DIEGO, CITY OF",434]],"060730083601":[["SAN DIEGO, CITY OF",591]],"060730083602":[["SAN DIEGO, CITY OF",538]],"060730083603":[["SAN DIEGO, CITY OF",657]],"060730083611":[["SAN DIEGO, CITY OF",746]],"060730083612":[["SAN DIEGO, CITY OF",500]],"060730083621":[["SAN DIEGO, CITY OF",540]],"060730083622":[["SAN DIEGO, CITY OF",292]],"060730083623":[["SAN DIEGO, CITY OF",668]],"060730083631":[["SAN DIEGO, CITY OF",44]],"060730083632":[["SAN DIEGO, CITY OF",6]],"060730083633":[["SAN DIEGO, CITY OF",615]],"060730083634":[["SAN DIEGO, CITY OF",21]],"060730083641":[["SAN DIEGO, CITY OF",589]],"060730083642":[["SAN DIEGO, CITY OF",384]],"060730083643":[["SAN DIEGO, CITY OF",649]],"060730083644":[["SAN DIEGO, CITY OF",96]],"060730083651":[["SAN DIEGO, CITY OF",510]],"060730083652":[["SAN DIEGO, CITY OF",420]],"060730083661":[["SAN DIEGO, CITY OF",774]],"060730083662":[["SAN DIEGO, CITY OF",894]],"060730083663":[["SAN DIEGO, CITY OF",521]],"060730083671":[["SAN DIEGO, CITY OF",273]],"060730083672":[["SAN DIEGO, CITY OF",591]],"060730083681":[["SAN DIEGO, CITY OF",317]],"060730083682":[["SAN DIEGO, CITY OF",299]],"060730083683":[["SAN DIEGO, CITY OF",560]],"060730083684":[["SAN DIEGO, CITY OF",796]],"060730083691":[["SAN DIEGO, CITY OF",667]],"060730083692":[["SAN DIEGO, CITY OF",575]],"060730083701":[["SAN DIEGO, CITY OF",992]],"060730083702":[["SAN DIEGO, CITY OF",904]],"060730083711":[["SAN DIEGO, CITY OF",407]],"060730083712":[["SAN DIEGO, CITY OF",138]],"060730083721":[["SAN DIEGO, CITY OF",294]],"060730083722":[["SAN DIEGO, CITY OF",772]],"060730083731":[["SAN DIEGO, CITY OF",91]],"060730083732":[["SAN DIEGO, CITY OF",807]],"060730083741":[["SAN DIEGO, CITY OF",580]],"060730083742":[["SAN DIEGO, CITY OF",709]],"060730083751":[["SAN DIEGO, CITY OF",71]],"060730083752":[["SAN DIEGO, CITY OF",618]],"060730083753":[["SAN DIEGO, CITY OF",12]],"060730083761":[["SAN DIEGO, CITY OF",203]],"060730083762":[["SAN DIEGO, CITY OF",156]],"060730083763":[["SAN DIEGO, CITY OF",13]],"060730083764":[["SAN DIEGO, CITY OF",413]],"060730083771":[["SAN DIEGO, CITY OF",556]],"060730083772":[["SAN DIEGO, CITY OF",340]],"060730083781":[["SAN DIEGO, CITY OF",574]],"060730083791":[["SAN DIEGO, CITY OF",4]],"060730083792":[["SAN DIEGO, CITY OF",3]],"060730083793":[["SAN DIEGO, CITY OF",5]],"060730083801":[["SAN DIEGO, CITY OF",270]],"060730083802":[["SAN DIEGO, CITY OF",443]],"060730083803":[["SAN DIEGO, CITY OF",5]],"060730083811":[["SAN DIEGO, CITY OF",324]],"060730083812":[["SAN DIEGO, CITY OF",347]],"060730085011":[["SAN DIEGO, CITY OF",472]],"060730085012":[["SAN DIEGO, CITY OF",728]],"060730085013":[["SAN DIEGO, CITY OF",434]],"060730085014":[["SAN DIEGO, CITY OF",312]],"060730085021":[["SAN DIEGO, CITY OF",616]],"060730085022":[["SAN DIEGO, CITY OF",290]],"060730085023":[["SAN DIEGO, CITY OF",319]],"060730085024":[["SAN DIEGO, CITY OF",468]],"060730085025":[["SAN DIEGO, CITY OF",462]],"060730085031":[["SAN DIEGO, CITY OF",726]],"060730085032":[["SAN DIEGO, CITY OF",379]],"060730085033":[["SAN DIEGO, CITY OF",958]],"060730085034":[["SAN DIEGO, CITY OF",449]],"060730085041":[["SAN DIEGO, CITY OF",265]],"060730085042":[["SAN DIEGO, CITY OF",247]],"060730085043":[["SAN DIEGO, CITY OF",466]],"060730085044":[["SAN DIEGO, CITY OF",325]],"060730085045":[["SAN DIEGO, CITY OF",825]],"060730085051":[["SAN DIEGO, CITY OF",466]],"060730085052":[["SAN DIEGO, CITY OF",254]],"060730085053":[["SAN DIEGO, CITY OF",256]],"060730085054":[["SAN DIEGO, CITY OF",437]],"060730085055":[["SAN DIEGO, CITY OF",339]],"060730085061":[["SAN DIEGO, CITY OF",243]],"060730085062":[["SAN DIEGO, CITY OF",436]],"060730085063":[["SAN DIEGO, CITY OF",520]],"060730085071":[["SAN DIEGO, CITY OF",535]],"060730085072":[["SAN DIEGO, CITY OF",202]],"060730085073":[["SAN DIEGO, CITY OF",231]],"060730085074":[["SAN DIEGO, CITY OF",316]],"060730085075":[["SAN DIEGO, CITY OF",389]],"060730085076":[["SAN DIEGO, CITY OF",265]],"060730085091":[["SAN DIEGO, CITY OF",368]],"060730085092":[["SAN DIEGO, CITY OF",389]],"060730085093":[["SAN DIEGO, CITY OF",233]],"060730085094":[["SAN DIEGO, CITY OF",343]],"060730085095":[["SAN DIEGO, CITY OF",434]],"060730085096":[["SAN DIEGO, CITY OF",340]],"060730085101":[["SAN DIEGO, CITY OF",414]],"060730085102":[["SAN DIEGO, CITY OF",714]],"060730085103":[["SAN DIEGO, CITY OF",378]],"060730085104":[["SAN DIEGO, CITY OF",380]],"060730085111":[["SAN DIEGO, CITY OF",225]],"060730085112":[["SAN DIEGO, CITY OF",287]],"060730085113":[["SAN DIEGO, CITY OF",157]],"060730085121":[["SAN DIEGO, CITY OF",322]],"060730085122":[["SAN DIEGO, CITY OF",494]],"060730085123":[["SAN DIEGO, CITY OF",857]],"060730085131":[["SAN DIEGO, CITY OF",702]],"060730085132":[["SAN DIEGO, CITY OF",384]],"060730086001":[["SAN DIEGO, CITY OF",984]],"060730086002":[["SAN DIEGO, CITY OF",211]],"060730086003":[["SAN DIEGO, CITY OF",150]],"060730086004":[["SAN DIEGO, CITY OF",82]],"060730087011":[["SAN DIEGO, CITY OF",465]],"060730087012":[["SAN DIEGO, CITY OF",135]],"060730087021":[["SAN DIEGO, CITY OF",354]],"060730087022":[["SAN DIEGO, CITY OF",502]],"060730087023":[["SAN DIEGO, CITY OF",110]],"060730088001":[["SAN DIEGO, CITY OF",373]],"060730088002":[["SAN DIEGO, CITY OF",114]],"060730088003":[["SAN DIEGO, CITY OF",454]],"060730088004":[["SAN DIEGO, CITY OF",184]],"060730089011":[["SAN DIEGO, CITY OF",297]],"060730089012":[["SAN DIEGO, CITY OF",282]],"060730089013":[["SAN DIEGO, CITY OF",1360]],"060730089021":[["SAN DIEGO, CITY OF",384]],"060730089022":[["SAN DIEGO, CITY OF",783]],"060730090001":[["SAN DIEGO, CITY OF",590]],"060730090002":[["SAN DIEGO, CITY OF",237]],"060730091011":[["SAN DIEGO, CITY OF",393]],"060730091012":[["SAN DIEGO, CITY OF",748]],"060730091013":[["SAN DIEGO, CITY OF",421]],"060730091014":[["SAN DIEGO, CITY OF",578]],"060730091021":[["SAN DIEGO, CITY OF",310]],"060730091022":[["SAN DIEGO, CITY OF",163]],"060730091023":[["SAN DIEGO, CITY OF",110]],"060730091031":[["SAN DIEGO, CITY OF",285]],"060730091032":[["SAN DIEGO, CITY OF",222]],"060730091033":[["SAN DIEGO, CITY OF",479]],"060730091034":[["SAN DIEGO, CITY OF",395]],"060730091041":[["SAN DIEGO, CITY OF",478]],"060730091042":[["SAN DIEGO, CITY OF",652]],"060730091071":[["SAN DIEGO, CITY OF",137]],"060730091072":[["SAN DIEGO, CITY OF",154]],"060730091073":[["SAN DIEGO, CITY OF",414]],"060730091074":[["SAN DIEGO, CITY OF",440]],"060730091081":[["SAN DIEGO, CITY OF",389]],"060730091082":[["SAN DIEGO, CITY OF",340]],"060730091091":[["SAN DIEGO, CITY OF",49]],"060730092011":[["SAN DIEGO, CITY OF",185]],"060730092012":[["SAN DIEGO, CITY OF",103]],"060730092013":[["SAN DIEGO, CITY OF",437]],"060730092014":[["SAN DIEGO, CITY OF",198]],"060730092031":[["SAN DIEGO, CITY OF",238]],"060730092032":[["SAN DIEGO, CITY OF",697]],"060730092041":[["SAN DIEGO, CITY OF",438]],"060730092042":[["SAN DIEGO, CITY OF",771]],"060730093011":[["SAN DIEGO, CITY OF",276]],"060730093012":[["SAN DIEGO, CITY OF",458]],"060730093013":[["SAN DIEGO, CITY OF",386]],"060730093014":[["SAN DIEGO, CITY OF",262]],"060730093051":[["SAN DIEGO, CITY OF",320]],"060730093052":[["SAN DIEGO, CITY OF",214]],"060730093053":[["SAN DIEGO, CITY OF",431]],"060730093054":[["SAN DIEGO, CITY OF",78]],"060730093055":[["SAN DIEGO, CITY OF",268]],"060730093061":[["SAN DIEGO, CITY OF",616]],"060730093062":[["SAN DIEGO, CITY OF",208]],"060730093063":[["SAN DIEGO, CITY OF",310]],"060730093064":[["SAN DIEGO, CITY OF",479]],"060730093071":[["SAN DIEGO, CITY OF",317]],"060730093072":[["SAN DIEGO, CITY OF",99]],"060730093073":[["SAN DIEGO, CITY OF",306]],"060730093074":[["SAN DIEGO, CITY OF",300]],"060730093081":[["SAN DIEGO, CITY OF",136]],"060730093082":[["SAN DIEGO, CITY OF",456]],"060730093083":[["SAN DIEGO, CITY OF",770]],"060730094001":[["SAN DIEGO, CITY OF",102]],"060730095021":[["SAN DIEGO, CITY OF",639]],"060730095022":[["SAN DIEGO, CITY OF",534]],"060730095041":[["SAN DIEGO, CITY OF",525]],"060730095042":[["SAN DIEGO, CITY OF",344]],"060730095043":[["SAN DIEGO, CITY OF",675]],"060730095044":[["SAN DIEGO, CITY OF",351]],"060730095051":[["SAN DIEGO, CITY OF",487]],"060730095052":[["SAN DIEGO, CITY OF",672]],"060730095053":[["SAN DIEGO, CITY OF",712]],"060730095054":[["SAN DIEGO, CITY OF",516]],"060730095061":[["SAN DIEGO, CITY OF",937]],"060730095062":[["SAN DIEGO, CITY OF",721]],"060730095071":[["SAN DIEGO, CITY OF",626]],"060730095072":[["SAN DIEGO, CITY OF",81]],"060730095073":[["SAN DIEGO, CITY OF",354]],"060730095091":[["SAN DIEGO, CITY OF",460]],"060730095092":[["SAN DIEGO, CITY OF",4]],"060730095093":[["SAN DIEGO, CITY OF",201]],"060730095101":[["SAN DIEGO, CITY OF",202]],"060730095102":[["SAN DIEGO, CITY OF",325]],"060730095103":[["SAN DIEGO, CITY OF",50]],"060730095111":[["SAN DIEGO, CITY OF",142]],"060730095112":[["SAN DIEGO, CITY OF",64]],"060730096021":[["SAN DIEGO, CITY OF",527]],"060730096022":[["SAN DIEGO, CITY OF",387]],"060730096023":[["SAN DIEGO, CITY OF",360]],"060730096024":[["SAN DIEGO, CITY OF",257]],"060730096031":[["SAN DIEGO, CITY OF",484]],"060730096032":[["SAN DIEGO, CITY OF",518]],"060730096033":[["SAN DIEGO, CITY OF",459]],"060730096034":[["SAN DIEGO, CITY OF",564]],"060730096041":[["SAN DIEGO, CITY OF",266]],"060730096042":[["SAN DIEGO, CITY OF",338]],"060730096043":[["SAN DIEGO, CITY OF",288]],"060730096044":[["SAN DIEGO, CITY OF",256]],"060730097031":[["SAN DIEGO, CITY OF",405]],"060730097032":[["SAN DIEGO, CITY OF",364]],"060730097033":[["SAN DIEGO, CITY OF",609]],"060730097041":[["SAN DIEGO, CITY OF",592]],"060730097042":[["SAN DIEGO, CITY OF",330]],"060730097043":[["SAN DIEGO, CITY OF",540]],"060730097044":[["SAN DIEGO, CITY OF",358]],"060730097045":[["SAN DIEGO, CITY OF",580]],"060730097051":[["SAN DIEGO, CITY OF",294]],"060730097052":[["SAN DIEGO, CITY OF",610]],"060730097053":[["SAN DIEGO, CITY OF",474]],"060730097061":[["SAN DIEGO, CITY OF",492]],"060730097062":[["SAN DIEGO, CITY OF",355]],"060730097063":[["SAN DIEGO, CITY OF",705]],"060730097064":[["SAN DIEGO, CITY OF",256]],"060730097065":[["SAN DIEGO, CITY OF",396]],"060730097066":[["SAN DIEGO, CITY OF",336]],"060730097067":[["SAN DIEGO, CITY OF",352]],"060730098011":[["SAN DIEGO, CITY OF",373]],"060730098012":[["SAN DIEGO, CITY OF",538]],"060730098013":[["SAN DIEGO, CITY OF",479]],"060730098014":[["SAN DIEGO, CITY OF",332]],"060730098021":[["SAN DIEGO, CITY OF",446]],"060730098022":[["SAN DIEGO, CITY OF",432]],"060730098023":[["SAN DIEGO, CITY OF",316]],"060730098024":[["SAN DIEGO, CITY OF",636]],"060730098025":[["SAN DIEGO, CITY OF",212]],"060730098041":[["SAN DIEGO, CITY OF",646]],"060730098042":[["SAN DIEGO, CITY OF",322]],"060730098043":[["SAN DIEGO, CITY OF",297]],"060730098044":[["SAN DIEGO, CITY OF",576]],"060730098051":[["SAN DIEGO, CITY OF",448]],"060730098052":[["SAN DIEGO, CITY OF",297]],"060730098053":[["SAN DIEGO, CITY OF",419]],"060730098054":[["SAN DIEGO, CITY OF",705]],"060730099011":[["SAN DIEGO, CITY OF",4]],"060730099021":[["SAN DIEGO, CITY OF",1]],"060730100011":[["SAN DIEGO, CITY OF",335]],"060730100012":[["SAN DIEGO, CITY OF",660]],"060730100031":[["SAN DIEGO, CITY OF",396]],"060730100032":[["SAN DIEGO, CITY OF",350]],"060730100033":[["SAN DIEGO, CITY OF",339]],"060730100034":[["SAN DIEGO, CITY OF",373]],"060730100041":[["SAN DIEGO, CITY OF",482]],"060730100042":[["SAN DIEGO, CITY OF",597]],"060730100051":[["SAN DIEGO, CITY OF",471]],"060730100052":[["SAN DIEGO, CITY OF",247]],"060730100053":[["SAN DIEGO, CITY OF",248]],"060730100054":[["SAN DIEGO, CITY OF",36]],"060730100091":[["SAN DIEGO, CITY OF",207]],"060730100092":[["SAN DIEGO, CITY OF",496]],"060730100093":[["SAN DIEGO, CITY OF",28]],"060730100094":[["SAN DIEGO, CITY OF",46]],"060730100101":[["SAN DIEGO, CITY OF",468]],"060730100102":[["SAN DIEGO, CITY OF",569]],"060730100103":[["SAN DIEGO, CITY OF",299]],"060730100111":[["SAN DIEGO, CITY OF",365]],"060730100112":[["SAN DIEGO, CITY OF",495]],"060730100121":[["SAN DIEGO, CITY OF",544]],"060730100122":[["SAN DIEGO, CITY OF",31]],"060730100123":[["SAN DIEGO, CITY OF",269]],"060730100131":[["SAN DIEGO, CITY OF",151]],"060730100132":[["SAN DIEGO, CITY OF",105]],"060730100133":[["SAN DIEGO, CITY OF",157]],"060730100134":[["SAN DIEGO, CITY OF",178]],"060730100151":[["SAN DIEGO, CITY OF",433]],"060730100152":[["SAN DIEGO COUNTY *",2],["SAN DIEGO, CITY OF",503]],"060730100161":[["SAN DIEGO COUNTY *",3],["SAN DIEGO, CITY OF",4]],"060730100171":[["SAN DIEGO, CITY OF",708]],"060730100172":[["SAN DIEGO, CITY OF",733]],"060730100181":[["SAN DIEGO, CITY OF",395]],"060730100182":[["SAN DIEGO, CITY OF",147]],"060730100183":[["SAN DIEGO, CITY OF",675]],"060730100191":[["SAN DIEGO, CITY OF",141]],"060730100192":[["SAN DIEGO, CITY OF",585]],"060730101031":[["SAN DIEGO, CITY OF",415]],"060730101032":[["SAN DIEGO, CITY OF",523]],"060730101033":[["SAN DIEGO, CITY OF",345]],"060730101041":[["SAN DIEGO, CITY OF",360]],"060730101042":[["SAN DIEGO, CITY OF",584]],"060730101061":[["SAN DIEGO, CITY OF",454]],"060730101062":[["SAN DIEGO, CITY OF",203]],"060730101063":[["SAN DIEGO, CITY OF",375]],"060730101071":[["SAN DIEGO, CITY OF",463]],"060730101072":[["SAN DIEGO, CITY OF",240]],"060730101073":[["SAN DIEGO, CITY OF",351]],"060730101074":[["SAN DIEGO, CITY OF",306]],"060730101091":[["SAN DIEGO, CITY OF",494]],"060730101092":[["SAN DIEGO, CITY OF",575]],"060730101101":[["SAN DIEGO, CITY OF",447]],"060730101102":[["SAN DIEGO, CITY OF",366]],"060730101103":[["SAN DIEGO, CITY OF",338]],"060730101104":[["SAN DIEGO, CITY OF",26]],"060730101105":[["SAN DIEGO, CITY OF",262]],"060730101111":[["SAN DIEGO, CITY OF",214]],"060730101112":[["SAN DIEGO, CITY OF",230]],"060730101121":[["SAN DIEGO, CITY OF",357]],"060730101122":[["SAN DIEGO, CITY OF",124]],"060730101123":[["SAN DIEGO, CITY OF",53]],"060730102011":[["SAN DIEGO, CITY OF",8]],"060730119024":[["SAN DIEGO, CITY OF",3]],"060730121021":[["SAN DIEGO COUNTY *",41]],"060730122001":[["SAN DIEGO COUNTY *",176]],"060730122002":[["SAN DIEGO COUNTY *",322]],"060730123042":[["SAN DIEGO COUNTY *",17]],"060730132051":[["SAN DIEGO, CITY OF",3]],"060730133081":[["SAN DIEGO, CITY OF",2]],"060730134011":[["SAN DIEGO COUNTY *",96]],"060730134111":[["SAN DIEGO COUNTY *",68]],"060730134112":[["SAN DIEGO COUNTY *",380]],"060730134113":[["SAN DIEGO COUNTY *",300]],"060730134114":[["SAN DIEGO COUNTY *",30]],"060730134121":[["SAN DIEGO COUNTY *",1]],"060730134122":[["SAN DIEGO COUNTY *",189]],"060730134123":[["SAN DIEGO COUNTY *",103]],"060730134221":[["SAN DIEGO COUNTY *",357]],"060730134222":[["SAN DIEGO COUNTY *",398]],"060730134223":[["SAN DIEGO COUNTY *",225]],"060730134231":[["SAN DIEGO COUNTY *",1]],"060730134232":[["SAN DIEGO COUNTY *",229]],"060730135031":[["SAN DIEGO COUNTY *",1036]],"060730135032":[["SAN DIEGO COUNTY *",431]],"060730135033":[["SAN DIEGO COUNTY *",658]],"060730135041":[["SAN DIEGO COUNTY *",275]],"060730135042":[["SAN DIEGO COUNTY *",280]],"060730135043":[["SAN DIEGO COUNTY *",586]],"060730135051":[["SAN DIEGO COUNTY *",730]],"060730135052":[["SAN DIEGO COUNTY *",447]],"060730135053":[["SAN DIEGO COUNTY *",245]],"060730135061":[["SAN DIEGO COUNTY *",472]],"060730135062":[["SAN DIEGO COUNTY *",290]],"060730135063":[["SAN DIEGO COUNTY *",337]],"060730136011":[["SAN DIEGO COUNTY *",316]],"060730136012":[["SAN DIEGO COUNTY *",596]],"060730136013":[["SAN DIEGO COUNTY *",595]],"060730136014":[["SAN DIEGO COUNTY *",86]],"060730136041":[["SAN DIEGO COUNTY *",306]],"060730136042":[["SAN DIEGO COUNTY *",274]],"060730136043":[["SAN DIEGO COUNTY *",829]],"060730136044":[["SAN DIEGO COUNTY *",154]],"060730136051":[["SAN DIEGO COUNTY *",1026]],"060730136052":[["SAN DIEGO COUNTY *",571]],"060730136053":[["SAN DIEGO COUNTY *",542]],"060730136071":[["SAN DIEGO COUNTY *",83]],"060730136072":[["SAN DIEGO COUNTY *",770]],"060730136081":[["SAN DIEGO COUNTY *",725]],"060730136082":[["SAN DIEGO COUNTY *",387]],"060730137011":[["SAN DIEGO COUNTY *",523]],"060730137012":[["SAN DIEGO COUNTY *",303]],"060730137021":[["SAN DIEGO COUNTY *",619]],"060730137022":[["SAN DIEGO COUNTY *",192]],"060730137023":[["SAN DIEGO COUNTY *",375]],"060730138011":[["SAN DIEGO COUNTY *",444]],"060730138012":[["SAN DIEGO COUNTY *",364]],"060730138013":[["SAN DIEGO COUNTY *",396]],"060730138021":[["SAN DIEGO COUNTY *",581]],"060730138022":[["SAN DIEGO COUNTY *",266]],"060730139031":[["SAN DIEGO COUNTY *",453]],"060730139032":[["SAN DIEGO COUNTY *",561]],"060730139051":[["SAN DIEGO COUNTY *",585]],"060730139052":[["SAN DIEGO COUNTY *",348]],"060730139053":[["SAN DIEGO COUNTY *",309]],"060730139061":[["SAN DIEGO COUNTY *",150]],"060730139062":[["SAN DIEGO COUNTY *",520]],"060730139063":[["SAN DIEGO COUNTY *",1303]],"060730139071":[["SAN DIEGO COUNTY *",332]],"060730139072":[["SAN DIEGO COUNTY *",470]],"060730139081":[["SAN DIEGO COUNTY *",272]],"060730139082":[["SAN DIEGO COUNTY *",459]],"060730139091":[["SAN DIEGO COUNTY *",515]],"060730139092":[["SAN DIEGO COUNTY *",662]],"060730140021":[["SAN DIEGO COUNTY *",267]],"060730140022":[["SAN DIEGO COUNTY *",162]],"060730141012":[["SAN DIEGO, CITY OF",9]],"060730141021":[["SAN DIEGO, CITY OF",742]],"060730141022":[["SAN DIEGO, CITY OF",260]],"060730142003":[["SAN DIEGO, CITY OF",42]],"060730147022":[["SAN DIEGO, CITY OF",56]],"060730152001":[["SAN DIEGO COUNTY *",415]],"060730152002":[["SAN DIEGO COUNTY *",115]],"060730152003":[["SAN DIEGO COUNTY *",177]],"060730152004":[["SAN DIEGO COUNTY *",277]],"060730153021":[["SAN DIEGO COUNTY *",427]],"060730153022":[["SAN DIEGO COUNTY *",7]],"060730154031":[["SAN DIEGO COUNTY *",282]],"060730154032":[["SAN DIEGO COUNTY *",424]],"060730154051":[["SAN DIEGO COUNTY *",65]],"060730154052":[["SAN DIEGO COUNTY *",536]],"060730154053":[["SAN DIEGO COUNTY *",585]],"060730154061":[["SAN DIEGO COUNTY *",1012]],"060730154071":[["SAN DIEGO COUNTY *",46]],"060730154081":[["SAN DIEGO COUNTY *",426]],"060730154082":[["SAN DIEGO COUNTY *",31]],"060730155011":[["SAN DIEGO COUNTY *",390]],"060730155012":[["SAN DIEGO COUNTY *",504]],"060730155013":[["SAN DIEGO COUNTY *",810]],"060730155014":[["SAN DIEGO COUNTY *",410]],"060730155021":[["SAN DIEGO COUNTY *",517]],"060730155022":[["SAN DIEGO COUNTY *",599]],"060730156011":[["SAN DIEGO COUNTY *",27]],"060730156012":[["SAN DIEGO COUNTY *",16]],"060730156021":[["SAN DIEGO COUNTY *",462]],"060730156022":[["SAN DIEGO COUNTY *",17]],"060730162021":[["SAN DIEGO COUNTY *",1]],"060730164011":[["SAN DIEGO COUNTY *",41]],"060730164013":[["SAN DIEGO COUNTY *",368]],"060730164031":[["SAN DIEGO COUNTY *",531]],"060730164032":[["SAN DIEGO COUNTY *",50]],"060730165021":[["SAN DIEGO COUNTY *",242]],"060730165022":[["SAN DIEGO COUNTY *",399]],"060730165023":[["SAN DIEGO COUNTY *",189]],"060730165024":[["SAN DIEGO COUNTY *",182]],"060730165031":[["SAN DIEGO COUNTY *",388]],"060730165032":[["SAN DIEGO COUNTY *",369]],"060730165041":[["SAN DIEGO COUNTY *",466]],"060730165042":[["SAN DIEGO COUNTY *",37]],"060730165043":[["SAN DIEGO COUNTY *",203]],"060730165044":[["SAN DIEGO COUNTY *",53]],"060730165045":[["SAN DIEGO COUNTY *",109]],"060730166071":[["SAN DIEGO COUNTY *",142]],"060730166073":[["SAN DIEGO COUNTY *",256]],"060730166081":[["SAN DIEGO COUNTY *",251]],"060730167032":[["SAN DIEGO COUNTY *",198]],"060730167041":[["SAN DIEGO COUNTY *",839]],"060730167043":[["SAN DIEGO COUNTY *",285]],"060730167051":[["SAN DIEGO COUNTY *",734]],"060730167052":[["SAN DIEGO COUNTY *",63]],"060730167053":[["SAN DIEGO COUNTY *",218]],"060730167061":[["SAN DIEGO COUNTY *",309]],"060730167062":[["SAN DIEGO COUNTY *",547]],"060730168041":[["SAN DIEGO COUNTY *",451]],"060730168042":[["SAN DIEGO COUNTY *",354]],"060730168043":[["SAN DIEGO COUNTY *",444]],"060730168044":[["SAN DIEGO COUNTY *",219]],"060730168061":[["SAN DIEGO COUNTY *",475]],"060730168062":[["SAN DIEGO COUNTY *",232]],"060730168063":[["SAN DIEGO COUNTY *",312]],"060730168071":[["SAN DIEGO COUNTY *",357]],"060730168072":[["SAN DIEGO COUNTY *",777]],"060730168073":[["SAN DIEGO COUNTY *",1206]],"060730168074":[["SAN DIEGO COUNTY *",172]],"060730168091":[["SAN DIEGO COUNTY *",244]],"060730168092":[["SAN DIEGO COUNTY *",589]],"060730168093":[["SAN DIEGO COUNTY *",831]],"060730168101":[["SAN DIEGO COUNTY *",926]],"060730168111":[["SAN DIEGO COUNTY *",526]],"060730168112":[["SAN DIEGO COUNTY *",474]],"060730168113":[["SAN DIEGO COUNTY *",458]],"060730168121":[["SAN DIEGO COUNTY *",944]],"060730168122":[["SAN DIEGO COUNTY *",310]],"060730168131":[["SAN DIEGO COUNTY *",477]],"060730168132":[["SAN DIEGO COUNTY *",971]],"060730169011":[["SAN DIEGO COUNTY *",604]],"060730169012":[["SAN DIEGO COUNTY *",423]],"060730169013":[["SAN DIEGO COUNTY *",511]],"060730169014":[["SAN DIEGO COUNTY *",149]],"060730169015":[["SAN DIEGO COUNTY *",496]],"060730169021":[["SAN DIEGO COUNTY *",846]],"060730170061":[["POWAY, CITY OF",450]],"060730170062":[["SAN DIEGO, CITY OF",323]],"060730170063":[["POWAY, CITY OF",290]],"060730170091":[["POWAY, CITY OF",772]],"060730170092":[["POWAY, CITY OF",405]],"060730170101":[["SAN DIEGO COUNTY *",23],["POWAY, CITY OF",351]],"060730170102":[["POWAY, CITY OF",621]],"060730170141":[["SAN DIEGO, CITY OF",539]],"060730170142":[["SAN DIEGO, CITY OF",801]],"060730170181":[["SAN DIEGO, CITY OF",484]],"060730170182":[["SAN DIEGO, CITY OF",881]],"060730170201":[["POWAY, CITY OF",368]],"060730170202":[["POWAY, CITY OF",520]],"060730170203":[["SAN DIEGO COUNTY *",106],["POWAY, CITY OF",321]],"060730170211":[["POWAY, CITY OF",577]],"060730170212":[["SAN DIEGO COUNTY *",321],["POWAY, CITY OF",253]],"060730170221":[["SAN DIEGO, CITY OF",256]],"060730170222":[["SAN DIEGO, CITY OF",293]],"060730170223":[["SAN DIEGO, CITY OF",290]],"060730170224":[["SAN DIEGO, CITY OF",460]],"060730170225":[["SAN DIEGO COUNTY *",17],["SAN DIEGO, CITY OF",307]],"060730170226":[["SAN DIEGO, CITY OF",312]],"060730170311":[["SAN DIEGO, CITY OF",400]],"060730170312":[["SAN DIEGO, CITY OF",361]],"060730170313":[["SAN DIEGO, CITY OF",671]],"060730170331":[["SAN DIEGO, CITY OF",458]],"060730170332":[["SAN DIEGO, CITY OF",265]],"060730170333":[["SAN DIEGO, CITY OF",1081]],"060730170341":[["SAN DIEGO, CITY OF",624]],"060730170342":[["SAN DIEGO, CITY OF",309]],"060730170343":[["SAN DIEGO, CITY OF",337]],"060730170351":[["SAN DIEGO, CITY OF",301]],"060730170352":[["SAN DIEGO, CITY OF",103]],"060730170353":[["SAN DIEGO, CITY OF",37]],"060730170361":[["SAN DIEGO, CITY OF",501]],"060730170362":[["SAN DIEGO, CITY OF",316]],"060730170363":[["SAN DIEGO, CITY OF",405]],"060730170371":[["SAN DIEGO, CITY OF",470]],"060730170372":[["SAN DIEGO, CITY OF",295]],"060730170373":[["SAN DIEGO, CITY OF",516]],"060730170374":[["SAN DIEGO, CITY OF",341]],"060730170391":[["SAN DIEGO, CITY OF",245]],"060730170392":[["SAN DIEGO, CITY OF",317]],"060730170393":[["SAN DIEGO, CITY OF",686]],"060730170394":[["SAN DIEGO, CITY OF",669]],"060730170395":[["SAN DIEGO, CITY OF",605]],"060730170401":[["POWAY, CITY OF",571]],"060730170402":[["POWAY, CITY OF",432]],"060730170403":[["POWAY, CITY OF",424]],"060730170411":[["POWAY, CITY OF",658]],"060730170412":[["POWAY, CITY OF",639]],"060730170413":[["POWAY, CITY OF",288]],"060730170414":[["POWAY, CITY OF",509]],"060730170431":[["SAN DIEGO, CITY OF",677]],"060730170432":[["SAN DIEGO, CITY OF",287]],"060730170433":[["SAN DIEGO, CITY OF",821]],"060730170441":[["SAN DIEGO, CITY OF",633]],"060730170442":[["SAN DIEGO, CITY OF",477]],"060730170443":[["SAN DIEGO, CITY OF",429]],"060730170444":[["SAN DIEGO, CITY OF",321]],"060730170451":[["SAN DIEGO, CITY OF",772],["POWAY, CITY OF",120]],"060730170461":[["SAN DIEGO, CITY OF",995]],"060730170462":[["SAN DIEGO, CITY OF",365]],"060730170471":[["SAN DIEGO, CITY OF",537]],"060730170472":[["SAN DIEGO, CITY OF",422]],"060730170473":[["SAN DIEGO, CITY OF",451]],"060730170481":[["POWAY, CITY OF",114]],"060730170482":[["POWAY, CITY OF",306]],"060730170483":[["POWAY, CITY OF",602]],"060730170484":[["POWAY, CITY OF",288]],"060730170491":[["POWAY, CITY OF",322]],"060730170492":[["POWAY, CITY OF",511]],"060730170501":[["SAN DIEGO, CITY OF",2],["POWAY, CITY OF",463]],"060730170502":[["POWAY, CITY OF",347]],"060730170511":[["SAN DIEGO, CITY OF",639]],"060730170512":[["SAN DIEGO, CITY OF",453]],"060730170513":[["SAN DIEGO, CITY OF",803]],"060730170521":[["SAN DIEGO, CITY OF",533]],"060730170522":[["SAN DIEGO, CITY OF",242]],"060730170523":[["SAN DIEGO, CITY OF",441]],"060730170524":[["SAN DIEGO, CITY OF",573]],"060730170531":[["POWAY, CITY OF",532]],"060730170532":[["POWAY, CITY OF",586]],"060730170541":[["POWAY, CITY OF",479]],"060730170542":[["POWAY, CITY OF",256]],"060730170543":[["POWAY, CITY OF",272]],"060730170544":[["POWAY, CITY OF",669]],"060730170551":[["SAN DIEGO, CITY OF",598]],"060730170552":[["SAN DIEGO, CITY OF",447]],"060730170553":[["SAN DIEGO, CITY OF",650]],"060730170561":[["SAN DIEGO, CITY OF",473]],"060730170562":[["SAN DIEGO, CITY OF",449]],"060730170571":[["SAN DIEGO, CITY OF",276]],"060730170572":[["SAN DIEGO, CITY OF",342]],"060730170573":[["SAN DIEGO, CITY OF",906]],"060730170581":[["SAN DIEGO, CITY OF",459]],"060730170582":[["SAN DIEGO, CITY OF",539]],"060730170583":[["SAN DIEGO, CITY OF",494]],"060730170591":[["SAN DIEGO, CITY OF",769]],"060730170592":[["SAN DIEGO, CITY OF",1021]],"060730170601":[["SAN DIEGO, CITY OF",706]],"060730170602":[["SAN DIEGO, CITY OF",519]],"060730170611":[["SAN DIEGO COUNTY *",25],["SAN DIEGO, CITY OF",539]],"060730170612":[["SAN DIEGO COUNTY *",1014],["SAN DIEGO, CITY OF",66]],"060730170621":[["SAN DIEGO COUNTY *",362],["SAN DIEGO, CITY OF",426]],"060730170622":[["SAN DIEGO, CITY OF",707]],"060730170623":[["SAN DIEGO COUNTY *",547]],"060730170631":[["SAN DIEGO, CITY OF",376]],"060730170632":[["SAN DIEGO, CITY OF",131]],"060730170633":[["SAN DIEGO, CITY OF",554]],"060730170641":[["SAN DIEGO COUNTY *",548]],"060730170642":[["SAN DIEGO COUNTY *",924]],"060730170643":[["SAN DIEGO COUNTY *",794]],"060730170651":[["SAN DIEGO, CITY OF",939]],"060730170652":[["SAN DIEGO, CITY OF",1505]],"060730170661":[["SAN DIEGO COUNTY *",953],["SAN DIEGO, CITY OF",129]],"060730170662":[["SAN DIEGO COUNTY *",516],["SAN DIEGO, CITY OF",492]],"060730170671":[["SAN DIEGO, CITY OF",332]],"060730170672":[["SAN DIEGO, CITY OF",435],["POWAY, CITY OF",147]],"060730170681":[["SAN DIEGO, CITY OF",454]],"060730170682":[["SAN DIEGO, CITY OF",875]],"060730170691":[["SAN DIEGO, CITY OF",929]],"060730170701":[["SAN DIEGO COUNTY *",672]],"060730170702":[["SAN DIEGO COUNTY *",693]],"060730170703":[["SAN DIEGO COUNTY *",44]],"060730170711":[["SAN DIEGO COUNTY *",1],["SAN DIEGO, CITY OF",517]],"060730170712":[["SAN DIEGO COUNTY *",687]],"060730171061":[["SAN DIEGO COUNTY *",551],["SAN DIEGO, CITY OF",1]],"060730171062":[["SAN DIEGO COUNTY *",491]],"060730171063":[["SAN DIEGO COUNTY *",562]],"060730171064":[["SAN DIEGO COUNTY *",478]],"060730171111":[["SAN DIEGO COUNTY *",888],["SAN DIEGO, CITY OF",1]],"060730171121":[["SAN DIEGO COUNTY *",245]],"060730171132":[["SAN DIEGO COUNTY *",7]],"060730173052":[["SAN DIEGO COUNTY *",38]],"060730173061":[["SAN DIEGO, CITY OF",181]],"060730173062":[["SAN DIEGO COUNTY *",357],["SAN DIEGO, CITY OF",42]],"060730173081":[["SAN DIEGO, CITY OF",6]],"060730181011":[["OCEANSIDE, CITY OF",614]],"060730181012":[["OCEANSIDE, CITY OF",267]],"060730181013":[["OCEANSIDE, CITY OF",353]],"060730181021":[["OCEANSIDE, CITY OF",326]],"060730181022":[["OCEANSIDE, CITY OF",316]],"060730181023":[["OCEANSIDE, CITY OF",212]],"060730182011":[["OCEANSIDE, CITY OF",547]],"060730182012":[["OCEANSIDE, CITY OF",135]],"060730182021":[["OCEANSIDE, CITY OF",115]],"060730182022":[["OCEANSIDE, CITY OF",160]],"060730182023":[["OCEANSIDE, CITY OF",391]],"060730183011":[["OCEANSIDE, CITY OF",172]],"060730183012":[["SAN DIEGO COUNTY *",6],["OCEANSIDE, CITY OF",329]],"060730183021":[["OCEANSIDE, CITY OF",368]],"060730183022":[["OCEANSIDE, CITY OF",358]],"060730184001":[["OCEANSIDE, CITY OF",413]],"060730184002":[["OCEANSIDE, CITY OF",212]],"060730184003":[["OCEANSIDE, CITY OF",258]],"060730185041":[["OCEANSIDE, CITY OF",444]],"060730185042":[["OCEANSIDE, CITY OF",534]],"060730185043":[["OCEANSIDE, CITY OF",731]],"060730185044":[["OCEANSIDE, CITY OF",223]],"060730185045":[["OCEANSIDE, CITY OF",229]],"060730185091":[["OCEANSIDE, CITY OF",144]],"060730185092":[["OCEANSIDE, CITY OF",220]],"060730185093":[["OCEANSIDE, CITY OF",257]],"060730185094":[["OCEANSIDE, CITY OF",135]],"060730185101":[["OCEANSIDE, CITY OF",476]],"060730185102":[["OCEANSIDE, CITY OF",371]],"060730185111":[["OCEANSIDE, CITY OF",288]],"060730185112":[["OCEANSIDE, CITY OF",234]],"060730185113":[["OCEANSIDE, CITY OF",238]],"060730185114":[["OCEANSIDE, CITY OF",391]],"060730185121":[["OCEANSIDE, CITY OF",1074]],"060730185122":[["OCEANSIDE, CITY OF",516]],"060730185123":[["OCEANSIDE, CITY OF",628]],"060730185151":[["OCEANSIDE, CITY OF",302]],"060730185152":[["OCEANSIDE, CITY OF",744]],"060730185153":[["OCEANSIDE, CITY OF",623]],"060730185161":[["OCEANSIDE, CITY OF",864]],"060730185162":[["OCEANSIDE, CITY OF",228]],"060730185171":[["OCEANSIDE, CITY OF",419]],"060730185172":[["OCEANSIDE, CITY OF",417]],"060730185173":[["OCEANSIDE, CITY OF",743]],"060730185181":[["OCEANSIDE, CITY OF",359]],"060730185182":[["OCEANSIDE, CITY OF",363]],"060730185191":[["OCEANSIDE, CITY OF",447]],"060730185192":[["OCEANSIDE, CITY OF",321]],"060730185193":[["OCEANSIDE, CITY OF",71]],"060730185194":[["OCEANSIDE, CITY OF",37]],"060730185201":[["OCEANSIDE, CITY OF",468]],"060730185202":[["OCEANSIDE, CITY OF",496]],"060730185203":[["OCEANSIDE, CITY OF",505]],"060730185211":[["OCEANSIDE, CITY OF",660]],"060730185212":[["OCEANSIDE, CITY OF",924]],"060730185221":[["OCEANSIDE, CITY OF",720]],"060730185222":[["OCEANSIDE, CITY OF",462]],"060730185223":[["OCEANSIDE, CITY OF",269]],"060730185231":[["OCEANSIDE, CITY OF",664]],"060730185232":[["OCEANSIDE, CITY OF",434]],"060730185233":[["OCEANSIDE, CITY OF",349]],"060730185241":[["OCEANSIDE, CITY OF",574]],"060730185242":[["OCEANSIDE, CITY OF",459]],"060730185251":[["OCEANSIDE, CITY OF",815]],"060730185252":[["OCEANSIDE, CITY OF",659]],"060730186011":[["OCEANSIDE, CITY OF",436]],"060730186012":[["OCEANSIDE, CITY OF",612]],"060730186013":[["OCEANSIDE, CITY OF",465]],"060730186081":[["OCEANSIDE, CITY OF",783]],"060730186082":[["OCEANSIDE, CITY OF",326]],"060730186091":[["OCEANSIDE, CITY OF",665]],"060730186092":[["OCEANSIDE, CITY OF",439]],"060730186093":[["OCEANSIDE, CITY OF",592]],"060730186121":[["SAN DIEGO COUNTY *",41],["OCEANSIDE, CITY OF",858]],"060730186122":[["OCEANSIDE, CITY OF",407]],"060730186131":[["OCEANSIDE, CITY OF",311]],"060730186132":[["OCEANSIDE, CITY OF",424]],"060730186133":[["OCEANSIDE, CITY OF",286]],"060730186151":[["OCEANSIDE, CITY OF",148]],"060730186152":[["OCEANSIDE, CITY OF",359]],"060730186153":[["OCEANSIDE, CITY OF",214]],"060730186161":[["OCEANSIDE, CITY OF",59]],"060730186162":[["OCEANSIDE, CITY OF",254]],"060730186163":[["OCEANSIDE, CITY OF",290]],"060730186171":[["OCEANSIDE, CITY OF",790]],"060730186172":[["OCEANSIDE, CITY OF",250]],"060730186181":[["OCEANSIDE, CITY OF",216]],"060730186182":[["OCEANSIDE, CITY OF",300]],"060730186183":[["OCEANSIDE, CITY OF",284]],"060730186191":[["SAN DIEGO COUNTY *",502],["OCEANSIDE, CITY OF",79]],"060730186192":[["SAN DIEGO COUNTY *",127],["OCEANSIDE, CITY OF",162]],"060730186193":[["OCEANSIDE, CITY OF",741]],"060730186194":[["OCEANSIDE, CITY OF",452]],"060730186201":[["OCEANSIDE, CITY OF",306]],"060730186202":[["OCEANSIDE, CITY OF",415]],"060730186211":[["OCEANSIDE, CITY OF",335]],"060730186221":[["OCEANSIDE, CITY OF",369]],"060730186222":[["OCEANSIDE, CITY OF",536]],"060730186223":[["OCEANSIDE, CITY OF",545]],"060730187001":[["SAN DIEGO COUNTY *",2808]],"060730188011":[["SAN DIEGO COUNTY *",774]],"060730188012":[["SAN DIEGO COUNTY *",639]],"060730188031":[["SAN DIEGO COUNTY *",391]],"060730188032":[["SAN DIEGO COUNTY *",419]],"060730188033":[["SAN DIEGO COUNTY *",568]],"060730188034":[["SAN DIEGO COUNTY *",738]],"060730188041":[["SAN DIEGO COUNTY *",666]],"060730188042":[["SAN DIEGO COUNTY *",720]],"060730188043":[["SAN DIEGO COUNTY *",810]],"060730188051":[["SAN DIEGO COUNTY *",680]],"060730188052":[["SAN DIEGO COUNTY *",798]],"060730189031":[["SAN DIEGO COUNTY *",543]],"060730189032":[["SAN DIEGO COUNTY *",232]],"060730189033":[["SAN DIEGO COUNTY *",361]],"060730189034":[["SAN DIEGO COUNTY *",184]],"060730189041":[["SAN DIEGO COUNTY *",166]],"060730189042":[["SAN DIEGO COUNTY *",213]],"060730189043":[["SAN DIEGO COUNTY *",275]],"060730189044":[["SAN DIEGO COUNTY *",633]],"060730189051":[["SAN DIEGO COUNTY *",151]],"060730189052":[["SAN DIEGO COUNTY *",323]],"060730189053":[["SAN DIEGO COUNTY *",438]],"060730189054":[["SAN DIEGO COUNTY *",542]],"060730189061":[["SAN DIEGO COUNTY *",266]],"060730189062":[["SAN DIEGO COUNTY *",201]],"060730189063":[["SAN DIEGO COUNTY *",828]],"060730190011":[["SAN DIEGO COUNTY *",510]],"060730190012":[["SAN DIEGO COUNTY *",710]],"060730190013":[["SAN DIEGO COUNTY *",861]],"060730190014":[["SAN DIEGO COUNTY *",460]],"060730190021":[["SAN DIEGO COUNTY *",1282]],"060730191031":[["SAN DIEGO COUNTY *",421]],"060730191032":[["SAN DIEGO COUNTY *",727]],"060730191033":[["SAN DIEGO COUNTY *",750]],"060730191034":[["SAN DIEGO COUNTY *",382]],"060730191051":[["SAN DIEGO COUNTY *",442]],"060730191052":[["SAN DIEGO COUNTY *",735]],"060730191053":[["SAN DIEGO COUNTY *",754]],"060730191054":[["SAN DIEGO COUNTY *",713]],"060730191071":[["SAN DIEGO COUNTY *",844]],"060730191081":[["SAN DIEGO COUNTY *",563]],"060730191082":[["SAN DIEGO COUNTY *",335]],"060730191091":[["SAN DIEGO COUNTY *",798]],"060730191092":[["SAN DIEGO COUNTY *",210]],"060730191093":[["SAN DIEGO COUNTY *",423]],"060730191101":[["SAN DIEGO COUNTY *",613]],"060730191102":[["SAN DIEGO COUNTY *",562]],"060730191103":[["SAN DIEGO COUNTY *",607]],"060730191111":[["SAN DIEGO COUNTY *",510]],"060730191112":[["SAN DIEGO COUNTY *",394]],"060730191113":[["SAN DIEGO COUNTY *",406]],"060730192031":[["SAN DIEGO COUNTY *",326]],"060730192032":[["SAN DIEGO COUNTY *",296]],"060730192081":[["SAN DIEGO COUNTY *",566]],"060730192082":[["SAN DIEGO COUNTY *",489]],"060730192091":[["SAN DIEGO COUNTY *",251]],"060730192092":[["SAN DIEGO COUNTY *",659]],"060730192101":[["SAN DIEGO COUNTY *",4]],"060730193011":[["OCEANSIDE, CITY OF",427]],"060730193012":[["OCEANSIDE, CITY OF",858]],"060730193013":[["OCEANSIDE, CITY OF",1039]],"060730193031":[["SAN DIEGO COUNTY *",100],["OCEANSIDE, CITY OF",664]],"060730193032":[["SAN DIEGO COUNTY *",206],["OCEANSIDE, CITY OF",627]],"060730193033":[["OCEANSIDE, CITY OF",153]],"060730193041":[["OCEANSIDE, CITY OF",361]],"060730193042":[["OCEANSIDE, CITY OF",768]],"060730193051":[["OCEANSIDE, CITY OF",419]],"060730193052":[["OCEANSIDE, CITY OF",931]],"060730194031":[["OCEANSIDE, CITY OF",522]],"060730194032":[["OCEANSIDE, CITY OF",222]],"060730196022":[["SAN DIEGO COUNTY *",339]],"060730197011":[["SAN DIEGO COUNTY *",81]],"060730197012":[["SAN DIEGO COUNTY *",5]],"060730198051":[["OCEANSIDE, CITY OF",920]],"060730198052":[["OCEANSIDE, CITY OF",273]],"060730198081":[["OCEANSIDE, CITY OF",540]],"060730198082":[["OCEANSIDE, CITY OF",399]],"060730198083":[["OCEANSIDE, CITY OF",1260]],"060730198091":[["SAN DIEGO COUNTY *",53],["OCEANSIDE, CITY OF",466]],"060730198092":[["OCEANSIDE, CITY OF",725]],"060730198093":[["SAN DIEGO COUNTY *",15],["OCEANSIDE, CITY OF",550]],"060730198102":[["OCEANSIDE, CITY OF",14]],"060730199021":[["SAN DIEGO COUNTY *",508]],"060730199022":[["SAN DIEGO COUNTY *",244]],"060730199031":[["SAN DIEGO COUNTY *",578]],"060730199032":[["SAN DIEGO COUNTY *",697]],"060730199041":[["SAN DIEGO COUNTY *",39]],"060730200171":[["SAN DIEGO COUNTY *",227]],"060730200172":[["SAN DIEGO COUNTY *",100]],"060730200173":[["SAN DIEGO COUNTY *",40]],"060730200191":[["SAN DIEGO COUNTY *",3]],"060730200193":[["SAN DIEGO COUNTY *",123]],"060730200261":[["SAN DIEGO COUNTY *",399]],"060730200263":[["SAN DIEGO COUNTY *",417]],"060730200313":[["SAN DIEGO COUNTY *",92]],"060730200382":[["SAN DIEGO COUNTY *",135]],"060730200422":[["SAN DIEGO COUNTY *",941]],"060730200431":[["SAN DIEGO COUNTY *",2]],"060730200443":[["SAN DIEGO COUNTY *",336]],"060730200444":[["SAN DIEGO COUNTY *",24]],"060730201051":[["SAN DIEGO COUNTY *",51]],"060730201052":[["SAN DIEGO COUNTY *",28]],"060730201061":[["SAN DIEGO COUNTY *",50]],"060730201071":[["SAN DIEGO COUNTY *",41]],"060730201101":[["SAN DIEGO COUNTY *",93]],"060730201103":[["SAN DIEGO COUNTY *",525]],"060730201111":[["SAN DIEGO COUNTY *",229]],"060730201112":[["SAN DIEGO COUNTY *",367]],"060730201113":[["SAN DIEGO COUNTY *",336]],"060730203041":[["SAN DIEGO COUNTY *",94]],"060730203043":[["SAN DIEGO COUNTY *",11]],"060730203044":[["SAN DIEGO COUNTY *",205]],"060730203051":[["SAN DIEGO COUNTY *",149]],"060730203052":[["SAN DIEGO COUNTY *",18]],"060730203053":[["SAN DIEGO COUNTY *",346]],"060730203091":[["SAN DIEGO COUNTY *",375]],"060730203092":[["SAN DIEGO COUNTY *",6]],"060730203111":[["SAN DIEGO COUNTY *",163]],"060730203112":[["SAN DIEGO COUNTY *",576]],"060730203121":[["SAN DIEGO COUNTY *",102]],"060730203131":[["SAN DIEGO COUNTY *",173]],"060730204011":[["SAN DIEGO COUNTY *",26]],"060730204012":[["SAN DIEGO COUNTY *",576]],"060730204031":[["SAN DIEGO COUNTY *",4]],"060730204032":[["SAN DIEGO COUNTY *",53]],"060730204042":[["SAN DIEGO COUNTY *",53]],"060730204043":[["SAN DIEGO COUNTY *",152]],"060730204051":[["SAN DIEGO COUNTY *",103]],"060730204052":[["SAN DIEGO COUNTY *",497]],"060730206024":[["SAN DIEGO COUNTY *",83]],"060730207053":[["SAN DIEGO COUNTY *",505]],"060730207061":[["SAN DIEGO COUNTY *",433],["SAN DIEGO, CITY OF",3]],"060730207062":[["SAN DIEGO COUNTY *",728],["SAN DIEGO, CITY OF",4]],"060730207063":[["SAN DIEGO COUNTY *",114]],"060730207064":[["SAN DIEGO COUNTY *",320]],"060730207071":[["SAN DIEGO COUNTY *",40]],"060730207081":[["SAN DIEGO COUNTY *",108]],"060730207082":[["SAN DIEGO COUNTY *",182]],"060730207101":[["SAN DIEGO COUNTY *",57],["SAN DIEGO, CITY OF",19]],"060730207111":[["SAN DIEGO COUNTY *",45],["SAN DIEGO, CITY OF",14]],"060730207112":[["SAN DIEGO COUNTY *",123]],"060730207122":[["SAN DIEGO COUNTY *",38]],"060730208011":[["SAN DIEGO COUNTY *",400],["POWAY, CITY OF",35]],"060730208012":[["SAN DIEGO COUNTY *",844],["SAN DIEGO, CITY OF",10]],"060730208013":[["SAN DIEGO COUNTY *",745]],"060730208051":[["SAN DIEGO COUNTY *",384]],"060730208052":[["SAN DIEGO COUNTY *",563]],"060730208061":[["SAN DIEGO COUNTY *",325]],"060730208062":[["SAN DIEGO COUNTY *",540]],"060730208063":[["SAN DIEGO COUNTY *",160]],"060730208064":[["SAN DIEGO COUNTY *",252]],"060730208071":[["SAN DIEGO COUNTY *",836]],"060730208072":[["SAN DIEGO COUNTY *",323]],"060730208101":[["SAN DIEGO COUNTY *",506]],"060730208102":[["SAN DIEGO COUNTY *",262]],"060730208103":[["SAN DIEGO COUNTY *",601]],"060730208104":[["SAN DIEGO COUNTY *",485]],"060730208111":[["SAN DIEGO COUNTY *",722]],"060730208112":[["SAN DIEGO COUNTY *",803]],"060730208113":[["SAN DIEGO COUNTY *",687]],"060730208121":[["SAN DIEGO COUNTY *",559]],"060730208131":[["SAN DIEGO COUNTY *",367]],"060730208132":[["SAN DIEGO COUNTY *",717]],"060730208133":[["SAN DIEGO COUNTY *",532]],"060730209021":[["SAN DIEGO COUNTY *",366]],"060730209022":[["SAN DIEGO COUNTY *",718]],"060730209031":[["SAN DIEGO COUNTY *",394]],"060730209032":[["SAN DIEGO COUNTY *",708]],"060730209033":[["SAN DIEGO COUNTY *",697]],"060730209041":[["SAN DIEGO COUNTY *",551]],"060730209042":[["SAN DIEGO COUNTY *",558]],"060730209043":[["SAN DIEGO COUNTY *",383]],"060730209044":[["SAN DIEGO COUNTY *",500]],"060730210011":[["SAN DIEGO COUNTY *",404]],"060730210012":[["SAN DIEGO COUNTY *",568]],"060730210013":[["SAN DIEGO COUNTY *",640]],"060730210021":[["SAN DIEGO COUNTY *",666]],"060730210022":[["SAN DIEGO COUNTY *",712]],"060730211011":[["SAN DIEGO COUNTY *",415]],"060730211012":[["SAN DIEGO COUNTY *",769]],"060730211013":[["SAN DIEGO COUNTY *",660]],"060730211021":[["SAN DIEGO COUNTY *",819]],"060730211022":[["SAN DIEGO COUNTY *",346]],"060730212021":[["SAN DIEGO COUNTY *",795]],"060730212022":[["SAN DIEGO COUNTY *",418]],"060730212041":[["SAN DIEGO COUNTY *",916]],"060730212042":[["SAN DIEGO COUNTY *",1184]],"060730212051":[["SAN DIEGO COUNTY *",665]],"060730212052":[["SAN DIEGO COUNTY *",486]],"060730212053":[["SAN DIEGO COUNTY *",570]],"060730212061":[["SAN DIEGO COUNTY *",725]],"060730212062":[["SAN DIEGO COUNTY *",444]],"060730213021":[["SAN DIEGO COUNTY *",604]],"060730213022":[["SAN DIEGO COUNTY *",526]],"060730213023":[["SAN DIEGO COUNTY *",527]],"060730213041":[["SAN DIEGO COUNTY *",534]],"060730213042":[["SAN DIEGO COUNTY *",392]],"060730213051":[["SAN DIEGO COUNTY *",837]],"060730213052":[["SAN DIEGO COUNTY *",627]],"060730213062":[["SAN DIEGO COUNTY *",1]],"060730213063":[["SAN DIEGO COUNTY *",361]],"060730214011":[["SAN DIEGO, CITY OF",258]],"060730214012":[["SAN DIEGO, CITY OF",598]],"060730214013":[["SAN DIEGO, CITY OF",354]],"060730214021":[["SAN DIEGO, CITY OF",420]],"060730214022":[["SAN DIEGO, CITY OF",387]],"060730215011":[["SAN DIEGO, CITY OF",508]],"060730215012":[["SAN DIEGO, CITY OF",288]],"060730215013":[["SAN DIEGO, CITY OF",367]],"060730215021":[["SAN DIEGO, CITY OF",1122]],"060730215022":[["SAN DIEGO, CITY OF",486]],"060730215023":[["SAN DIEGO, CITY OF",732]],"060871001001":[["SANTA CRUZ COUNTY *",2],["SANTA CRUZ, CITY OF",795]],"060871002001":[["SANTA CRUZ, CITY OF",433]],"060871002002":[["SANTA CRUZ, CITY OF",837]],"060871002003":[["SANTA CRUZ, CITY OF",762]],"060871003001":[["SANTA CRUZ COUNTY *",76],["SANTA CRUZ, CITY OF",522]],"060871003002":[["SANTA CRUZ, CITY OF",565]],"060871004001":[["SANTA CRUZ, CITY OF",110]],"060871004002":[["SANTA CRUZ, CITY OF",1]],"060871005001":[["SANTA CRUZ, CITY OF",1103]],"060871005002":[["SANTA CRUZ COUNTY *",23],["SANTA CRUZ, CITY OF",798]],"060871006001":[["SANTA CRUZ, CITY OF",413]],"060871006002":[["SANTA CRUZ, CITY OF",771]],"060871007001":[["SANTA CRUZ, CITY OF",285]],"060871007002":[["SANTA CRUZ, CITY OF",244]],"060871008011":[["SANTA CRUZ, CITY OF",450]],"060871008012":[["SANTA CRUZ, CITY OF",413]],"060871008021":[["SANTA CRUZ, CITY OF",543]],"060871008022":[["SANTA CRUZ, CITY OF",461]],"060871009001":[["SANTA CRUZ, CITY OF",563]],"060871009002":[["SANTA CRUZ COUNTY *",7],["SANTA CRUZ, CITY OF",579]],"060871009003":[["SANTA CRUZ, CITY OF",474]],"060871010011":[["SANTA CRUZ, CITY OF",376]],"060871010012":[["SANTA CRUZ, CITY OF",488]],"060871010021":[["SANTA CRUZ, CITY OF",194]],"060871010022":[["SANTA CRUZ, CITY OF",248]],"060871010023":[["SANTA CRUZ, CITY OF",214]],"060871011001":[["SANTA CRUZ, CITY OF",735]],"060871011002":[["SANTA CRUZ, CITY OF",603]],"060871011003":[["SANTA CRUZ, CITY OF",643]],"060871012001":[["SANTA CRUZ, CITY OF",1055]],"060871012002":[["SANTA CRUZ COUNTY *",10],["SANTA CRUZ, CITY OF",36]],"060871101011":[["SANTA CRUZ COUNTY *",43],["WATSONVILLE, CITY OF",706]],"060871101021":[["WATSONVILLE, CITY OF",299]],"060871101022":[["WATSONVILLE, CITY OF",952]],"060871102011":[["WATSONVILLE, CITY OF",646]],"060871102021":[["WATSONVILLE, CITY OF",327]],"060871102022":[["WATSONVILLE, CITY OF",412]],"060871102023":[["SANTA CRUZ COUNTY *",22],["WATSONVILLE, CITY OF",331]],"060871103011":[["WATSONVILLE, CITY OF",199]],"060871103012":[["WATSONVILLE, CITY OF",335]],"060871103021":[["WATSONVILLE, CITY OF",239]],"060871103022":[["WATSONVILLE, CITY OF",198]],"060871104011":[["WATSONVILLE, CITY OF",246]],"060871104012":[["SANTA CRUZ COUNTY *",3],["WATSONVILLE, CITY OF",221]],"060871104021":[["WATSONVILLE, CITY OF",178]],"060871104022":[["WATSONVILLE, CITY OF",425]],"060871104023":[["WATSONVILLE, CITY OF",390]],"060871105031":[["WATSONVILLE, CITY OF",374]],"060871105032":[["WATSONVILLE, CITY OF",309]],"060871105041":[["WATSONVILLE, CITY OF",556]],"060871105051":[["WATSONVILLE, CITY OF",430]],"060871105052":[["WATSONVILLE, CITY OF",410]],"060871105061":[["WATSONVILLE, CITY OF",422]],"060871105062":[["WATSONVILLE, CITY OF",348]],"060871106011":[["WATSONVILLE, CITY OF",646]],"060871106012":[["SANTA CRUZ COUNTY *",85],["WATSONVILLE, CITY OF",324]],"060871106021":[["WATSONVILLE, CITY OF",500]],"060871107001":[["SANTA CRUZ COUNTY *",515],["WATSONVILLE, CITY OF",54]],"060871107002":[["SANTA CRUZ COUNTY *",219],["WATSONVILLE, CITY OF",20]],"060871202001":[["SANTA CRUZ COUNTY *",576]],"060871202002":[["SANTA CRUZ COUNTY *",538]],"060871202003":[["SANTA CRUZ COUNTY *",403]],"060871203011":[["SANTA CRUZ COUNTY *",609]],"060871203012":[["SANTA CRUZ COUNTY *",695]],"060871203013":[["SANTA CRUZ COUNTY *",519]],"060871203021":[["SANTA CRUZ COUNTY *",494]],"060871203022":[["SANTA CRUZ COUNTY *",620]],"060871204001":[["SANTA CRUZ COUNTY *",584]],"060871204002":[["SANTA CRUZ COUNTY *",396]],"060871204003":[["SANTA CRUZ COUNTY *",649]],"060871204004":[["SANTA CRUZ COUNTY *",470]],"060871205001":[["SANTA CRUZ COUNTY *",977]],"060871205002":[["SANTA CRUZ COUNTY *",597]],"060871205003":[["SANTA CRUZ COUNTY *",789]],"060871206001":[["SANTA CRUZ COUNTY *",927]],"060871206002":[["SANTA CRUZ COUNTY *",933]],"060871207001":[["SANTA CRUZ COUNTY *",588]],"060871207002":[["SANTA CRUZ COUNTY *",756]],"060871207003":[["SANTA CRUZ COUNTY *",442],["SANTA CRUZ, CITY OF",1]],"060871208001":[["SANTA CRUZ COUNTY *",111]],"060871208002":[["SANTA CRUZ COUNTY *",519]],"060871208003":[["SANTA CRUZ COUNTY *",451],["SANTA CRUZ, CITY OF",94]],"060871209011":[["SANTA CRUZ COUNTY *",611]],"060871209012":[["SANTA CRUZ COUNTY *",19]],"060871209022":[["SANTA CRUZ COUNTY *",36]],"060871210001":[["SANTA CRUZ COUNTY *",579]],"060871210002":[["SANTA CRUZ COUNTY *",701]],"060871211001":[["SANTA CRUZ COUNTY *",272]],"060871211002":[["SANTA CRUZ COUNTY *",876]],"060871212001":[["SANTA CRUZ COUNTY *",340]],"060871212002":[["SANTA CRUZ COUNTY *",508],["SANTA CRUZ, CITY OF",389]],"060871212003":[["SANTA CRUZ COUNTY *",220]],"060871213001":[["SANTA CRUZ COUNTY *",140]],"060871213002":[["SANTA CRUZ COUNTY *",580]],"060871213003":[["SANTA CRUZ COUNTY *",455]],"060871214011":[["SANTA CRUZ COUNTY *",313]],"060871214012":[["SANTA CRUZ COUNTY *",529],["SANTA CRUZ, CITY OF",1]],"060871214021":[["SANTA CRUZ COUNTY *",611]],"060871214022":[["SANTA CRUZ COUNTY *",568]],"060871214031":[["SANTA CRUZ COUNTY *",446]],"060871214032":[["SANTA CRUZ COUNTY *",668]],"060871215011":[["SANTA CRUZ COUNTY *",421]],"060871215012":[["SANTA CRUZ COUNTY *",561]],"060871215013":[["SANTA CRUZ COUNTY *",443],["SANTA CRUZ, CITY OF",1]],"060871215021":[["SANTA CRUZ COUNTY *",561]],"060871216011":[["SANTA CRUZ COUNTY *",762]],"060871216012":[["SANTA CRUZ COUNTY *",816]],"060871216021":[["SANTA CRUZ COUNTY *",318]],"060871216022":[["SANTA CRUZ COUNTY *",560]],"060871217021":[["SANTA CRUZ COUNTY *",407]],"060871217022":[["SANTA CRUZ COUNTY *",439]],"060871220011":[["SANTA CRUZ COUNTY *",821]],"060871220012":[["SANTA CRUZ COUNTY *",1015]],"060871220021":[["SANTA CRUZ COUNTY *",1349]],"060871220041":[["SANTA CRUZ COUNTY *",698]],"060871220042":[["SANTA CRUZ COUNTY *",368]],"060871220051":[["SANTA CRUZ COUNTY *",904]],"060871220052":[["SANTA CRUZ COUNTY *",527]],"060871221001":[["SANTA CRUZ COUNTY *",861]],"060871221002":[["SANTA CRUZ COUNTY *",729]],"060871222021":[["SANTA CRUZ COUNTY *",975]],"060871222031":[["SANTA CRUZ COUNTY *",1063]],"060871222032":[["SANTA CRUZ COUNTY *",559]],"060871222041":[["SANTA CRUZ COUNTY *",355]],"060871222042":[["SANTA CRUZ COUNTY *",676]],"060871222051":[["SANTA CRUZ COUNTY *",837]],"060871222052":[["SANTA CRUZ COUNTY *",447]],"060871222053":[["SANTA CRUZ COUNTY *",760]],"060871223001":[["SANTA CRUZ COUNTY *",370]],"060871223002":[["SANTA CRUZ COUNTY *",453]],"060871223003":[["SANTA CRUZ COUNTY *",840]],"060871224011":[["SANTA CLARA COUNTY*",1],["SANTA CRUZ COUNTY *",916]],"060871224021":[["SANTA CRUZ COUNTY *",713]],"060871224022":[["SANTA CRUZ COUNTY *",911]],"060871225001":[["SANTA CRUZ COUNTY *",394]],"060871225002":[["SANTA CRUZ COUNTY *",143],["WATSONVILLE, CITY OF",16]],"060871225003":[["SANTA CRUZ COUNTY *",455]],"060871225004":[["SANTA CRUZ COUNTY *",385]],"060871231001":[["SANTA CRUZ COUNTY *",378]],"060871231002":[["SANTA CRUZ COUNTY *",379],["WATSONVILLE, CITY OF",2]],"060871233001":[["SANTA CRUZ COUNTY *",470]],"061070009011":[["VISALIA, CITY OF",1]],"061070010051":[["VISALIA, CITY OF",1025]],"061070010061":[["VISALIA, CITY OF",299]],"061070010062":[["VISALIA, CITY OF",283]],"061070010063":[["VISALIA, CITY OF",719]],"061070010064":[["VISALIA, CITY OF",429]],"061070010065":[["VISALIA, CITY OF",220]],"061070010071":[["VISALIA, CITY OF",717]],"061070010072":[["VISALIA, CITY OF",820]],"061070010081":[["VISALIA, CITY OF",865]],"061070010082":[["VISALIA, CITY OF",912]],"061070010091":[["VISALIA, CITY OF",397]],"061070010092":[["VISALIA, CITY OF",624]],"061070010101":[["VISALIA, CITY OF",380]],"061070010102":[["VISALIA, CITY OF",585]],"061070010111":[["VISALIA, CITY OF",602]],"061070010112":[["VISALIA, CITY OF",1020]],"061070010113":[["VISALIA, CITY OF",605]],"061070010121":[["VISALIA, CITY OF",577]],"061070010122":[["VISALIA, CITY OF",637]],"061070010123":[["VISALIA, CITY OF",679]],"061070010124":[["VISALIA, CITY OF",798]],"061070011011":[["VISALIA, CITY OF",263]],"061070011012":[["VISALIA, CITY OF",176]],"061070011021":[["VISALIA, CITY OF",535]],"061070011022":[["VISALIA, CITY OF",438]],"061070012001":[["VISALIA, CITY OF",326]],"061070013031":[["VISALIA, CITY OF",512]],"061070013032":[["VISALIA, CITY OF",465]],"061070013033":[["VISALIA, CITY OF",623]],"061070013041":[["VISALIA, CITY OF",270]],"061070013042":[["VISALIA, CITY OF",463]],"061070013051":[["VISALIA, CITY OF",121]],"061070013052":[["VISALIA, CITY OF",504]],"061070013061":[["VISALIA, CITY OF",570]],"061070013062":[["VISALIA, CITY OF",336]],"061070013063":[["VISALIA, CITY OF",579]],"061070017011":[["VISALIA, CITY OF",239]],"061070017012":[["VISALIA, CITY OF",237]],"061070017013":[["VISALIA, CITY OF",437]],"061070017014":[["VISALIA, CITY OF",360]],"061070017015":[["VISALIA, CITY OF",483]],"061070017031":[["VISALIA, CITY OF",708]],"061070017032":[["VISALIA, CITY OF",689]],"061070017033":[["VISALIA, CITY OF",636]],"061070017034":[["VISALIA, CITY OF",625]],"061070017051":[["VISALIA, CITY OF",428]],"061070017052":[["VISALIA, CITY OF",525]],"061070017061":[["VISALIA, CITY OF",851]],"061070017062":[["VISALIA, CITY OF",660]],"061070018001":[["VISALIA, CITY OF",313]],"061070018002":[["VISALIA, CITY OF",621]],"061070018003":[["VISALIA, CITY OF",355]],"061070018004":[["VISALIA, CITY OF",364]],"061070019011":[["VISALIA, CITY OF",475]],"061070019012":[["VISALIA, CITY OF",501]],"061070019013":[["VISALIA, CITY OF",284]],"061070019021":[["VISALIA, CITY OF",257]],"061070019022":[["VISALIA, CITY OF",310]],"061070019023":[["VISALIA, CITY OF",503]],"061070019024":[["VISALIA, CITY OF",347]],"061070020021":[["VISALIA, CITY OF",309]],"061070020022":[["VISALIA, CITY OF",368]],"061070020023":[["VISALIA, CITY OF",450]],"061070020024":[["VISALIA, CITY OF",399]],"061070020031":[["VISALIA, CITY OF",393]],"061070020032":[["VISALIA, CITY OF",340]],"061070020033":[["VISALIA, CITY OF",268]],"061070020034":[["VISALIA, CITY OF",364]],"061070020035":[["VISALIA, CITY OF",392]],"061070020041":[["VISALIA, CITY OF",241]],"061070020042":[["VISALIA, CITY OF",856]],"061070020043":[["VISALIA, CITY OF",464]],"061070020061":[["VISALIA, CITY OF",445]],"061070020062":[["VISALIA, CITY OF",525]],"061070020063":[["VISALIA, CITY OF",488]],"061070020081":[["VISALIA, CITY OF",307]],"061070020082":[["VISALIA, CITY OF",249]],"061070020091":[["VISALIA, CITY OF",516]],"061070020092":[["VISALIA, CITY OF",615]],"061070020093":[["VISALIA, CITY OF",349]],"061070020101":[["VISALIA, CITY OF",807]],"061070020102":[["VISALIA, CITY OF",289]],"061070020103":[["VISALIA, CITY OF",592]],"061070020111":[["VISALIA, CITY OF",460]],"061070020112":[["VISALIA, CITY OF",405]]};
+
+function crsInfo(geoid) {
+  const arr = CRS_LOOKUP[geoid];
+  if (!arr || !arr.length) return { total: 0, entries: [] };
+  const total = arr.reduce((s, x) => s + x[1], 0);
+  return { total, entries: arr.map(x => ({ name: x[0], count: x[1] })) };
+}
+
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+let layers = { income:true, lowtakeup:true, outline:true, labels:false, crs:false };
+let thresholds = { pctSFHA:50, lmi:40, nfip:40 };
+const hlMode = 3; // High-risk = all 3 thresholds exceeded (driven entirely by Risk Thresholds panel)
+let choroMetric = 'pctSFHA'; // 'pctSFHA' or 'nfipSFHA'
+let currentCommunity = '';
+let currentBgData = [];
+let selectedBg = null;
+let geoFeatures = null; // Array of GeoJSON features with _data attached
+let currentView = 'map';
+let sortCol = 'pctSFHA';
+let sortDir = -1;
+
+/* Leaflet map (initialized once) */
+let leafletMap = null;
+
+/* ════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════ */
+function numOrNull(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === 'string' && (v.trim() === '' || v.trim().toUpperCase() === 'NA' || v.trim().toUpperCase() === 'N/A')) return null;
+  const n = +v;
+  return Number.isFinite(n) ? n : null;
+}
+
+// Normalize a raw CA_bg_tool.json feature's properties into a clean data object
+function normalizeBg(props) {
+  return {
+    geoid:             String(props.GEOID),
+    community:         props.Community,
+    population:        numOrNull(props.population) || 0,
+    structures:        numOrNull(props.residential_structure) || 0,
+    structuresSFHA:    numOrNull(props.residential_structure_SFHA) || 0,
+    structuresNonSFHA: numOrNull(props.residential_structure_nonSFHA) || 0,
+    pctSFHA:           numOrNull(props.Percent_residential_structure_SFHA) || 0,
+    nfipAll:           numOrNull(props.NFIP_takeup_residential),
+    nfipSFHA:          numOrNull(props.NFIP_takeup_residential_SFHA),     // null = NA (no structures in SFHA)
+    nfipNonSFHA:       numOrNull(props.NFIP_takeup_residential_NonSFHA),
+    lmi:               numOrNull(props.LMI) || 0,
+  };
+}
+
+function getVal(d, metric) {
+  if (metric === 'nfipSFHA') return d.nfipSFHA;
+  return d.pctSFHA;
+}
+function hasNfipSfhaData(d) { return d.nfipSFHA !== null && d.nfipSFHA !== undefined; }
+
+// Flags for the three risk thresholds, in priority order:
+// 1) % Structures in SFHA ≥ threshold   2) LMI ≥ threshold   3) NFIP take-up (SFHA) ≤ threshold
+function getFlags(d) {
+  const fSfha = d.pctSFHA >= thresholds.pctSFHA;
+  const fLmi  = d.lmi     >= thresholds.lmi;
+  const fNfip = hasNfipSfhaData(d) ? (d.nfipSFHA <= thresholds.nfip) : false;
+  return { fSfha, fLmi, fNfip };
+}
+function getRiskFactors(d) {
+  const { fSfha, fLmi, fNfip } = getFlags(d);
+  return (fSfha?1:0) + (fLmi?1:0) + (fNfip?1:0);
+}
+// Risk classification level: 3 = High (all 3 exceeded), 2 = Medium (exactly 2
+// exceeded AND % Structures in SFHA must be one of them — top-priority factor),
+// 1 = Watch (1 factor, or 2 factors that don't include SFHA share), 0 = Low risk.
+function getRiskLevel(d) {
+  const factors = getRiskFactors(d);
+  const { fSfha } = getFlags(d);
+  if (factors === 3) return 3;
+  if (factors === 2 && fSfha) return 2;
+  if (factors >= 1) return 1;
+  return 0;
+}
+function pct(v) { return (v === null || v === undefined) ? 'N/A' : v.toFixed(1) + '%'; }
+function fmt(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0)+'K';
+  return Math.round(n).toLocaleString();
+}
+function shortGeoid(geoid) { return geoid ? geoid.slice(-4) : ''; }
+
+/* Color scales */
+const SCHEMES = {
+  pctSFHA: ["#EAF2FB","#CBE0F5","#A9CCEE","#82B4E4","#5C9BD9","#3A82CB","#2769B4","#185792","#104573","#0B3355"],
+  nfipSFHA:["#E6F6F6","#BEE8E8","#98DDDD","#6DCBCB","#40B6B6","#259E9E","#1C8282","#146767","#0E4E4E","#083535"],
+};
+// makeColorScale — for nfipSFHA, LOW take-up (worse protection) should render dark,
+// so the scheme array is reversed for that metric ("invert").
+function makeColorScale(metric, data) {
+  const invert = metric === 'nfipSFHA';
+  const vals = data.map(d => getVal(d, metric)).filter(v => v !== null && v !== undefined);
+  if (!vals.length) return () => '#ccc';
+  const [lo, hi] = [d3.min(vals), d3.max(vals)];
+  const scheme = invert ? [...SCHEMES[metric]].reverse() : SCHEMES[metric];
+  return d3.scaleQuantize([lo === hi ? 0 : lo, hi || 1], scheme);
+}
+function gradCSS(metric) {
+  const invert = metric === 'nfipSFHA';
+  const s = invert ? [...SCHEMES[metric]].reverse() : SCHEMES[metric];
+  return `linear-gradient(to right, ${s[0]}, ${s[s.length-1]})`;
+}
+function metricLabel(m) {
+  return { pctSFHA:'% Structures in SFHA', nfipSFHA:'NFIP take-up rate (in SFHA)' }[m] || m;
+}
+
+/* ════════════════════════════════════════════
+   LEAFLET MAP INITIALIZATION
+════════════════════════════════════════════ */
+
+// Active Leaflet layer references (cleared and rebuilt on community change)
+let bgLayer      = null;  // L.geoJSON for block group fills
+let outlineLayer = null;  // L.geoJSON for high-risk dashed borders
+let dotLayer     = null;  // L.layerGroup for income/take-up dots
+let labelLayer   = null;  // L.layerGroup for block group labels
+let boundaryLayer= null;  // L.geoJSON for county boundary
+let crsLayer     = null;  // L.geoJSON for Community Rating System cross-hatch
+
+function initLeafletMap() {
+  if (leafletMap) return;
+
+  leafletMap = L.map('leaflet-map', {
+    center: [36.7, -119.4],
+    zoom: 6,
+    zoomControl: true,
+    attributionControl: true,
+    preferCanvas: false, // keep SVG renderer so path styles + patterns work
+  });
+
+  // CartoDB Positron — clean light basemap with roads and labels
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(leafletMap);
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// Inject a reusable diagonal-hatch <pattern> into Leaflet's SVG renderer so
+// CRS-participating block groups can be drawn cross-hatched rather than filled.
+function ensureHatchPattern() {
+  if (!leafletMap) return;
+  const pane = leafletMap.getPane('overlayPane');
+  const svg = pane && pane.querySelector('svg');
+  if (!svg) return;
+  if (svg.querySelector('#crsHatchPattern')) return;
+  let defs = svg.querySelector('defs');
+  if (!defs) {
+    defs = document.createElementNS(SVG_NS, 'defs');
+    svg.insertBefore(defs, svg.firstChild);
+  }
+  const pattern = document.createElementNS(SVG_NS, 'pattern');
+  pattern.setAttribute('id', 'crsHatchPattern');
+  pattern.setAttribute('width', '6');
+  pattern.setAttribute('height', '6');
+  pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+  pattern.setAttribute('patternTransform', 'rotate(45)');
+  const line = document.createElementNS(SVG_NS, 'line');
+  line.setAttribute('x1', '0'); line.setAttribute('y1', '0');
+  line.setAttribute('x2', '0'); line.setAttribute('y2', '6');
+  line.setAttribute('stroke', '#6B4A9E');
+  line.setAttribute('stroke-width', '2.5');
+  pattern.appendChild(line);
+  defs.appendChild(pattern);
+}
+
+/* ════════════════════════════════════════════
+   OVERLAY — built with native L.geoJSON
+   Leaflet automatically repositions its SVG pane
+   on every pan/zoom, so layers stay locked to the map.
+════════════════════════════════════════════ */
+
+function clearAllLayers() {
+  [bgLayer, outlineLayer, dotLayer, labelLayer, boundaryLayer, crsLayer].forEach(l => {
+    if (l) leafletMap.removeLayer(l);
+  });
+  bgLayer = outlineLayer = dotLayer = labelLayer = boundaryLayer = crsLayer = null;
+}
+
+// Return the geographic centroid [lat, lng] of a GeoJSON geometry
+function geoCentroid(geometry) {
+  let coords = [];
+  if (geometry.type === 'Polygon') coords = geometry.coordinates[0];
+  else if (geometry.type === 'MultiPolygon') coords = geometry.coordinates[0][0];
+  if (!coords.length) return null;
+  const lons = coords.map(c => c[0]);
+  const lats = coords.map(c => c[1]);
+  return [
+    (Math.min(...lats) + Math.max(...lats)) / 2,
+    (Math.min(...lons) + Math.max(...lons)) / 2,
+  ];
+}
+
+// Approximate pixel width of a feature at current zoom (used for label visibility)
+function geoPixelWidth(geometry) {
+  if (!leafletMap) return 0;
+  let coords = [];
+  if (geometry.type === 'Polygon') coords = geometry.coordinates[0];
+  else if (geometry.type === 'MultiPolygon') coords = geometry.coordinates[0][0];
+  if (!coords.length) return 0;
+  const lons = coords.map(c => c[0]);
+  const lats = coords.map(c => c[1]);
+  const midLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const p0 = leafletMap.latLngToContainerPoint([midLat, Math.min(...lons)]);
+  const p1 = leafletMap.latLngToContainerPoint([midLat, Math.max(...lons)]);
+  return Math.abs(p1.x - p0.x);
+}
+
+function redrawOverlay() {
+  if (!leafletMap || !geoFeatures) return;
+
+  clearAllLayers();
+
+  const colorScale = makeColorScale(choroMetric, currentBgData);
+  const fc = { type: 'FeatureCollection', features: geoFeatures };
+  const NODATA_COLOR = '#D7DBE0';
+
+  /* ── 1. Block group choropleth fills ── */
+  bgLayer = L.geoJSON(fc, {
+    style: feat => {
+      const d = feat._data;
+      if (!d) return { fillOpacity: 0, stroke: false };
+      const isSelected = selectedBg === d.geoid;
+      const val = getVal(d, choroMetric);
+      const noData = (val === null || val === undefined);
+      return {
+        fillColor:   noData ? NODATA_COLOR : colorScale(val),
+        fillOpacity: noData ? 0.5 : 0.72,
+        color:       isSelected ? '#0E2A47' : 'rgba(255,255,255,0.75)',
+        weight:      isSelected ? 2.5 : 0.8,
+        opacity:     1,
+      };
+    },
+    onEachFeature: (feat, layer) => {
+      const d = feat._data;
+      if (!d) return;
+      layer.on({
+        mouseover: e => { showTooltip(e.originalEvent, d); layer.setStyle({ fillOpacity: 0.9 }); },
+        mousemove: e => moveTooltip(e.originalEvent),
+        mouseout:  e => { hideTooltip(); bgLayer && bgLayer.resetStyle(layer); },
+        click:     e => {
+          selectedBg = d.geoid;
+          refreshBgStyles();
+          selectBg(d);
+          updateTopBgs();
+        },
+      });
+    },
+  }).addTo(leafletMap);
+
+  /* ── 2. High-risk dashed outlines ── */
+  if (layers.outline) {
+    const highRiskFeatures = geoFeatures.filter(f => f._data && getRiskFactors(f._data) >= hlMode);
+    if (highRiskFeatures.length) {
+      outlineLayer = L.geoJSON(
+        { type:'FeatureCollection', features: highRiskFeatures },
+        {
+          style: { fill: false, color: '#C0392B', weight: 2.5, dashArray: '6,4', opacity: 1 },
+          interactive: false,
+        }
+      ).addTo(leafletMap);
+    }
+  }
+
+  /* ── 3. Community boundary ── */
+  if (geoFeatures._boundary) {
+    boundaryLayer = L.geoJSON(geoFeatures._boundary, {
+      style: { fill: false, color: '#0E2A47', weight: 3, dashArray: null, opacity: 0.9 },
+      interactive: false,
+    }).addTo(leafletMap);
+  }
+
+  /* ── 4. Community Rating System cross-hatch overlay ── */
+  if (layers.crs && crsGeoData) {
+    ensureHatchPattern();
+    const crsFeatures = filterCrsFeaturesForCommunity(crsGeoData, currentCommunity);
+    if (crsFeatures.length) {
+      crsLayer = L.geoJSON(
+        { type: 'FeatureCollection', features: crsFeatures },
+        {
+          style: { fillColor: 'url(#crsHatchPattern)', fill: true, fillOpacity: 1, color: '#6B4A9E', weight: 1.2, opacity: 0.85 },
+          interactive: false,
+        }
+      ).addTo(leafletMap);
+    }
+  }
+
+  /* ── 5. Income + low take-up dots and block group labels (DivIcon markers) ── */
+  const markers = [];
+
+  geoFeatures.forEach(feat => {
+    if (!feat._data || !feat.geometry) return;
+    const d    = feat._data;
+    const ctr  = geoCentroid(feat.geometry);
+    if (!ctr) return;
+
+    // LMI dot
+    if (layers.income && d.lmi >= thresholds.lmi) {
+      markers.push(L.circleMarker(ctr, {
+        radius: 4, color: 'white', weight: 1,
+        fillColor: '#1B8E8E', fillOpacity: 1,
+        interactive: false,
+        pane: 'markerPane',
+      }));
+    }
+
+    // Low NFIP take-up dot (slightly offset east)
+    if (layers.lowtakeup && hasNfipSfhaData(d) && d.nfipSFHA <= thresholds.nfip) {
+      const offsetLng = ctr[1] + 0.005;
+      markers.push(L.circleMarker([ctr[0], offsetLng], {
+        radius: 4, color: 'white', weight: 1,
+        fillColor: '#E07B2A', fillOpacity: 1,
+        interactive: false,
+        pane: 'markerPane',
+      }));
+    }
+
+    // Block group label
+    if (layers.labels) {
+      const bw = geoPixelWidth(feat.geometry);
+      if (bw >= 22) {
+        markers.push(L.marker(ctr, {
+          icon: L.divIcon({
+            className: 'bg-label-div',
+            html: shortGeoid(d.geoid),
+            iconSize: null,
+            iconAnchor: [12, 6],
+          }),
+          interactive: false,
+          pane: 'tooltipPane', // above vectors, below popups
+        }));
+      }
+    }
+  });
+
+  dotLayer = L.layerGroup(markers).addTo(leafletMap);
+
+  /* ── Update legend UI ── */
+  const grad = gradCSS(choroMetric);
+  document.getElementById('legend-grad').style.background = grad;
+  document.getElementById('legend-title').textContent = metricLabel(choroMetric);
+  document.getElementById('sidebar-legend-ramp').style.background = grad;
+  document.getElementById('sidebar-legend-label').textContent = metricLabel(choroMetric);
+  document.getElementById('choro-legend').style.display = 'block';
+  const anyNoData = currentBgData.some(d => getVal(d, choroMetric) === null || getVal(d, choroMetric) === undefined);
+  document.getElementById('legend-nodata-row').style.display = (choroMetric === 'nfipSFHA' && anyNoData) ? 'flex' : 'none';
+  document.getElementById('leg-income').style.display     = layers.income    ? 'flex' : 'none';
+  document.getElementById('leg-lowtakeup').style.display   = layers.lowtakeup? 'flex' : 'none';
+  document.getElementById('leg-outline').style.display     = layers.outline  ? 'flex' : 'none';
+  document.getElementById('leg-crs').style.display          = layers.crs     ? 'flex' : 'none';
+}
+
+// Efficiently restyle block group paths without full rebuild (used when selection changes)
+function refreshBgStyles() {
+  if (!bgLayer) return;
+  const colorScale = makeColorScale(choroMetric, currentBgData);
+  const NODATA_COLOR = '#D7DBE0';
+  bgLayer.eachLayer(layer => {
+    const d = layer.feature && layer.feature._data;
+    if (!d) return;
+    const isSelected = selectedBg === d.geoid;
+    const val = getVal(d, choroMetric);
+    const noData = (val === null || val === undefined);
+    layer.setStyle({
+      fillColor:   noData ? NODATA_COLOR : colorScale(val),
+      fillOpacity: noData ? 0.5 : 0.72,
+      color:       isSelected ? '#0E2A47' : 'rgba(255,255,255,0.75)',
+      weight:      isSelected ? 2.5 : 0.8,
+    });
+  });
+}
+
+/* ════════════════════════════════════════════
+   TOOLTIP (with donut chart)
+════════════════════════════════════════════ */
+function renderDonut(svgId, inCount, outCount) {
+  const svg = document.getElementById(svgId);
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const w = 120, h = 120, cx = w/2, cy = h/2, rOuter = 52, rInner = 30;
+  const total = (inCount||0) + (outCount||0);
+
+  const g = document.createElementNS(SVG_NS, 'g');
+  g.setAttribute('transform', `translate(${cx},${cy})`);
+  svg.appendChild(g);
+
+  if (total <= 0) {
+    const circle = document.createElementNS(SVG_NS, 'circle');
+    circle.setAttribute('r', rOuter);
+    circle.setAttribute('fill', 'none');
+    circle.setAttribute('stroke', '#E2E6EB');
+    circle.setAttribute('stroke-width', rOuter - rInner);
+    g.appendChild(circle);
+  } else {
+    const dataset = [
+      { value: inCount||0,  color: '#1B5FA8' },
+      { value: outCount||0, color: '#26BFBF' },
+    ];
+    const pieGen = d3.pie().value(d => d.value).sort(null);
+    const arcGen = d3.arc().innerRadius(rInner).outerRadius(rOuter).padAngle(0.015);
+    pieGen(dataset).forEach((seg, i) => {
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('d', arcGen(seg));
+      path.setAttribute('fill', dataset[i].color);
+      g.appendChild(path);
+    });
+  }
+
+  const pctIn = total > 0 ? Math.round((inCount/total)*100) : 0;
+  const text = document.createElementNS(SVG_NS, 'text');
+  text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('dy', '0.05em');
+  text.setAttribute('font-size', '19');
+  text.setAttribute('font-weight', '800');
+  text.setAttribute('font-family', "'DM Mono', monospace");
+  text.setAttribute('fill', '#0E2A47');
+  text.textContent = pctIn + '%';
+  g.appendChild(text);
+  const sub = document.createElementNS(SVG_NS, 'text');
+  sub.setAttribute('text-anchor', 'middle');
+  sub.setAttribute('dy', '1.35em');
+  sub.setAttribute('font-size', '8.5');
+  sub.setAttribute('font-family', "'Inter', sans-serif");
+  sub.setAttribute('fill', '#6b7280');
+  sub.textContent = 'in SFHA';
+  g.appendChild(sub);
+}
+
+function setHBar(fillId, value, maxValue) {
+  const el = document.getElementById(fillId);
+  if (value === null || value === undefined) { el.style.width = '0%'; return; }
+  el.style.width = Math.max(2, Math.min(100, (value/maxValue)*100)) + '%';
+}
+
+function renderCrsBlock(container, geoid) {
+  const info = crsInfo(geoid);
+  if (!info.entries.length) {
+    container.innerHTML = `<span class="tt-crs-empty">Not in a CRS-rated community</span>`;
+    return;
+  }
+  container.innerHTML = info.entries.map(e => `
+    <div class="tt-crs-row"><span class="tt-crs-name">${e.name}</span><span class="tt-crs-count">${e.count.toLocaleString()} structures</span></div>
+  `).join('');
+}
+
+function showTooltip(event, d) {
+  const tt = document.getElementById('tooltip');
+
+  document.getElementById('tt-name').innerHTML = 'Block Group ' + shortGeoid(d.geoid) + '<span class="tt-header-sub">GEOID ' + d.geoid + '</span>';
+  document.getElementById('tt-community').textContent = d.community || '';
+
+  renderDonut('tt-pie', d.structuresSFHA, d.structuresNonSFHA);
+  document.getElementById('tt-pie-in').textContent  = (d.structuresSFHA||0).toLocaleString();
+  document.getElementById('tt-pie-out').textContent = (d.structuresNonSFHA||0).toLocaleString();
+
+  document.getElementById('tt-nfip-all').textContent     = pct(d.nfipAll);
+  document.getElementById('tt-nfip-sfha').textContent    = pct(d.nfipSFHA);
+  document.getElementById('tt-nfip-nonsfha').textContent = pct(d.nfipNonSFHA);
+  document.getElementById('tt-lmi').textContent          = pct(d.lmi);
+
+  setHBar('tt-bar-nfip-all',     d.nfipAll,     100);
+  setHBar('tt-bar-nfip-sfha',    d.nfipSFHA,    100);
+  setHBar('tt-bar-nfip-nonsfha', d.nfipNonSFHA, 100);
+  setHBar('tt-bar-lmi',          d.lmi,         100);
+
+  document.getElementById('tt-structures').textContent = d.structures.toLocaleString();
+  document.getElementById('tt-pop').textContent         = d.population.toLocaleString();
+
+  renderCrsBlock(document.getElementById('tt-crs'), d.geoid);
+
+  tt.style.display = 'block';
+  moveTooltip(event);
+}
+function moveTooltip(event) {
+  const tt   = document.getElementById('tooltip');
+  const wrap = document.getElementById('map-container');
+  const rect = wrap.getBoundingClientRect();
+  let x = event.clientX - rect.left + 16;
+  let y = event.clientY - rect.top  + 16;
+  if (x + 500 > wrap.clientWidth)  x = event.clientX - rect.left - 516;
+  if (y + 380 > wrap.clientHeight) y = Math.max(4, event.clientY - rect.top - 390);
+  tt.style.left = x + 'px';
+  tt.style.top  = y + 'px';
+}
+function hideTooltip() { document.getElementById('tooltip').style.display = 'none'; }
+
+/* ════════════════════════════════════════════
+   BLOCK GROUP SPOTLIGHT
+════════════════════════════════════════════ */
+function selectBg(d) {
+  document.getElementById('spotlight-empty').style.display   = 'none';
+  document.getElementById('spotlight-content').style.display = 'block';
+  const level = getRiskLevel(d);
+  document.getElementById('sp-name').textContent = 'Block Group ' + shortGeoid(d.geoid);
+  document.getElementById('sp-sub').textContent  = `GEOID ${d.geoid} · ${d.community || ''}`;
+  document.getElementById('sp-pctsfha').textContent      = pct(d.pctSFHA);
+  document.getElementById('sp-nfipsfha').textContent     = pct(d.nfipSFHA);
+  document.getElementById('sp-nfipnonsfha').textContent  = pct(d.nfipNonSFHA);
+  document.getElementById('sp-lmi').textContent          = pct(d.lmi);
+  document.getElementById('sp-structures').textContent      = d.structures.toLocaleString();
+  document.getElementById('sp-structures-sfha').textContent  = d.structuresSFHA.toLocaleString();
+  document.getElementById('sp-pop').textContent          = d.population.toLocaleString();
+  document.getElementById('bar-pctsfha').style.width     = Math.min(100, d.pctSFHA) + '%';
+  document.getElementById('bar-nfipsfha').style.width    = Math.min(100, d.nfipSFHA||0) + '%';
+  document.getElementById('bar-nfipnonsfha').style.width = Math.min(100, d.nfipNonSFHA||0) + '%';
+  document.getElementById('bar-lmi').style.width         = Math.min(100, d.lmi) + '%';
+
+  const badge = document.getElementById('sp-badge');
+  badge.innerHTML = level === 3
+    ? `<span class="risk-badge risk-high">⚠ High risk — all 3 factors</span>`
+    : level === 2
+    ? `<span class="risk-badge risk-med">◉ Medium risk — 2 factors</span>`
+    : level === 1
+    ? `<span class="risk-badge risk-watch">✓ Watch — 1 factor</span>`
+    : `<span class="risk-badge risk-low">✓ Low risk</span>`;
+
+  renderCrsBlock(document.getElementById('sp-crs'), d.geoid);
+}
+
+/* ════════════════════════════════════════════
+   METRICS + TOP BLOCK GROUPS
+════════════════════════════════════════════ */
+function updateMetrics() {
+  const high = currentBgData.filter(d => getRiskFactors(d) >= 3);
+  document.getElementById('m-high').textContent = currentBgData.length ? high.length : '—';
+  document.getElementById('m-rate').textContent = currentBgData.length
+    ? d3.mean(currentBgData, d => d.pctSFHA).toFixed(1) + '%' : '—';
+  const pop = high.reduce((s,d) => s + d.population, 0);
+  document.getElementById('m-pop').textContent  = currentBgData.length ? fmt(pop) : '—';
+
+  // Community Rating System summary for the selected community
+  const crsEl = document.getElementById('m-crs');
+  const crsSubEl = document.getElementById('m-crs-sub');
+  if (!currentBgData.length) {
+    crsEl.textContent = '—';
+    crsEl.className = 'metric-value mv-white metric-value-sm';
+    crsSubEl.textContent = 'Select a community';
+  } else {
+    let totalCrsStructures = 0;
+    const names = new Set();
+    currentBgData.forEach(d => {
+      const info = crsInfo(d.geoid);
+      totalCrsStructures += info.total;
+      info.entries.forEach(e => names.add(e.name));
+    });
+    if (names.size) {
+      crsEl.textContent = `${fmt(totalCrsStructures)} structures`;
+      crsEl.className = 'metric-value mv-crs-yes metric-value-sm';
+      crsSubEl.textContent = `${names.size} CRS-rated ${names.size!==1?'communities':'community'}`;
+    } else {
+      crsEl.textContent = 'None found';
+      crsEl.className = 'metric-value mv-crs-no metric-value-sm';
+      crsSubEl.textContent = 'No CRS-rated communities in this area';
+    }
+  }
+}
+
+function updateTopBgs() {
+  const container = document.getElementById('top-bgs');
+  if (!container) return;
+  if (!currentBgData.length) {
+    container.innerHTML = '<div class="empty-state"><div class="es-icon">📊</div><span>Select a community</span></div>';
+    return;
+  }
+  const sorted = [...currentBgData].sort((a,b) => {
+    const lvlDiff = getRiskLevel(b) - getRiskLevel(a);
+    if (lvlDiff !== 0) return lvlDiff;
+    if (b.pctSFHA !== a.pctSFHA) return b.pctSFHA - a.pctSFHA;
+    if (b.lmi !== a.lmi) return b.lmi - a.lmi;
+    return (a.nfipSFHA ?? 100) - (b.nfipSFHA ?? 100);
+  }).slice(0,8);
+  container.innerHTML = '';
+  sorted.forEach((d, i) => {
+    const level  = getRiskLevel(d);
+    const cls    = level===3?'score-red':level===2?'score-amber':level===1?'score-teal':'score-green';
+    const label  = { 3:'High', 2:'Medium', 1:'Watch', 0:'Low' }[level];
+    const div = document.createElement('div');
+    div.className = 'bg-item' + (selectedBg===d.geoid ? ' selected' : '');
+    div.innerHTML = `<span class="bg-rank">#${i+1}</span><span class="bg-code">${shortGeoid(d.geoid)}<span class="bg-sub">${d.community || ''}</span></span><span class="bg-score ${cls}">${label}</span>`;
+    div.onclick = () => {
+      selectedBg = d.geoid;
+      refreshBgStyles();
+      selectBg(d);
+      updateTopBgs();
+      // Pan map to the selected block group
+      if (bgLayer) {
+        bgLayer.eachLayer(layer => {
+          if (layer.feature && layer.feature._data && layer.feature._data.geoid === d.geoid) {
+            leafletMap.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 14 });
+          }
+        });
+      }
+    };
+    container.appendChild(div);
+  });
+}
+
+/* ════════════════════════════════════════════
+   LAYER TOGGLE
+════════════════════════════════════════════ */
+function toggleLayer(name) {
+  layers[name] = !layers[name];
+  const colorMap = { income:'on-teal', lowtakeup:'on-amber', outline:'on-red', labels:'on-navy', crs:'on-purple' };
+  const tog = document.getElementById('tog-'+name);
+  if (tog) tog.className = 'toggle' + (layers[name] ? ' ' + colorMap[name] : '');
+
+  if (name === 'crs' && layers.crs) {
+    loadCrsData().then(() => redrawOverlay());
+  } else {
+    redrawOverlay();
+  }
+}
+
+/* ════════════════════════════════════════════
+   DATA LOADING — CA_bg_tool.json (block group geography + attributes)
+   and CRS_CA.json (Community Rating System overlay geometry)
+════════════════════════════════════════════ */
+let bgGeoCache = null;      // cached full CA_bg_tool.json FeatureCollection
+let bgGeoLoadPromise = null;
+let crsGeoData = null;      // cached full CRS_CA.json (array of features)
+let crsGeoLoadPromise = null;
+
+function fetchBgGeoJSON() {
+  if (bgGeoCache) return Promise.resolve(bgGeoCache);
+  if (bgGeoLoadPromise) return bgGeoLoadPromise;
+  bgGeoLoadPromise = fetch('./CA_bg_tool.json').then(r => r.json()).then(gj => { bgGeoCache = gj; return gj; });
+  return bgGeoLoadPromise;
+}
+
+function loadCrsData() {
+  if (crsGeoData) return Promise.resolve(crsGeoData);
+  if (crsGeoLoadPromise) return crsGeoLoadPromise;
+  crsGeoLoadPromise = fetch('./CRS_CA.json')
+    .then(r => r.json())
+    .then(gj => {
+      crsGeoData = (gj && gj.features) ? gj.features : (Array.isArray(gj) ? gj : []);
+      return crsGeoData;
+    })
+    .catch(err => {
+      console.warn('Could not load CRS_CA.json', err);
+      crsGeoData = [];
+      return crsGeoData;
+    });
+  return crsGeoLoadPromise;
+}
+
+// CRS_CA.json may or may not be scoped to a single community. If its features
+// carry a recognizable community/county field, filter to the selected
+// community; otherwise render everything that was returned.
+function filterCrsFeaturesForCommunity(features, communityKey) {
+  if (!features || !features.length) return [];
+  const meta = COMMUNITY_META[communityKey];
+  if (!meta) return features;
+  const sample = features[0].properties || {};
+  const candidateKeys = ['Community', 'COMMUNITY', 'County', 'COUNTY', 'community'];
+  const key = candidateKeys.find(k => k in sample);
+  if (!key) return features;
+  return features.filter(f => f.properties && String(f.properties[key]).trim() === meta.label);
+}
+
+/* ════════════════════════════════════════════
+   LOAD GEOGRAPHY from CA_bg_tool.json
+════════════════════════════════════════════ */
+function loadCommunityMap(communityKey) {
+  const meta = COMMUNITY_META[communityKey];
+  if (!meta) return;
+
+  document.getElementById('no-community').classList.add('hidden');
+  document.getElementById('map-loading').classList.add('show');
+  document.getElementById('map-loading').innerHTML = `<div class="spinner"></div><span>Loading block group geography…</span>`;
+  document.getElementById('choro-legend').style.display = 'none';
+
+  // Fly Leaflet map to the community
+  leafletMap.flyTo(meta.center, meta.zoom, { duration: 1.0 });
+
+  Promise.all([
+    fetchBgGeoJSON(),
+    fetch('./Community_Outline.json').then(r => r.json()).catch(() => null),
+    layers.crs ? loadCrsData() : Promise.resolve(null),
+  ])
+  .then(([bgGeo, boundaryData]) => {
+    const features = (bgGeo.features || []).filter(f => {
+      const c = f.properties && f.properties.Community;
+      return c && String(c).trim() === meta.label;
+    });
+
+    features.forEach(f => { f._data = normalizeBg(f.properties); });
+
+    geoFeatures = features;
+    currentBgData = features.map(f => f._data);
+
+    // Attach boundary as a property on the array
+    if (boundaryData) {
+      const boundary = boundaryData.features
+        ? boundaryData.features.find(f => String(f.properties.fips) === String(meta.fips))
+        : null;
+      geoFeatures._boundary = boundary || null;
+    }
+
+    document.getElementById('map-loading').classList.remove('show');
+    redrawOverlay();
+    updateMetrics();
+    updateTopBgs();
+  })
+  .catch(err => {
+    // If external files aren't present, show placeholder message
+    document.getElementById('map-loading').innerHTML =
+      `<div style="text-align:center;padding:20px;">
+        <p style="color:var(--red);font-size:12px;margin-bottom:8px;">Could not load block group boundaries.</p>
+        <p style="color:var(--text2);font-size:11px;">Host CA_bg_tool.json alongside this file.<br>Data and metrics are still available in Table / Definitions views once loaded.</p>
+      </div>`;
+    console.warn(err);
+  });
+}
+
+/* ════════════════════════════════════════════
+   COMMUNITY CHANGE
+════════════════════════════════════════════ */
+function loadNonMapCommunityData(communityKey) {
+  const meta = COMMUNITY_META[communityKey];
+  if (!meta) return;
+  fetchBgGeoJSON().then(bgGeo => {
+    const features = (bgGeo.features || []).filter(f => {
+      const c = f.properties && f.properties.Community;
+      return c && String(c).trim() === meta.label;
+    });
+    features.forEach(f => { f._data = normalizeBg(f.properties); });
+    geoFeatures = features;
+    currentBgData = features.map(f => f._data);
+    updateMetrics();
+    renderCurrentNonMapView();
+  }).catch(err => console.warn(err));
+}
+
+document.getElementById('community-select').addEventListener('change', function() {
+  currentCommunity = this.value;
+  selectedBg = null;
+  geoFeatures = null;
+  currentBgData = [];
+  document.getElementById('spotlight-empty').style.display   = 'flex';
+  document.getElementById('spotlight-content').style.display = 'none';
+
+  const meta = COMMUNITY_META[currentCommunity];
+  if (!meta) {
+    document.getElementById('community-info').style.display = 'none';
+    document.getElementById('no-community').classList.remove('hidden');
+    document.getElementById('choro-legend').style.display   = 'none';
+    updateMetrics();
+    updateTopBgs();
+    return;
+  }
+
+  document.getElementById('ci-name').textContent   = meta.label;
+  document.getElementById('ci-detail').textContent = meta.detail;
+  document.getElementById('community-info').style.display = 'block';
+
+  if (currentView === 'map') {
+    loadCommunityMap(currentCommunity);
+  } else {
+    // Pre-load data; map will load when user switches back
+    loadNonMapCommunityData(currentCommunity);
+  }
+});
+
+/* ════════════════════════════════════════════
+   CHOROPLETH METRIC SWITCH
+════════════════════════════════════════════ */
+document.querySelectorAll('input[name="choro-metric"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    if (this.checked) {
+      choroMetric = this.value;
+      redrawOverlay();
+    }
+  });
+});
+
+/* ════════════════════════════════════════════
+   VIEW SWITCHING — uses display:none/block
+   Map is NEVER destroyed
+════════════════════════════════════════════ */
+function setView(v) {
+  currentView = v;
+
+  // Update tab buttons
+  ['map','table','chart'].forEach(n =>
+    document.getElementById('btn-'+n).classList.toggle('active', n===v)
+  );
+
+  const viewArea = document.getElementById('view-area');
+
+  if (v === 'map') {
+    document.getElementById('view-map').style.display   = 'contents';
+    document.getElementById('view-table').style.display = 'none';
+    document.getElementById('view-table').classList.remove('active');
+    document.getElementById('view-chart').style.display = 'none';
+    document.getElementById('view-chart').classList.remove('active');
+    viewArea.style.gridTemplateColumns = '1fr 280px';
+
+    // Tell Leaflet to re-measure its container size
+    if (leafletMap) {
+      setTimeout(() => {
+        leafletMap.invalidateSize();
+        redrawOverlay();
+        // If community was changed while in another view, load map now
+        if (currentCommunity && !geoFeatures) {
+          loadCommunityMap(currentCommunity);
+        }
+      }, 50);
+    }
+  } else {
+    document.getElementById('view-map').style.display   = 'none';
+    viewArea.style.gridTemplateColumns = '1fr';
+
+    if (v === 'table') {
+      document.getElementById('view-chart').style.display = 'none';
+      document.getElementById('view-chart').classList.remove('active');
+      document.getElementById('view-table').style.display = 'flex';
+      document.getElementById('view-table').classList.add('active');
+    } else {
+      document.getElementById('view-table').style.display = 'none';
+      document.getElementById('view-table').classList.remove('active');
+      document.getElementById('view-chart').style.display = 'grid';
+      document.getElementById('view-chart').classList.add('active');
+    }
+
+    renderCurrentNonMapView();
+  }
+}
+
+function renderCurrentNonMapView() {
+  if (currentView === 'table') renderTableView();
+  else if (currentView === 'chart') renderDefinitionsView();
+}
+
+['map','table','chart'].forEach(v => {
+  document.getElementById('btn-'+v).addEventListener('click', () => setView(v));
+});
+
+/* ════════════════════════════════════════════
+   CONTROLS — risk threshold sliders
+════════════════════════════════════════════ */
+document.getElementById('sl-pctsfha').addEventListener('input', function() {
+  thresholds.pctSFHA = +this.value;
+  document.getElementById('sv-pctsfha').textContent = this.value + '%';
+  redrawOverlay(); updateMetrics(); updateTopBgs();
+});
+document.getElementById('sl-lmi').addEventListener('input', function() {
+  thresholds.lmi = +this.value;
+  document.getElementById('sv-lmi').textContent = this.value + '%';
+  redrawOverlay(); updateMetrics(); updateTopBgs();
+});
+document.getElementById('sl-nfip').addEventListener('input', function() {
+  thresholds.nfip = +this.value;
+  document.getElementById('sv-nfip').textContent = this.value + '%';
+  redrawOverlay(); updateMetrics(); updateTopBgs();
+});
+
+/* ════════════════════════════════════════════
+   TABLE VIEW
+════════════════════════════════════════════ */
+function renderTableView() {
+  const area = document.getElementById('view-table');
+  if (!area) return;
+  const meta = COMMUNITY_META[currentCommunity];
+  const title = meta ? meta.label : 'No community selected';
+
+  if (!currentBgData.length) {
+    area.innerHTML = `<div class="table-header-bar"><div><div class="table-title">Select a community</div><div class="table-subtitle">Choose a community from the left panel to view block group data.</div></div></div>`;
+    return;
+  }
+
+  const cols = [
+    { key:'geoid',             label:'GEOID',                 numeric:false },
+    { key:'community',         label:'Community',             numeric:false },
+    { key:'pctSFHA',           label:'% in SFHA',             numeric:true  },
+    { key:'nfipSFHA',          label:'NFIP Take-up (SFHA)',   numeric:true  },
+    { key:'nfipNonSFHA',       label:'NFIP Take-up (Non-SFHA)',numeric:true },
+    { key:'lmi',               label:'LMI %',                 numeric:true  },
+    { key:'structures',        label:'Structures',            numeric:true  },
+    { key:'structuresSFHA',    label:'Structures in SFHA',    numeric:true  },
+    { key:'population',        label:'Population',            numeric:true  },
+    { key:'crs',               label:'CRS Structures',        numeric:true  },
+    { key:'factors',           label:'Risk Level',            numeric:true  },
+  ];
+
+  function sortData(data) {
+    return [...data].sort((a,b) => {
+      let va = sortCol==='factors' ? getRiskFactors(a) : sortCol==='crs' ? crsInfo(a.geoid).total : a[sortCol];
+      let vb = sortCol==='factors' ? getRiskFactors(b) : sortCol==='crs' ? crsInfo(b.geoid).total : b[sortCol];
+      if (va === null || va === undefined) va = -Infinity;
+      if (vb === null || vb === undefined) vb = -Infinity;
+      if (typeof va==='string') { va=va.toLowerCase(); vb=vb.toLowerCase(); }
+      return va < vb ? sortDir : va > vb ? -sortDir : 0;
+    });
+  }
+
+  function render() {
+    const sorted = sortData(currentBgData);
+    const th = cols.map(c => {
+      const cls = sortCol===c.key ? (sortDir===-1?'sort-desc':'sort-asc') : '';
+      return `<th class="${cls}" data-key="${c.key}">${c.label}</th>`;
+    }).join('');
+    const rows = sorted.map(d => {
+      const level    = getRiskLevel(d);
+      const rowCls   = level===3?'high-risk':level===2?'med-risk':'';
+      const badgeCls = {3:'tbl-high', 2:'tbl-med', 1:'tbl-watch', 0:'tbl-lower'}[level];
+      const badgeLbl = {3:'High', 2:'Medium', 1:'Watch', 0:'Low'}[level];
+      const { fSfha, fLmi, fNfip } = getFlags(d);
+      const sfhaCls = fSfha ? 'flag' : '';
+      const lmiCls  = fLmi  ? 'flag-amber' : '';
+      const nfipCls = fNfip ? 'flag-amber' : '';
+      const crs = crsInfo(d.geoid);
+      return `<tr class="${rowCls}">
+        <td class="mono" style="font-weight:700;color:var(--navy);">${d.geoid}</td>
+        <td>${d.community || ''}</td>
+        <td class="mono ${sfhaCls}">${pct(d.pctSFHA)}</td>
+        <td class="mono ${nfipCls}">${pct(d.nfipSFHA)}</td>
+        <td class="mono" style="color:var(--text2);">${pct(d.nfipNonSFHA)}</td>
+        <td class="mono ${lmiCls}">${pct(d.lmi)}</td>
+        <td class="mono" style="color:var(--text2);">${d.structures.toLocaleString()}</td>
+        <td class="mono" style="color:var(--text2);">${d.structuresSFHA.toLocaleString()}</td>
+        <td class="mono" style="color:var(--text2);">${d.population.toLocaleString()}</td>
+        <td class="mono" style="color:var(--text2);">${crs.total.toLocaleString()}</td>
+        <td><span class="tbl-badge ${badgeCls}">${badgeLbl}</span></td>
+      </tr>`;
+    }).join('');
+
+    area.innerHTML = `
+      <div class="table-header-bar">
+        <div>
+          <div class="table-title">${title} — Block Group Flood Risk Data</div>
+          <div class="table-subtitle">${currentBgData.length} block groups · Click column headers to sort</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr>${th}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+
+    area.querySelectorAll('th[data-key]').forEach(th => {
+      th.addEventListener('click', () => {
+        const k = th.dataset.key;
+        if (sortCol===k) sortDir*=-1;
+        else { sortCol=k; sortDir=(k==='geoid'||k==='community')?1:-1; }
+        render();
+      });
+    });
+  }
+  render();
+}
+
+/* ════════════════════════════════════════════
+   DEFINITIONS VIEW
+════════════════════════════════════════════ */
+function renderDefinitionsView() {
+  const area = document.getElementById('view-chart');
+  if (!area) return;
+
+  const rows = VARIABLE_DEFINITIONS.map(d => `
+    <tr>
+      <td style="font-weight:700;color:var(--navy);white-space:nowrap;">${d.variable}</td>
+      <td>${d.definition}</td>
+      <td style="color:var(--text2);">${d.source}</td>
+    </tr>`).join('');
+
+  area.innerHTML = `
+    <div class="table-header-bar">
+      <div>
+        <div class="table-title">Variable Definitions &amp; Data Sources</div>
+        <div class="table-subtitle">Reference for every metric used across the Map and Table views</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Variable</th><th>Definition</th><th>Data Source</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════
+   EXPORT
+════════════════════════════════════════════ */
+document.getElementById('export-csv').addEventListener('click', () => {
+  if (!currentBgData.length) { alert('Select a community first.'); return; }
+  const header = 'GEOID,Community,% Structures in SFHA,NFIP Take-up Overall,NFIP Take-up SFHA,NFIP Take-up Non-SFHA,LMI %,Structures,Structures in SFHA,Structures outside SFHA,Population,CRS Structures,Risk Level\n';
+  const rows = currentBgData.map(d => {
+    const levelLabel = { 3:'High', 2:'Medium', 1:'Watch', 0:'Low' }[getRiskLevel(d)];
+    const crs = crsInfo(d.geoid).total;
+    const nfipAll = d.nfipAll ?? '';
+    const nfipSfha = d.nfipSFHA ?? '';
+    const nfipNon = d.nfipNonSFHA ?? '';
+    return `"${d.geoid}","${d.community || ''}",${d.pctSFHA},${nfipAll},${nfipSfha},${nfipNon},${d.lmi},${d.structures},${d.structuresSFHA},${d.structuresNonSFHA},${d.population},${crs},${levelLabel}`;
+  }).join('\n');
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([header+rows],{type:'text/csv'})),
+    download: `flood-risk-${currentCommunity||'data'}.csv`
+  });
+  a.click();
+});
+
+
+/* ════════════════════════════════════════════
+   INIT — run on page load
+════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  initLeafletMap();
+});
+
+window.addEventListener('resize', () => {
+  if (leafletMap) leafletMap.invalidateSize();
+  if (geoFeatures) redrawOverlay();
+});
+</script>
+</body>
+</html>
