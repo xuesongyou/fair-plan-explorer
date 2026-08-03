@@ -1267,7 +1267,7 @@ function setHBar(fillId, value, maxValue) {
 function renderCrsBlock(container, geoid) {
   const info = crsInfo(geoid);
   if (!info.entries.length) {
-    container.innerHTML = `<span class="tt-crs-empty">Not in a CRS-rated community</span>`;
+    container.innerHTML = `<span class="tt-crs-empty">Not in a CRS community</span>`;
     return;
   }
   container.innerHTML = info.entries.map(e => `
@@ -1378,11 +1378,11 @@ function updateMetrics() {
     if (names.size) {
       crsEl.textContent = `${fmt(totalCrsStructures)} structures`;
       crsEl.className = 'metric-value mv-crs-yes metric-value-sm';
-      crsSubEl.textContent = `${names.size} CRS-rated ${names.size!==1?'communities':'community'}`;
+      crsSubEl.textContent = `${names.size} CRS ${names.size!==1?'communities':'community'}`;
     } else {
       crsEl.textContent = 'None found';
       crsEl.className = 'metric-value mv-crs-no metric-value-sm';
-      crsSubEl.textContent = 'No CRS-rated communities in this area';
+      crsSubEl.textContent = 'No CRS communities in this area';
     }
   }
 }
