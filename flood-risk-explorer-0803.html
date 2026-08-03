@@ -1280,8 +1280,8 @@ function renderCrsBlock(container, geoid) {
 function showTooltip(event, d) {
   const tt = document.getElementById('tooltip');
 
-  document.getElementById('tt-name').textContent = 'Block Group ' + shortGeoid(d.geoid);
-  document.getElementById('tt-community').textContent = 'GEOID ' + d.geoid + (d.community ? ' · ' + d.community : '');
+  document.getElementById('tt-name').textContent = 'Block Group ' + d.geoid + (d.community ? ' · ' + d.community : '');
+ 
 
   renderDonut('tt-pie', d.structuresSFHA, d.structuresNonSFHA);
   document.getElementById('tt-pie-in').textContent  = (d.structuresSFHA||0).toLocaleString();
