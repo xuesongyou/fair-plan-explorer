@@ -1360,8 +1360,10 @@ function selectBg(d) {
 function updateMetrics() {
   const high = currentBgData.filter(d => getRiskFactors(d) >= 3);
   document.getElementById('m-high').textContent = currentBgData.length ? high.length : '—';
-  document.getElementById('m-rate').textContent = currentBgData.length
-    ? d3.mean(currentBgData, d => d.pctSFHA).toFixed(1) + '%' : '—';
+  const totalStructures = d3.sum(currentBgData, d => d.structures);
+const totalStructuresSFHA = d3.sum(currentBgData, d => d.structuresSFHA);
+document.getElementById('m-rate').textContent = totalStructures > 0
+    ? (totalStructuresSFHA / totalStructures * 100).toFixed(1) + '%' : '—';
   const pop = high.reduce((s,d) => s + d.population, 0);
   document.getElementById('m-pop').textContent  = currentBgData.length ? fmt(pop) : '—';
 
