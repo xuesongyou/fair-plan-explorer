@@ -187,17 +187,17 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   color: #111827;
   pointer-events: none;
   z-index: 600;
-  min-width: 480px;
-  max-width: 640px;
+  min-width: 460px;
+  max-width: 580px;
   overflow: hidden;
 }
 
 .tt-header {
   background: #0A2816;
   color: #fff;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  padding: 10px 14px;
+  padding: 8px 14px;
   letter-spacing: -0.01em;
 }
 
@@ -221,10 +221,10 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 
 .tt-right {
   flex: 1;
-  padding: 12px 14px;
+  padding: 10px 14px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0 16px;
+  gap: 0 14px;
 }
 
 /* Left panel */
@@ -300,15 +300,15 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 .tt-row {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  padding: 5px 0;
+  gap: 0px;
+  padding: 3px 0;
   border-bottom: 1px solid rgba(15,31,60,0.06);
 }
 .tt-row:last-child { border-bottom: none; }
-.tt-key { color: #6b7280; font-size: 9.5px; text-transform: uppercase; letter-spacing: .03em; }
-.tt-val { font-weight: 700; font-family: 'DM Mono', monospace; font-size: 12.5px; color: #111827; }
+.tt-key { color: #6b7280; font-size: 9px; text-transform: uppercase; letter-spacing: .02em; }
+.tt-val { font-weight: 700; font-family: 'DM Mono', monospace; font-size: 11.5px; color: #111827; }
 
-/* Extra full-width section: insurers + firewise */
+/* Extra full-width section: insurers */
 .tt-extra {
   display: flex;
   flex-direction: row;
@@ -316,22 +316,41 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 }
 .tt-extra-col {
   flex: 1;
-  padding: 11px 14px;
+  padding: 8px 14px;
 }
 .tt-extra-col + .tt-extra-col {
   border-left: 1px solid rgba(15,31,60,0.1);
 }
 .tt-extra-title {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   color: var(--forest);
   text-transform: uppercase;
   letter-spacing: .05em;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 5px;
 }
+.tt-ins-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.tt-ins-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #E6F6F6;
+  color: #146767;
+  border: 1px solid #C7E8E8;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+.tt-ins-chip b { font-family: 'DM Mono', monospace; color: #0E4E4E; }
 .tt-ins-row {
   display: flex;
   align-items: center;
@@ -654,7 +673,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
           <span class="layer-name">LMI overlay</span>
         </div>
         <div class="layer-row" onclick="toggleLayer('renter')">
-          <div class="toggle on-indigo" id="tog-renter"><div class="toggle-knob"></div></div>
+          <div class="toggle" id="tog-renter"><div class="toggle-knob"></div></div>
           <div class="layer-dot" style="background:#3B5BDB"></div>
           <span class="layer-name">Renter share overlay</span>
         </div>
@@ -1978,15 +1997,12 @@ function showTooltip(event, cd) {
   setBar('tt-bar-med',  'tt-bar-med-rest',  cd.medRisk  || 0);
   setBar('tt-bar-high', 'tt-bar-high-rest', cd.highRisk || 0);
 
-  // Top admitted insurers
-  const insurers = generateInsurers(cd.zip);
-  document.getElementById('tt-insurers').innerHTML = insurers.map((ins, i) => `
-    <div class="tt-ins-row">
-      <span class="tt-ins-rank">${i+1}</span>
-      <span class="tt-ins-name">${ins.name}</span>
-      <div class="tt-ins-track"><div class="tt-ins-fill" style="width:${Math.min(100, ins.share*1.3)}%"></div></div>
-      <span class="tt-ins-pct">${ins.share}%</span>
-    </div>`).join('');
+  // Top admitted insurers (top 3 shown here; full top 5 remains in the ZIP Spotlight)
+  const insurers = generateInsurers(cd.zip).slice(0, 3);
+  document.getElementById('tt-insurers').innerHTML = insurers.length
+    ? `<div class="tt-ins-chips">${insurers.map((ins, i) =>
+        `<span class="tt-ins-chip"><b>${i+1}</b> ${ins.name} · ${ins.share}%</span>`).join('')}</div>`
+    : `<span class="tt-fw-empty">No insurer data available</span>`;
 
   tt.style.display = 'block';
   moveTooltip(event);
