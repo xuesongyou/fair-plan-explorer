@@ -1672,11 +1672,16 @@ function initLeafletMap() {
     preferCanvas: false, // keep SVG renderer so path styles work
   });
 
-  // CartoDB Positron — clean light basemap with roads and labels
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19,
+    // Esri Light Gray Canvas — clean light basemap, no API key required
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+    maxZoom: 16,
+  }).addTo(leafletMap);
+
+  // Esri's reference layer adds place labels/roads back on top (Canvas base has none)
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 16,
+    pane: 'shadowPane', // keeps labels above the base tiles but below your markers/choropleth
   }).addTo(leafletMap);
 }
 
