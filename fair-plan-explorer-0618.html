@@ -2495,8 +2495,18 @@ document.getElementById('export-csv').addEventListener('click', () => {
 ════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
   initLeafletMap();
+ 
+  // Default to a specific community when embedded with ?community=KEY in the URL
+  // e.g. fair-plan-explorer.html?community=monterey
+  const params = new URLSearchParams(window.location.search);
+  const requestedCommunity = params.get('community');
+  if (requestedCommunity && COMMUNITY_META[requestedCommunity]) {
+    const select = document.getElementById('community-select');
+    select.value = requestedCommunity;
+    select.dispatchEvent(new Event('change'));
+  }
 });
-
+ 
 window.addEventListener('resize', () => {
   if (leafletMap) leafletMap.invalidateSize();
   if (geoFeatures) redrawOverlay();
