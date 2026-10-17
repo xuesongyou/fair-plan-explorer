@@ -2590,9 +2590,12 @@ function renderDefinitionsView() {
     { label: 'CA ZIP code boundaries', text: '2024 California ZIP code boundary files from the California Department of Technology GIS.' },
     { label: 'CA Fire Hazard Severity Zones', text: 'CAL FIRE Fire Hazard Severity Zone Maps within both State Responsibility Areas and Local Responsibility Areas.', url: 'https://osfm.fire.ca.gov/what-we-do/community-wildfire-preparedness-and-mitigation/fire-hazard-severity-zones' },
   ];
-  const sourceBullets = sourceItems.map(s =>
-    `<li><strong>${s.label}:</strong> ${s.text}${s.url ? ` <a href="${s.url}" target="_blank" rel="noopener">${s.url.replace(/&amp;/g,'&').replace(/^https?:\/\//,'').slice(0,60)}${s.url.replace(/^https?:\/\//,'').length>60?'…':''}</a>` : ''}</li>`
-  ).join('');
+  const sourceBullets = sourceItems.map(s => {
+    const label = s.url
+      ? `<a href="${s.url}" target="_blank" rel="noopener"><strong>${s.label}</strong></a>`
+      : `<strong>${s.label}</strong>`;
+    return `<li>${label}: ${s.text}</li>`;
+  }).join('');
 
   area.innerHTML = `
     <div class="table-header-bar">
