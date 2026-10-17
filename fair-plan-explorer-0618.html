@@ -33,23 +33,35 @@
   --text3: #9CA3AF;
   --border: rgba(15,31,60,0.1);
   --border2: rgba(15,31,60,0.18);
+  --radius-sm: 6px;
   --radius: 8px;
   --radius-lg: 14px;
   --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 10px 28px rgba(10,40,22,0.14), 0 2px 8px rgba(10,40,22,0.08);
+  --ease: cubic-bezier(.4,0,.2,1);
   --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --mono: 'DM Mono', 'Courier New', monospace;
 }
 
-body { font-family: var(--font); background: var(--slate); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+body { font-family: var(--font); background: linear-gradient(180deg, #F3F5F8 0%, var(--slate) 180px); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
 .app { display: flex; flex-direction: column; height: 100vh; max-height: 100vh; overflow: hidden; }
+
+/* ── Scrollbars ── */
+* { scrollbar-width: thin; scrollbar-color: rgba(15,31,60,0.22) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(15,31,60,0.18); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(15,31,60,0.32); background-clip: padding-box; }
 
 /* ── Header ── */
 .header {
-  background: var(--forest);
+  background: linear-gradient(135deg, var(--forest) 0%, #0D3420 100%);
   padding: 0 20px;
   display: flex; align-items: center; justify-content: space-between;
   height: 58px; flex-shrink: 0; gap: 12px;
+  box-shadow: 0 1px 0 rgba(224,123,42,0.35), 0 2px 10px rgba(0,0,0,0.18);
+  position: relative; z-index: 10;
 }
 .header-brand { display: flex; align-items: center; gap: 12px; }
 .header-logo {
@@ -57,34 +69,41 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   background: linear-gradient(135deg, var(--amber) 0%, var(--amber-light) 100%);
   display: flex; align-items: center; justify-content: center;
   font-size: 18px; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(224,123,42,0.45);
 }
-.header-title { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
-.header-sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+.header-brand img { box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.header-title { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.015em; }
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.52); margin-top: 1px; letter-spacing: .01em; }
 .header-right { display: flex; align-items: center; gap: 10px; }
 .view-tabs {
-  display: flex; background: rgba(255,255,255,0.08);
-  border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(255,255,255,0.12);
+  display: flex; background: rgba(255,255,255,0.07);
+  border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.14);
+  padding: 3px; gap: 2px;
 }
 .view-tab {
-  padding: 6px 14px; font-size: 12px; font-weight: 500; font-family: var(--font);
-  background: transparent; border: none; color: rgba(255,255,255,0.6);
-  cursor: pointer; transition: all .15s; letter-spacing: 0.01em;
+  padding: 6px 15px; font-size: 12px; font-weight: 500; font-family: var(--font);
+  background: transparent; border: none; border-radius: 7px; color: rgba(255,255,255,0.62);
+  cursor: pointer; transition: all .18s var(--ease); letter-spacing: 0.01em;
 }
-.view-tab.active { background: var(--amber); color: #fff; }
+.view-tab.active { background: var(--amber); color: #fff; box-shadow: 0 2px 6px rgba(224,123,42,0.5); }
 .view-tab:hover:not(.active) { background: rgba(255,255,255,0.12); color: #fff; }
 
 /* ── Metrics bar ── */
 .metrics {
   display: grid; grid-template-columns: repeat(4, minmax(0,1fr));
-  gap: 0; background: var(--forest2); flex-shrink: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  gap: 0; background: linear-gradient(180deg, var(--forest2) 0%, #19330D 100%); flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.metric { padding: 10px 20px; border-right: 1px solid rgba(255,255,255,0.06); }
+.metric {
+  padding: 11px 20px; border-right: 1px solid rgba(255,255,255,0.07);
+  transition: background .18s var(--ease);
+}
+.metric:hover { background: rgba(255,255,255,0.035); }
 .metric:last-child { border-right: none; }
-.metric-label { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .08em; font-weight: 500; }
-.metric-value { font-size: 22px; font-weight: 700; margin-top: 1px; font-family: var(--mono); }
+.metric-label { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+.metric-value { font-size: 22px; font-weight: 700; margin-top: 2px; font-family: var(--mono); letter-spacing: -0.01em; }
 .metric-value.metric-value-sm { font-size: 15px; line-height: 1.3; }
-.metric-sub { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+.metric-sub { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 2px; }
 .mv-amber { color: var(--amber-light); }
 .mv-teal { color: var(--teal-light); }
 .mv-red { color: #F07066; }
@@ -165,10 +184,10 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 /* Legend over map */
 .choro-legend {
   position: absolute; bottom: 40px; left: 14px; z-index: 500;
-  background: rgba(255,255,255,0.94); border: 1px solid rgba(0,0,0,0.12);
-  border-radius: var(--radius-lg); padding: 10px 12px;
+  background: rgba(255,255,255,0.96); border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--radius-lg); padding: 11px 13px;
   font-size: 10px; font-family: var(--font); color: #333; min-width: 140px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg); backdrop-filter: blur(3px);
 }
 .legend-title { font-weight: 700; font-size: 11px; margin-bottom: 5px; color: var(--forest); }
 .legend-grad { height: 8px; border-radius: 4px; margin: 4px 0 3px; }
@@ -179,9 +198,9 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   display: none;
   position: absolute;
   background: #ffffff;
-  border: 1px solid rgba(15,31,60,0.14);
-  border-radius: 12px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+  border: 1px solid rgba(15,31,60,0.12);
+  border-radius: 13px;
+  box-shadow: 0 14px 38px rgba(10,40,22,0.18), 0 3px 10px rgba(0,0,0,0.08);
   font-family: 'Inter', -apple-system, sans-serif;
   font-size: 12px;
   color: #111827;
@@ -193,11 +212,11 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 }
 
 .tt-header {
-  background: #0A2816;
+  background: linear-gradient(135deg, #0A2816 0%, #123A1E 100%);
   color: #fff;
   font-size: 12.5px;
   font-weight: 700;
-  padding: 8px 14px;
+  padding: 9px 14px;
   letter-spacing: -0.01em;
 }
 
@@ -406,8 +425,8 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Sidebar ── */
-.sidebar-section { padding: 16px 16px 14px; border-bottom: 1px solid var(--border); }
-.sec-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+.sidebar-section { padding: 16px 16px 14px; border-bottom: 1px solid var(--border); transition: background .15s; }
+.sec-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .09em; margin-bottom: 10px; }
 
 .community-select-wrap { position: relative; }
 .community-select-wrap::after {
@@ -415,18 +434,20 @@ body { font-family: var(--font); background: var(--slate); color: var(--text); f
   color: var(--amber); font-size: 11px; pointer-events: none;
 }
 select.community-sel {
-  width: 100%; padding: 9px 28px 9px 12px; font-size: 13px; font-weight: 500;
+  width: 100%; padding: 10px 28px 10px 12px; font-size: 13px; font-weight: 600;
   font-family: var(--font); border: 1.5px solid var(--border2); border-radius: var(--radius);
   background: var(--white); color: var(--text); cursor: pointer;
-  appearance: none; -webkit-appearance: none;
-  transition: border-color .15s, box-shadow .15s;
+  appearance: none; -webkit-appearance: none; box-shadow: var(--shadow);
+  transition: border-color .18s, box-shadow .18s;
 }
+select.community-sel:hover { border-color: var(--amber-light); }
 select.community-sel:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(224,123,42,0.15); }
 .community-info {
-  margin-top: 8px; padding: 8px 10px; background: var(--amber-pale);
+  margin-top: 9px; padding: 9px 11px; background: var(--amber-pale);
   border-radius: var(--radius); border-left: 3px solid var(--amber);
+  box-shadow: 0 1px 2px rgba(224,123,42,0.08);
 }
-.community-info-name { font-size: 11px; font-weight: 600; color: var(--amber); margin-bottom: 2px; }
+.community-info-name { font-size: 11px; font-weight: 700; color: var(--amber); margin-bottom: 2px; }
 .community-info-detail { font-size: 10px; color: var(--text2); }
 
 select.ctrl-select {
@@ -437,9 +458,10 @@ select.ctrl-select {
 }
 select.ctrl-select:focus { outline: none; border-color: var(--amber); }
 
-.layer-row { display: flex; align-items: center; gap: 9px; padding: 5px 0; cursor: pointer; user-select: none; }
-.toggle { width: 32px; height: 18px; border-radius: 9px; border: 1.5px solid var(--border2); background: var(--slate2); position: relative; flex-shrink: 0; transition: background .2s, border-color .2s; cursor: pointer; }
-.toggle-knob { width: 12px; height: 12px; border-radius: 50%; background: var(--text3); position: absolute; top: 2px; left: 2px; transition: all .2s; }
+.layer-row { display: flex; align-items: center; gap: 9px; padding: 6px 7px; margin: 0 -7px; border-radius: var(--radius-sm); cursor: pointer; user-select: none; transition: background .15s; }
+.layer-row:hover { background: var(--slate); }
+.toggle { width: 32px; height: 18px; border-radius: 9px; border: 1.5px solid var(--border2); background: var(--slate2); position: relative; flex-shrink: 0; transition: background .2s var(--ease), border-color .2s var(--ease); cursor: pointer; }
+.toggle-knob { width: 12px; height: 12px; border-radius: 50%; background: var(--text3); position: absolute; top: 2px; left: 2px; transition: all .2s var(--ease); box-shadow: 0 1px 2px rgba(0,0,0,0.25); }
 .toggle.on-amber { background: var(--amber); border-color: var(--amber); }
 .toggle.on-amber .toggle-knob { background: white; left: 16px; }
 .toggle.on-teal { background: var(--teal); border-color: var(--teal); }
@@ -464,14 +486,18 @@ select.ctrl-select:focus { outline: none; border-color: var(--amber); }
 .slider-name { font-size: 11px; color: var(--text2); }
 .slider-val { font-size: 11px; font-weight: 700; color: var(--forest); font-family: var(--mono); }
 input[type=range] {
-  width: 100%; height: 4px; border-radius: 2px;
-  appearance: none; -webkit-appearance: none; background: var(--slate2);
+  width: 100%; height: 5px; border-radius: 3px;
+  appearance: none; -webkit-appearance: none;
+  background: linear-gradient(90deg, var(--amber-light), var(--slate2) 0%);
+  background: var(--slate2);
   cursor: pointer;
 }
 input[type=range]::-webkit-slider-thumb {
-  appearance: none; width: 14px; height: 14px; border-radius: 50%;
-  background: var(--amber); border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer;
+  appearance: none; width: 15px; height: 15px; border-radius: 50%;
+  background: var(--amber); border: 2.5px solid white; box-shadow: 0 2px 5px rgba(224,123,42,0.45); cursor: pointer;
+  transition: transform .15s var(--ease);
 }
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.12); }
 input[type=range]:focus { outline: none; }
 .slider-bounds { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-top: 3px; }
 
@@ -485,15 +511,15 @@ input[type=range]:focus { outline: none; }
   overflow-y: auto; padding: 0; display: flex; flex-direction: column;
   grid-column: 2; grid-row: 1;
 }
-.spot-card { background: var(--slate); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 10px; }
-.spot-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.spot-card { background: var(--slate); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 11px 13px; margin-bottom: 10px; box-shadow: var(--shadow); }
+.spot-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5.5px 0; border-bottom: 1px solid var(--border); }
 .spot-row:last-child { border-bottom: none; }
 .spot-key { font-size: 11px; color: var(--text2); }
 .spot-val { font-size: 12px; font-weight: 700; font-family: var(--mono); }
-.spot-name { font-size: 14px; font-weight: 700; color: var(--forest); }
+.spot-name { font-size: 15px; font-weight: 700; color: var(--forest); letter-spacing: -0.01em; }
 .spot-sub { font-size: 11px; color: var(--text2); margin-top: 1px; margin-bottom: 10px; }
 
-.risk-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-top: 10px; text-transform: uppercase; letter-spacing: .04em; }
+.risk-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; padding: 5px 11px; border-radius: 20px; margin-top: 10px; text-transform: uppercase; letter-spacing: .04em; box-shadow: var(--shadow); }
 .risk-high { background: var(--red-pale); color: var(--red); }
 .risk-med { background: var(--amber-pale); color: var(--amber); }
 .risk-low { background: var(--green-pale); color: var(--green); }
@@ -508,10 +534,10 @@ input[type=range]:focus { outline: none; }
 .legend-swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .legend-outline-sym { width: 14px; height: 10px; border-radius: 2px; border: 2px dashed var(--red); flex-shrink: 0; }
 
-.zip-list { display: flex; flex-direction: column; gap: 4px; }
-.zip-item { display: flex; align-items: center; justify-content: space-between; background: var(--slate); border-radius: var(--radius); padding: 7px 10px; cursor: pointer; font-size: 11px; border: 1.5px solid transparent; transition: border-color .15s, background .15s; }
-.zip-item:hover { background: var(--slate2); border-color: var(--amber); }
-.zip-item.selected { border-color: var(--amber); background: var(--amber-pale); }
+.zip-list { display: flex; flex-direction: column; gap: 5px; }
+.zip-item { display: flex; align-items: center; justify-content: space-between; background: var(--slate); border-radius: var(--radius); padding: 8px 11px; cursor: pointer; font-size: 11px; border: 1.5px solid transparent; transition: border-color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease); }
+.zip-item:hover { background: var(--slate2); border-color: var(--amber-light); transform: translateX(2px); }
+.zip-item.selected { border-color: var(--amber); background: var(--amber-pale); box-shadow: var(--shadow); }
 .zip-rank { font-size: 10px; font-weight: 700; color: var(--text3); font-family: var(--mono); width: 16px; }
 .zip-code { font-weight: 600; color: var(--forest); flex: 1; padding-left: 4px; }
 .zip-score { font-family: var(--mono); font-size: 11px; font-weight: 700; }
@@ -522,7 +548,7 @@ input[type=range]:focus { outline: none; }
   font-size: 10px; font-weight: 700; color: var(--forest); text-transform: uppercase;
   letter-spacing: .05em; margin: 12px 0 8px; display: flex; align-items: center; gap: 5px;
 }
-.sp-ins-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 10px; margin-bottom: 6px; }
+.sp-ins-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 10px 11px; margin-bottom: 6px; box-shadow: var(--shadow); }
 .sp-ins-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
 .sp-ins-row:last-child { margin-bottom: 0; }
 .sp-ins-rank { font-size: 9px; font-weight: 700; color: var(--text3); font-family: var(--mono); width: 13px; flex-shrink: 0; }
@@ -544,19 +570,20 @@ input[type=range]:focus { outline: none; }
 .table-header-bar {
   background: var(--white); padding: 14px 20px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 5;
-  flex-shrink: 0;
+  flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
-.table-title { font-size: 14px; font-weight: 700; color: var(--forest); }
+.table-title { font-size: 14px; font-weight: 700; color: var(--forest); letter-spacing: -0.01em; }
 .table-subtitle { font-size: 11px; color: var(--text2); margin-top: 1px; }
-.table-wrap { padding: 16px; }
-table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--white); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
-table.data-table thead tr { background: var(--forest); }
-table.data-table th { padding: 10px 13px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.75); text-align: left; user-select: none; cursor: pointer; white-space: nowrap; transition: background .15s; letter-spacing: .03em; }
-table.data-table th:hover { background: var(--forest-light); color: white; }
+.table-wrap { padding: 18px; }
+table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--white); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid var(--border); }
+table.data-table thead tr { background: linear-gradient(135deg, var(--forest) 0%, #123A1E 100%); }
+table.data-table th { padding: 11px 13px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.78); text-align: left; user-select: none; cursor: pointer; white-space: nowrap; transition: background .15s; letter-spacing: .03em; }
+table.data-table th:hover { background: rgba(255,255,255,0.08); color: white; }
 table.data-table th.sort-asc::after { content: ' ↑'; color: var(--amber-light); font-size: 10px; }
 table.data-table th.sort-desc::after { content: ' ↓'; color: var(--amber-light); font-size: 10px; }
-table.data-table td { padding: 9px 13px; border-bottom: 1px solid var(--border); }
+table.data-table td { padding: 9.5px 13px; border-bottom: 1px solid var(--border); transition: background .1s; }
 table.data-table tr:last-child td { border-bottom: none; }
+table.data-table tr:nth-child(even) td { background: rgba(15,31,60,0.012); }
 table.data-table tr:hover td { background: var(--slate); }
 table.data-table tr.high-risk td { background: rgba(192,57,43,0.04); }
 table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
@@ -578,17 +605,32 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
 .chart-title { font-size: 12px; font-weight: 700; color: var(--forest); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
 .chart-subtitle { font-size: 11px; color: var(--text2); margin-bottom: 14px; }
 
-/* ── Footer ── */
-.footer {
-  background: var(--white); border-top: 1px solid var(--border);
-  padding: 8px 20px; display: flex; align-items: center; gap: 12px;
-  font-size: 11px; color: var(--text3); flex-shrink: 0;
+/* ── Export button (now lives in the Table tab header) ── */
+.export-btn { background: var(--white); border: 1.5px solid var(--border2); border-radius: var(--radius); padding: 7px 14px; font-size: 11.5px; font-family: var(--font); color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all .15s; font-weight: 600; box-shadow: var(--shadow); }
+.export-btn:hover { background: var(--forest); color: white; border-color: var(--forest); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.export-btn:active { transform: translateY(0); }
+
+/* ── Data sources (Definitions tab) ── */
+.sources-card {
+  margin-top: 18px; background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 20px; box-shadow: var(--shadow);
 }
-.footer a { color: var(--amber); text-decoration: none; }
-.footer a:hover { text-decoration: underline; }
-.footer-right { margin-left: auto; display: flex; gap: 8px; }
-.export-btn { background: transparent; border: 1.5px solid var(--border2); border-radius: var(--radius); padding: 5px 12px; font-size: 11px; font-family: var(--font); color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all .15s; font-weight: 500; }
-.export-btn:hover { background: var(--forest); color: white; border-color: var(--forest); }
+.sources-card-title { font-size: 12px; font-weight: 700; color: var(--forest); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+.sources-card-sub { font-size: 11px; color: var(--text2); margin-bottom: 12px; }
+.sources-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.source-pill {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--slate);
+  border: 1px solid var(--border2); border-radius: 20px; padding: 6px 13px;
+  font-size: 11.5px; font-weight: 500; color: var(--text); text-decoration: none;
+  transition: all .15s;
+}
+.source-pill:hover { background: var(--amber-pale); border-color: var(--amber); color: var(--amber); transform: translateY(-1px); box-shadow: var(--shadow); }
+.source-pill .sp-ico { font-size: 12px; }
+.sources-bullets { margin: 4px 0 0 18px; padding: 0; font-size: 12px; line-height: 1.55; color: var(--text); }
+.sources-bullets li { margin-bottom: 7px; }
+.sources-bullets li::marker { color: var(--amber); }
+.sources-bullets a { color: var(--amber); text-decoration: none; word-break: break-all; }
+.sources-bullets a:hover { text-decoration: underline; }
 
 /* Leaflet attribution positioning */
 .leaflet-control-attribution { font-size: 9px !important; }
@@ -603,7 +645,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
       <img src="./I4G.png" alt="Company logo" style="width:36px; height:36px; border-radius:10px; object-fit:contain;">
       <div>
         <div class="header-title">FAIR Plan Community Risk Explorer</div>
-        <div class="header-sub">Insurance access · Income · Building age by ZIP code</div>
       </div>
     </div>
     <div class="header-right">
@@ -780,7 +821,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     <div class="tt-left">
       <div class="tt-pct-label">% of Residential Structures with a FAIR Plan Policy</div>
       <div class="tt-pct-value" id="tt-fair"></div>
-      <div class="tt-pct-date">As of 06/30/2026</div>
+      <div class="tt-pct-date" id="tt-date">As of 06/30/2026</div>
       <hr class="tt-divider">
       <div class="tt-bar-label">Number of Residential FAIR Plan Policies</div>
 
@@ -909,21 +950,6 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     </div><!-- #view-area -->
   </div><!-- .body -->
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <span>📦</span>
-    <a href="https://www.cfpnet.com/key-statistics-data/" target="_blank">CA FAIR Plan</a>
-    <a href="https://www.hec.usace.army.mil/confluence/nsi" target="_blank">National Structure Inventory</a>
-    <a href="https://data.census.gov" target="_blank">ACS 5-yr</a>
-    <a href="https://osfm.fire.ca.gov/what-we-do/community-wildfire-preparedness-and-mitigation/fire-hazard-severity-zones" target="_blank">FHSZ</a>
-    <a href="https://lab.data.ca.gov/dataset/cal-fire-damage-inspection-dins-data" target="_blank">DINS</a>
-    <a href="https://34c031f8-c9fd-4018-8c5a-4159cdff6b0d-cdn-endpoint.azureedge.net/-/media/bof-website/projects-and-programs/fire-risk-reduction-community-list/07-01-2026-frrcl-and-bof-resolution-of-approval.pdf?rev=3428690de0414895a06fe75c4de609b7&hash=3B29D082C5B6ADEB36048F2EDB7C6D79" target="_blank">Fire Reduction Community</a>
-    <a href="https://www.arcgis.com/apps/mapviewer/index.html?webmap=c2260105797847b4bf5edf8f9cfc1f8f" target="_blank">Firewise Sites</a>
-    <div class="footer-right">
-      <button class="export-btn" id="export-csv">⬇ Export CSV</button>
-    </div>
-  </footer>
-
 </div><!-- .app -->
 
 <!-- Libraries -->
@@ -936,19 +962,19 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
    COMMUNITY DEFINITIONS
 ════════════════════════════════════════════ */
 const COMMUNITY_META = {
-  monterey:   { label:'Monterey County',      fips:'06053', detail:'Central Coast · 434K population',               center:[36.2,-121.3], zoom:9, avgFairRate:4.54,
+  monterey:   { label:'Monterey County',      fips:'06053', detail:'Central Coast · 434K population',               center:[36.2,-121.3], zoom:9,
                 frrc:['City of Monterey','Monterey County Regional Fire District','Monterey Fire Department'] },
-  san_benito: { label:'San Benito County',    fips:'06069', detail:'Inland Central Coast · 63K population',          center:[36.8,-121.1], zoom:10, avgFairRate:2.86,
+  san_benito: { label:'San Benito County',    fips:'06069', detail:'Inland Central Coast · 63K population',          center:[36.8,-121.1], zoom:10,
                 frrc:[] },
-  san_diego:  { label:'San Diego County',     fips:'06073', detail:'Southern California · 3.3M population',          center:[32.9,-116.9], zoom:9, avgFairRate:6.52,
+  san_diego:  { label:'San Diego County',     fips:'06073', detail:'Southern California · 3.3M population',          center:[32.9,-116.9], zoom:9,
                 frrc:['San Diego County'] },
-  santa_cruz: { label:'Santa Cruz County',    fips:'06087', detail:'Central Coast · 271K population',               center:[37.05,-122.0],zoom:10, avgFairRate:13.95,
+  santa_cruz: { label:'Santa Cruz County',    fips:'06087', detail:'Central Coast · 271K population',               center:[37.05,-122.0],zoom:10,
                 frrc:['Santa Cruz County'] },
-  tulare:     { label:'Tulare County',        fips:'06107', detail:'San Joaquin Valley · 473K population',           center:[36.2,-119.0], zoom:9, avgFairRate:2.3,
+  tulare:     { label:'Tulare County',        fips:'06107', detail:'San Joaquin Valley · 473K population',           center:[36.2,-119.0], zoom:9,
                 frrc:[] },
-  tuolumne:   { label:'Tuolumne County',      fips:'06109', detail:'Sierra Nevada Foothills · 55K population',      center:[37.9,-120.0], zoom:10, avgFairRate:50.82,
+  tuolumne:   { label:'Tuolumne County',      fips:'06109', detail:'Sierra Nevada Foothills · 55K population',      center:[37.9,-120.0], zoom:10,
                 frrc:[] },
-  hoopa:      { label:'Hoopa Valley Tribe',   fips:'130821',detail:'Northwestern California · Tribal Nation',        center:[41.05,-123.7],zoom:11, avgFairRate:6.86,
+  hoopa:      { label:'Hoopa Valley Tribe',   fips:'130821',detail:'Northwestern California · Tribal Nation',        center:[41.05,-123.7],zoom:11,
                 frrc:[] },
 };
 
@@ -966,43 +992,122 @@ const VARIABLE_DEFINITIONS = [
   { variable: 'Risk Level', definition: '= High (all 4 risk thresholds are exceeded);<br>= Medium (3 of 4 risk thresholds are exceeded AND FAIR plan rate must be one of them);<br>= Watch (1-2 risk thresholds are exceeded, or 3 are exceeded that don\'t include FAIR plan rate);<br>= Lower risk (none exceeded).', source: 'Four risk thresholds, in priority order: FAIR plan rate; LMI %; Renter %; Pre-2010 %' },
 ];
 /* ════════════════════════════════════════════
-   ADMITTED INSURER SEED LIST (placeholder — replace with real 2024 data)
-════════════════════════════════════════════ */
-const ADMITTED_INSURER_POOL = [
-  'State Farm', 'CSAA / AAA', 'Mercury Insurance', 'Farmers Insurance', 'Allstate',
-  'USAA', 'Liberty Mutual', 'Travelers', 'Nationwide', 'Auto Club (Interinsurance)',
-  'Safeco', 'Chubb', 'Century National', 'Wawanesa', 'American National'
-];
+   LIVE DATA — FAIR plan rate & admitted insurers,
+   fetched at runtime from CSV files hosted alongside this HTML file.
+   Update the CSVs in the repo; this explorer reflects changes automatically
+   on next page load. No code changes needed for data refreshes.
 
-// Simple deterministic PRNG seeded by ZIP so results are stable per ZIP but look varied
-function seededRandom(seed) {
-  let s = 0;
-  for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
-  return function() {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
+   Expected files (same folder as this HTML):
+     • CA_FAIR_Rate.csv  → zip, County, fair, totalPolicies, lowRisk, medRisk, highRisk, asOfDate
+         - "fair" is a plain percentage number (20.17 means 20.17%)
+     • Admitted_Top5.csv → zip, NAIC_CODE, ADMITTED_INSURER_NAME, rank, MarketShare_2024
+         - "MarketShare_2024" is a plain percentage number (100 means 100%)
+════════════════════════════════════════════ */
+const FAIR_RATE_BY_ZIP = {};   // zip -> { fair, totalPolicies, lowRisk, medRisk, highRisk, asOfDate, county }
+const INSURERS_BY_ZIP  = {};   // zip -> [{ name, share, rank, naic }, ...] sorted by rank
+
+// Minimal CSV parser: handles quoted fields (with embedded commas/quotes) and
+// both comma- and tab-delimited files, \r\n or \n line endings.
+function parseCSV(text) {
+  if (!text) return [];
+  const delim = text.indexOf('\t') !== -1 && text.indexOf(',') === -1 ? '\t' : ',';
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === delim) {
+      row.push(field); field = '';
+    } else if (c === '\r') {
+      // skip
+    } else if (c === '\n') {
+      row.push(field); rows.push(row); row = []; field = '';
+    } else {
+      field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  const cleanRows = rows.filter(r => r.some(v => v !== ''));
+  if (!cleanRows.length) return [];
+  const headers = cleanRows[0].map(h => h.trim());
+  return cleanRows.slice(1).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = r[i] !== undefined ? r[i].trim() : ''; });
+    return obj;
+  });
 }
 
-function generateInsurers(zip) {
-  const rng = seededRandom(zip + '-ins');
-  const pool = [...ADMITTED_INSURER_POOL];
-  const picks = [];
-  for (let i = 0; i < 5 && pool.length; i++) {
-    const idx = Math.floor(rng() * pool.length);
-    picks.push(pool.splice(idx, 1)[0]);
-  }
-  // Generate a descending, plausible market-share split (placeholder data)
-  let remaining = 58 + rng() * 20; // top-5 admitted share of ~58-78%
-  const shares = [];
-  let rem = remaining;
-  for (let i = 0; i < 5; i++) {
-    const frac = i === 4 ? rem : rem * (0.28 + rng() * 0.20);
-    shares.push(Math.max(1, frac));
-    rem -= frac;
-  }
-  shares.sort((a,b) => b-a);
-  return picks.map((name, i) => ({ name, share: +shares[i].toFixed(1) }));
+function loadFairRateCsv() {
+  return fetch('./CA_FAIR_Rate.csv')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(text => {
+      parseCSV(text).forEach(row => {
+        const zip = (row.zip || row.ZIP || row.Zip || '').trim();
+        if (!zip) return;
+        FAIR_RATE_BY_ZIP[zip] = {
+          fair:          parseFloat(row.fair) || 0,
+          totalPolicies: parseInt(row.totalPolicies, 10) || 0,
+          lowRisk:       parseInt(row.lowRisk, 10) || 0,
+          medRisk:       parseInt(row.medRisk, 10) || 0,
+          highRisk:      parseInt(row.highRisk, 10) || 0,
+          asOfDate:      row.asOfDate || row.AsOfDate || '',
+          county:        row.County || row.county || '',
+        };
+      });
+    })
+    .catch(err => { console.warn('CA_FAIR_Rate.csv not found or unreadable — falling back to built-in FAIR plan figures.', err); });
+}
+
+function loadInsurerCsv() {
+  return fetch('./Admitted_Top5.csv')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(text => {
+      parseCSV(text).forEach(row => {
+        const zip = (row.zip || row.ZIP || row.ZIP_CODE || '').trim();
+        if (!zip) return;
+        const share = row.MarketShare_2024 !== undefined ? row.MarketShare_2024 : row.share;
+        if (!INSURERS_BY_ZIP[zip]) INSURERS_BY_ZIP[zip] = [];
+        INSURERS_BY_ZIP[zip].push({
+          name:  row.ADMITTED_INSURER_NAME || row.COMPANY_NAME_v2 || row.insurer || '',
+          share: +(parseFloat(share) || 0).toFixed(1),
+          rank:  parseInt(row.rank, 10) || 999,
+          naic:  row.NAIC_CODE || '',
+        });
+      });
+      Object.keys(INSURERS_BY_ZIP).forEach(z => INSURERS_BY_ZIP[z].sort((a, b) => a.rank - b.rank));
+    })
+    .catch(err => { console.warn('Admitted_Top5.csv not found or unreadable — insurer panels will be empty.', err); });
+}
+
+// Resolves once both CSVs have been fetched and parsed (or have failed gracefully).
+const CSV_READY = Promise.all([loadFairRateCsv(), loadInsurerCsv()]);
+
+// Overwrites a ZIP record's FAIR plan fields with live CSV data when available,
+// leaving the built-in figures in place as a fallback for any ZIP not in the CSV.
+function applyFairCsvOverrides(data) {
+  data.forEach(d => {
+    const row = FAIR_RATE_BY_ZIP[d.zip];
+    if (row) {
+      d.fair          = row.fair;
+      d.totalPolicies = row.totalPolicies;
+      d.lowRisk       = row.lowRisk;
+      d.medRisk       = row.medRisk;
+      d.highRisk      = row.highRisk;
+      d.asOfDate      = row.asOfDate || d.asOfDate || null;
+    }
+  });
+  return data;
+}
+
+// Top admitted insurers for a ZIP, sourced from Admitted_Top5.csv (empty array if none on file).
+function getInsurers(zip) {
+  return INSURERS_BY_ZIP[zip] || [];
 }
 
 /* ════════════════════════════════════════════
@@ -1663,6 +1768,17 @@ function getRiskScore(d) {
   return +avgZ.toFixed(2);
 }
 function pct(v) { return v.toFixed(1) + '%'; }
+// Community-level average FAIR plan rate:
+// Σ(totalPolicies) across the community's ZIPs / Σ(residential structures) × 100.
+function computeAvgFairRate(data) {
+  if (!data || !data.length) return null;
+  let policySum = 0, structureSum = 0;
+  data.forEach(d => {
+    policySum    += d.totalPolicies || 0;
+    structureSum += d.structure || 0;
+  });
+  return structureSum ? (policySum / structureSum) * 100 : null;
+}
 function fmt(n) {
   if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
   if (n >= 1e3) return (n/1e3).toFixed(0)+'K';
@@ -1968,6 +2084,7 @@ function showTooltip(event, cd) {
 
   document.getElementById('tt-name').textContent = 'ZIP ' + cd.zip + ' · ' + cd.name;
   document.getElementById('tt-fair').textContent  = cd.fair.toFixed(1) + '%';
+  document.getElementById('tt-date').textContent  = cd.asOfDate ? 'As of ' + cd.asOfDate : '';
   document.getElementById('tt-income').textContent = cd.income + '%';
   document.getElementById('tt-renter').textContent  = cd.renter != null ? cd.renter + '%' : 'N/A';
   document.getElementById('tt-renter-takeup').textContent = cd.renterTakeup != null ? cd.renterTakeup + '%' : 'N/A';
@@ -1998,7 +2115,7 @@ function showTooltip(event, cd) {
   setBar('tt-bar-high', 'tt-bar-high-rest', cd.highRisk || 0);
 
   // Top admitted insurers (top 3 shown here; full top 5 remains in the ZIP Spotlight)
-  const insurers = generateInsurers(cd.zip).slice(0, 3);
+  const insurers = getInsurers(cd.zip).slice(0, 3);
   document.getElementById('tt-insurers').innerHTML = insurers.length
     ? `<div class="tt-ins-chips">${insurers.map((ins, i) =>
         `<span class="tt-ins-chip"><b>${i+1}</b> ${ins.name} · ${ins.share}%</span>`).join('')}</div>`
@@ -2056,14 +2173,16 @@ function selectZip(cd) {
     : `<span class="risk-badge risk-low">✓ Low risk</span>`;
 
   // Top admitted insurers
-  const insurers = generateInsurers(cd.zip);
-  document.getElementById('sp-insurers').innerHTML = insurers.map((ins, i) => `
-    <div class="sp-ins-row">
-      <span class="sp-ins-rank">${i+1}</span>
-      <span class="sp-ins-name">${ins.name}</span>
-      <div class="sp-ins-track"><div class="sp-ins-fill" style="width:${Math.min(100, ins.share*1.3)}%"></div></div>
-      <span class="sp-ins-pct">${ins.share}%</span>
-    </div>`).join('');
+  const insurers = getInsurers(cd.zip);
+  document.getElementById('sp-insurers').innerHTML = insurers.length
+    ? insurers.map((ins, i) => `
+      <div class="sp-ins-row">
+        <span class="sp-ins-rank">${i+1}</span>
+        <span class="sp-ins-name">${ins.name}</span>
+        <div class="sp-ins-track"><div class="sp-ins-fill" style="width:${Math.min(100, ins.share*1.3)}%"></div></div>
+        <span class="sp-ins-pct">${ins.share}%</span>
+      </div>`).join('')
+    : `<span class="sp-fw-empty">No insurer data available</span>`;
 
   // Firewise sites
   const fwSites = firewiseSitesForZip(cd);
@@ -2078,9 +2197,9 @@ function selectZip(cd) {
 function updateMetrics() {
   const high = currentZipData.filter(d => getRiskLevel(d) === 3);
   document.getElementById('m-high').textContent = currentZipData.length ? high.length : '—';
-  const metaForRate = COMMUNITY_META[currentCommunity];
-  document.getElementById('m-rate').textContent = metaForRate
-    ? metaForRate.avgFairRate.toFixed(2) + '%' : '—';
+  const avgRate = computeAvgFairRate(currentZipData);
+  document.getElementById('m-rate').textContent = avgRate != null
+    ? avgRate.toFixed(2) + '%' : '—';
   const pop = high.reduce((s,d) => s + d.pop, 0);
   document.getElementById('m-pop').textContent  = currentZipData.length ? fmt(pop) : '—';
 
@@ -2172,7 +2291,8 @@ function loadCommunityMap(communityKey) {
   document.getElementById('map-loading').classList.add('show');
   document.getElementById('choro-legend').style.display = 'none';
 
-  currentZipData = generateZIPs(communityKey);
+  // currentZipData is populated (and CSV-overridden) by the caller before this runs.
+  if (!currentZipData.length) currentZipData = generateZIPs(communityKey);
 
   // Fly Leaflet map to the community
   leafletMap.flyTo(meta.center, meta.zoom, { duration: 1.0 });
@@ -2213,8 +2333,7 @@ function loadCommunityMap(communityKey) {
         <p style="color:var(--red);font-size:12px;margin-bottom:8px;">Could not load ZIP boundaries.</p>
         <p style="color:var(--text2);font-size:11px;">Host CA_ZIP_simple.json alongside this file.<br>Data and metrics are still available in Table / Charts views.</p>
       </div>`;
-    // Still load data for table/chart views
-    currentZipData = generateZIPs(communityKey);
+    // Still show data for table/chart views
     updateMetrics();
     updateTopZips();
   });
@@ -2223,7 +2342,7 @@ function loadCommunityMap(communityKey) {
 /* ════════════════════════════════════════════
    COMMUNITY CHANGE
 ════════════════════════════════════════════ */
-document.getElementById('community-select').addEventListener('change', function() {
+document.getElementById('community-select').addEventListener('change', async function() {
   currentCommunity = this.value;
   selectedZip = null;
   geoFeatures = null;
@@ -2246,6 +2365,10 @@ document.getElementById('community-select').addEventListener('change', function(
   document.getElementById('community-info').style.display = 'block';
 
   currentZipData = generateZIPs(currentCommunity);
+  // Wait for the live CA_FAIR_Rate.csv / Admitted_Top5.csv fetch (fast, already in flight
+  // since page load) so the FAIR plan figures and insurer panels reflect the latest data.
+  await CSV_READY;
+  applyFairCsvOverrides(currentZipData);
 
   if (currentView === 'map') {
     loadCommunityMap(currentCommunity);
@@ -2421,6 +2544,7 @@ function renderTableView() {
           <div class="table-title">${title} — ZIP Code Risk Data</div>
           <div class="table-subtitle">${currentZipData.length} ZIP codes · Click column headers to sort</div>
         </div>
+        <button class="export-btn" onclick="exportCsv()">⬇ Export CSV</button>
       </div>
       <div class="table-wrap">
         <table class="data-table">
@@ -2455,6 +2579,21 @@ function renderDefinitionsView() {
       <td style="color:var(--text2);">${d.source}</td>
     </tr>`).join('');
 
+  const sourceItems = [
+    { label: 'CA FAIR Plan policies', text: 'California FAIR Plan Key Statistics &amp; Data. Residential policies only (excluding policies for renters and condo unit owners).', url: 'https://www.cfpnet.com/key-statistics-data/' },
+    { label: 'Admitted market home insurance policies', text: 'California Department of Insurance\'s Community Service Statement Dataset for 2024.' },
+    { label: 'Residential structures', text: 'USACE National Structure Inventory (NSI) 2022 dataset. Residential only.', url: 'https://www.hec.usace.army.mil/confluence/nsi' },
+    { label: 'Fire-damaged structures', text: 'CAL FIRE Damage Inspection (DINS) Data for 2013-2025.', url: 'https://lab.data.ca.gov/dataset/cal-fire-damage-inspection-dins-data' },
+    { label: 'Firewise Communities', text: 'Firewise sites (in good standing) as of June 01, 2026 from the National Fire Protection Association (NFPA).', url: 'https://www.arcgis.com/apps/mapviewer/index.html?webmap=c2260105797847b4bf5edf8f9cfc1f8f' },
+    { label: 'Fire Risk Reduction Communities', text: '2026 Fire Risk Reduction Community list from the California Board of Forestry and Fire Protection.', url: 'https://34c031f8-c9fd-4018-8c5a-4159cdff6b0d-cdn-endpoint.azureedge.net/-/media/bof-website/projects-and-programs/fire-risk-reduction-community-list/07-01-2026-frrcl-and-bof-resolution-of-approval.pdf?rev=3428690de0414895a06fe75c4de609b7&amp;hash=3B29D082C5B6ADEB36048F2EDB7C6D79' },
+    { label: 'ZIP-level demographic and socioeconomic data', text: 'US Census Bureau\'s 2020-2024 American Community Survey (ACS) 5-year data.', url: 'https://data.census.gov/' },
+    { label: 'CA ZIP code boundaries', text: '2024 California ZIP code boundary files from the California Department of Technology GIS.' },
+    { label: 'CA Fire Hazard Severity Zones', text: 'CAL FIRE Fire Hazard Severity Zone Maps within both State Responsibility Areas and Local Responsibility Areas.', url: 'https://osfm.fire.ca.gov/what-we-do/community-wildfire-preparedness-and-mitigation/fire-hazard-severity-zones' },
+  ];
+  const sourceBullets = sourceItems.map(s =>
+    `<li><strong>${s.label}:</strong> ${s.text}${s.url ? ` <a href="${s.url}" target="_blank" rel="noopener">${s.url.replace(/&amp;/g,'&').replace(/^https?:\/\//,'').slice(0,60)}${s.url.replace(/^https?:\/\//,'').length>60?'…':''}</a>` : ''}</li>`
+  ).join('');
+
   area.innerHTML = `
     <div class="table-header-bar">
       <div>
@@ -2467,27 +2606,31 @@ function renderDefinitionsView() {
         <thead><tr><th>Variable</th><th>Definition</th><th>Data Source</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      <div class="sources-card">
+        <div class="sources-card-title">Data Sources</div>
+        <ul class="sources-bullets">${sourceBullets}</ul>
+      </div>
     </div>`;
 }
 
 /* ════════════════════════════════════════════
    EXPORT
 ════════════════════════════════════════════ */
-document.getElementById('export-csv').addEventListener('click', () => {
+function exportCsv() {
   if (!currentZipData.length) { alert('Select a community first.'); return; }
   const header = 'ZIP,Area Name,FAIR Plan Rate,LMI %,Renter %,Renter Insurance Takeup %,Pre-2010 %,FHSZ %,Damaged (DINS),Firewise Communities,Structures,Population,Risk Level\n';
   const rows = currentZipData.map(d => {
-  const levelLabel = { 3:'High', 2:'Medium', 1:'Watch', 0:'Lower' }[getRiskLevel(d)];
-  const renterVal = d.renter != null ? d.renter : '';
-  const renterTakeupVal = d.renterTakeup != null ? d.renterTakeup : '';
-  return `"${d.zip}","${d.name}",${d.fair},${d.income},${renterVal},${renterTakeupVal},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${levelLabel}`;
-}).join('\n');
+    const levelLabel = { 3:'High', 2:'Medium', 1:'Watch', 0:'Lower' }[getRiskLevel(d)];
+    const renterVal = d.renter != null ? d.renter : '';
+    const renterTakeupVal = d.renterTakeup != null ? d.renterTakeup : '';
+    return `"${d.zip}","${d.name}",${d.fair},${d.income},${renterVal},${renterTakeupVal},${d.pre2010},${d.fhsz},${d.damaged},${d.firewise},${d.structure},${d.pop},${levelLabel}`;
+  }).join('\n');
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([header+rows],{type:'text/csv'})),
     download: `fair-plan-${currentCommunity||'data'}.csv`
   });
   a.click();
-});
+}
 
 
 /* ════════════════════════════════════════════
