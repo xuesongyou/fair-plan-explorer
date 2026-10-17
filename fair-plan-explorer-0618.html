@@ -821,7 +821,7 @@ table.data-table tr.med-risk td { background: rgba(224,123,42,0.04); }
     <div class="tt-left">
       <div class="tt-pct-label">% of Residential Structures with a FAIR Plan Policy</div>
       <div class="tt-pct-value" id="tt-fair"></div>
-      <div class="tt-pct-date" id="tt-date">As of 06/30/2026</div>
+      <div class="tt-pct-date" id="tt-date"></div>
       <hr class="tt-divider">
       <div class="tt-bar-label">Number of Residential FAIR Plan Policies</div>
 
@@ -1004,12 +1004,14 @@ const VARIABLE_DEFINITIONS = [
          - "MarketShare_2024" is a plain percentage number (100 means 100%)
 ════════════════════════════════════════════ */
 const FAIR_RATE_BY_ZIP = {};   // zip -> { fair, totalPolicies, lowRisk, medRisk, highRisk, asOfDate, county }
-const INSURERS_BY_ZIP  = {};   // zip -> [{ name, share, rank, naic }, ...] sorted by rank
+const INSURERS_BY_ZIP  = {};
+let LATEST_AS_OF_DATE = '';   // fallback 'as of' date for ZIPs whose CSV row has none   // zip -> [{ name, share, rank, naic }, ...] sorted by rank
 
 // Minimal CSV parser: handles quoted fields (with embedded commas/quotes) and
 // both comma- and tab-delimited files, \r\n or \n line endings.
 function parseCSV(text) {
   if (!text) return [];
+  text = text.replace(/^\uFEFF/, '');
   const delim = text.indexOf('\t') !== -1 && text.indexOf(',') === -1 ? '\t' : ',';
   const rows = [];
   let row = [], field = '', inQuotes = false;
@@ -1038,17 +1040,17 @@ function parseCSV(text) {
   const headers = cleanRows[0].map(h => h.trim());
   return cleanRows.slice(1).map(r => {
     const obj = {};
-    headers.forEach((h, i) => { obj[h] = r[i] !== undefined ? r[i].trim() : ''; });
+    headers.forEach((h, i) => { const v = r[i] !== undefined ? r[i].trim() : ''; obj[h] = v; obj[h.toLowerCase()] = v; });
     return obj;
   });
 }
 
 function loadFairRateCsv() {
-  return fetch('./CA_FAIR_Rate.csv')
+  return fetch('./CA_FAIR_Rate.csv', { cache: 'no-cache' })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
     .then(text => {
       parseCSV(text).forEach(row => {
-        const zip = (row.zip || row.ZIP || row.Zip || '').trim();
+        const zip = (row.zip || '').trim();
         if (!zip) return;
         FAIR_RATE_BY_ZIP[zip] = {
           fair:          parseFloat(row.fair) || 0,
@@ -1056,28 +1058,36 @@ function loadFairRateCsv() {
           lowRisk:       parseInt(row.lowRisk, 10) || 0,
           medRisk:       parseInt(row.medRisk, 10) || 0,
           highRisk:      parseInt(row.highRisk, 10) || 0,
-          asOfDate:      row.asOfDate || row.AsOfDate || '',
-          county:        row.County || row.county || '',
+          asOfDate:      row.asofdate || '',
+          county:        row.county || '',
         };
       });
+    })
+    .then(() => {
+      let best = null, bestStr = '';
+      Object.values(FAIR_RATE_BY_ZIP).forEach(r => {
+        const t = Date.parse(r.asOfDate);
+        if (!isNaN(t) && (best === null || t > best)) { best = t; bestStr = r.asOfDate; }
+      });
+      LATEST_AS_OF_DATE = bestStr;
     })
     .catch(err => { console.warn('CA_FAIR_Rate.csv not found or unreadable — falling back to built-in FAIR plan figures.', err); });
 }
 
 function loadInsurerCsv() {
-  return fetch('./Admitted_Top5.csv')
+  return fetch('./Admitted_Top5.csv', { cache: 'no-cache' })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
     .then(text => {
       parseCSV(text).forEach(row => {
-        const zip = (row.zip || row.ZIP || row.ZIP_CODE || '').trim();
+        const zip = (row.zip || row.zip_code || '').trim();
         if (!zip) return;
-        const share = row.MarketShare_2024 !== undefined ? row.MarketShare_2024 : row.share;
+        const share = row.marketshare_2024 !== undefined ? row.marketshare_2024 : row.share;
         if (!INSURERS_BY_ZIP[zip]) INSURERS_BY_ZIP[zip] = [];
         INSURERS_BY_ZIP[zip].push({
-          name:  row.ADMITTED_INSURER_NAME || row.COMPANY_NAME_v2 || row.insurer || '',
+          name:  row.admitted_insurer_name || row.company_name_v2 || row.insurer || '',
           share: +(parseFloat(share) || 0).toFixed(1),
           rank:  parseInt(row.rank, 10) || 999,
-          naic:  row.NAIC_CODE || '',
+          naic:  row.naic_code || '',
         });
       });
       Object.keys(INSURERS_BY_ZIP).forEach(z => INSURERS_BY_ZIP[z].sort((a, b) => a.rank - b.rank));
@@ -1099,7 +1109,9 @@ function applyFairCsvOverrides(data) {
       d.lowRisk       = row.lowRisk;
       d.medRisk       = row.medRisk;
       d.highRisk      = row.highRisk;
-      d.asOfDate      = row.asOfDate || d.asOfDate || null;
+      d.asOfDate      = row.asOfDate || LATEST_AS_OF_DATE || null;
+    } else {
+      d.asOfDate      = LATEST_AS_OF_DATE || null;
     }
   });
   return data;
@@ -1462,6 +1474,68 @@ function dinsColor(damage) {
   if (d.includes('no damage') || d.includes('inaccessible')) return '#9CA3AF';
   return '#3A3A3A';
 }
+
+/* Draws all DINS triangles on ONE <canvas> instead of thousands of DOM markers,
+   and shows a single shared hover tooltip. Much faster to add/pan/zoom. */
+const DinsCanvasLayer = L.Layer.extend({
+  initialize: function (pts) { this._pts = pts; },
+  onAdd: function (map) {
+    this._map = map;
+    const c = this._canvas = L.DomUtil.create('canvas', 'leaflet-zoom-animated');
+    c.style.pointerEvents = 'none';
+    map.getPane('markerPane').appendChild(c);
+    this._tip = L.tooltip({ direction: 'top', offset: [0, -8], sticky: false });
+    this._onMove = this._onMove.bind(this);
+    map.on('moveend zoomend resize', this._redraw, this);
+    map.on('mousemove', this._onMove);
+    this._redraw();
+  },
+  onRemove: function (map) {
+    map.off('moveend zoomend resize', this._redraw, this);
+    map.off('mousemove', this._onMove);
+    if (this._tip) map.closeTooltip(this._tip);
+    L.DomUtil.remove(this._canvas);
+  },
+  _redraw: function () {
+    const map = this._map, size = map.getSize(), c = this._canvas;
+    const dpr = window.devicePixelRatio || 1;
+    L.DomUtil.setPosition(c, map.containerPointToLayerPoint([0, 0]));
+    c.width = size.x * dpr; c.height = size.y * dpr;
+    c.style.width = size.x + 'px'; c.style.height = size.y + 'px';
+    const ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr);
+    this._screen = [];
+    const b = map.getBounds().pad(0.02);
+    this._pts.forEach(p => {
+      if (!b.contains([p.lat, p.lng])) return;
+      const pt = map.latLngToContainerPoint([p.lat, p.lng]);
+      ctx.beginPath();
+      ctx.moveTo(pt.x, pt.y - 8);
+      ctx.lineTo(pt.x - 5, pt.y + 1);
+      ctx.lineTo(pt.x + 5, pt.y + 1);
+      ctx.closePath();
+      ctx.fillStyle = dinsColor(p.damage);
+      ctx.globalAlpha = 0.95;
+      ctx.fill();
+      this._screen.push({ x: pt.x, y: pt.y - 3, p: p });
+    });
+  },
+  _onMove: function (e) {
+    const mx = e.containerPoint.x, my = e.containerPoint.y;
+    let hit = null;
+    for (let i = this._screen.length - 1; i >= 0; i--) {
+      const s = this._screen[i];
+      if (Math.abs(s.x - mx) <= 6 && Math.abs(s.y - my) <= 6) { hit = s; break; }
+    }
+    if (hit) {
+      this._tip.setLatLng([hit.p.lat, hit.p.lng])
+               .setContent('<strong>' + hit.p.year + '</strong><br>' + hit.p.damage);
+      if (!this._map.hasLayer(this._tip)) this._tip.addTo(this._map);
+    } else if (this._map.hasLayer(this._tip)) {
+      this._map.closeTooltip(this._tip);
+    }
+  }
+});
 
 function firewiseSitesForZip(cd) {
   const sites = FIREWISE_SITES[currentCommunity] || [];
@@ -2025,23 +2099,11 @@ function redrawOverlay() {
     firewiseLayer = L.layerGroup(fwMarkers).addTo(leafletMap);
   }
 
-  /* ── 6. DINS fire-damaged structure points ── */
+  /* ── 6. DINS fire-damaged structure points (single canvas layer: fast) ── */
   if (layers.dins && dinsData) {
     const zipSet = new Set(currentZipData.map(d => d.zip));
     const pts = dinsData.filter(p => zipSet.has(p.zip));
-    const dinsMarkers = pts.map(p => L.marker([p.lat, p.lng], {
-      icon: L.divIcon({
-        className: 'dins-triangle-icon',
-        html: `<div class="dins-triangle-sm" style="border-bottom:9px solid ${dinsColor(p.damage)};"></div>`,
-        iconSize: [10, 9],
-        iconAnchor: [5, 8],
-      }),
-      pane: 'markerPane',
-    }).bindTooltip(
-      `<strong>${p.year}</strong><br>${p.damage}`,
-      { direction: 'top', offset: [0, -8] }
-    ));
-    dinsLayer = L.layerGroup(dinsMarkers).addTo(leafletMap);
+    dinsLayer = new DinsCanvasLayer(pts).addTo(leafletMap);
   }
 
   /* ── Update legend UI ── */
@@ -2641,6 +2703,8 @@ function exportCsv() {
 ════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
   initLeafletMap();
+  // Warm up the DINS file in the background so the toggle is instant later.
+  (window.requestIdleCallback || (f => setTimeout(f, 800)))(() => loadDinsData());
  
   // Default to a specific community when embedded with ?community=KEY in the URL
   // e.g. fair-plan-explorer.html?community=monterey
