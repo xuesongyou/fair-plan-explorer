@@ -495,44 +495,50 @@ select.county-sel option { background: #ffffff; color: var(--text); }
   padding-bottom: 1px;
 }
 
-.tt-gauge {
-  position: relative;
-  height: 6px;
-  margin: 15px 0 6px;
-  border-radius: 999px;
-  box-shadow: inset 0 0 0 1px rgba(15,23,42,.06);
+.tt-trend {
+  margin-top: 14px;
+  padding: 10px 12px 6px;
+  border-radius: 10px;
+  background: #f5f7fa;
 }
 
-.tt-gauge-tick {
-  position: absolute;
-  top: -4px; bottom: -4px;
-  width: 2px;
-  border-radius: 1px;
-  background: #1a2533;
-  opacity: .5;
-  transform: translateX(-50%);
-  transition: left .3s cubic-bezier(.2,.8,.2,1);
-}
-
-.tt-gauge-marker {
-  position: absolute;
-  top: 50%;
-  width: 15px; height: 15px;
-  border-radius: 50%;
-  background: var(--tt-accent);
-  border: 2.5px solid #fff;
-  box-shadow: 0 0 0 1px rgba(15,23,42,.20), 0 2px 6px rgba(15,23,42,.28);
-  transform: translate(-50%, -50%);
-  transition: left .3s cubic-bezier(.2,.8,.2,1);
-}
-
-.tt-gauge-ends {
+.tt-trend-head {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  color: var(--text3);
+  gap: 8px;
+  min-height: 20px;
 }
+
+.tt-delta {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.tt-delta.up    { color: #a3283a; background: #fbe9ea; }
+.tt-delta.down  { color: #1f7a4d; background: #e3f4ea; }
+.tt-delta.flat  { color: var(--text2); background: #e8ecf1; }
+.tt-delta.read  { color: var(--text); background: #fff; box-shadow: inset 0 0 0 1px rgba(15,23,42,.10); }
+.tt-delta:empty { display: none; }
+
+#tt-spark {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 4px;
+  overflow: visible;
+}
+#tt-spark text { font-family: var(--mono); font-size: 9.5px; fill: var(--text3); }
+#tt-spark .spark-dot { transition: r .15s ease; }
+
+.tt-chg { font-size: 10.5px; margin-left: 5px; }
+.tt-chg.up   { color: #a3283a; }
+.tt-chg.down { color: #1f7a4d; }
+.tt-chg.flat { color: var(--text3); }
 
 .tt-metrics {
   display: grid;
@@ -561,10 +567,9 @@ select.county-sel option { background: #ffffff; color: var(--text); }
 }
 
 .tt-tick-icon {
-  width: 2px; height: 10px;
-  border-radius: 1px;
-  background: #1a2533;
-  opacity: .5;
+  width: 12px;
+  height: 0;
+  border-top: 1.5px dashed #8a9aaa;
   flex-shrink: 0;
 }
 
@@ -927,16 +932,18 @@ select.county-sel option { background: #ffffff; color: var(--text); }
         <div class="tt-rate-caption">of residential structures have a FAIR&nbsp;Plan policy</div>
       </div>
 
-      <div class="tt-gauge" id="tt-gauge">
-        <div class="tt-gauge-tick" id="tt-gauge-tick"></div>
-        <div class="tt-gauge-marker" id="tt-gauge-marker"></div>
+      <div class="tt-trend" id="tt-trend">
+        <div class="tt-trend-head">
+          <span class="tt-label">Trend</span>
+          <span class="tt-delta" id="tt-delta"></span>
+        </div>
+        <svg id="tt-spark" viewBox="0 0 252 82" role="img" aria-label="FAIR Plan rate over time"></svg>
       </div>
-      <div class="tt-gauge-ends"><span>0%</span><span>50%</span><span>100%</span></div>
 
       <div class="tt-metrics">
         <div class="tt-metric">
           <div class="tt-metric-label">Total policies</div>
-          <div class="tt-metric-value" id="tt-total">—</div>
+          <div class="tt-metric-value"><span id="tt-total">—</span><span class="tt-chg" id="tt-total-chg"></span></div>
         </div>
         <div class="tt-metric" id="tt-avg-wrap">
           <div class="tt-metric-label"><span class="tt-tick-icon"></span><span id="tt-avg-label">County avg</span></div>
@@ -985,21 +992,31 @@ select.county-sel option { background: #ffffff; color: var(--text); }
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   DATA FILES — just replace these files when data updates.
+   DATA FILES — just update these files when data updates.
    No edits to this HTML are needed.
 
-   CA_FAIR_Rate.csv columns:
+   CA_FAIR_Rate_TimeSeries.csv  (one row per ZIP per date)
      zip, fair, totalPolicies, lowRisk, medRisk, highRisk, asOfDate
      (fair = percent, e.g. 20.17 means 20.17%)
+     → The map, stats and risk bars show the LATEST asOfDate.
+     → The tooltip trend line uses every date in the file.
+     → Each quarter, append the new rows; nothing else changes.
 
-   CA_FAIR_Rate_County.csv columns:
+   CA_FAIR_Rate_County.csv
      area, fair_area, asOfDate
      (area = county name or "All California"; fair_area = percent)
+     → Latest date is used for averages. If you also keep one row
+       per area per date, the tooltip draws the county average
+       over time; otherwise it draws a flat reference line.
+
+   CA_FAIR_Rate.csv is only used as a fallback if the time-series
+   file is missing (no trend line in that case).
 
    Comma- or tab-delimited files both work. Column names are
    matched case-insensitively.
 ═══════════════════════════════════════════════════════ */
 const FILES = {
+  zipSeries: './CA_FAIR_Rate_TimeSeries.csv',
   zipData:   './CA_FAIR_Rate.csv',
   areaData:  './CA_FAIR_Rate_County.csv',
   zipGeo:    './CA_ZIP_simple.json',
@@ -1008,7 +1025,10 @@ const FILES = {
 
 let DATA_DATE = '';
 const ZIP_DATA   = {};  // "90001": [fair_rate_pct, totalPolicies, lowRisk, medRisk, highRisk]
-const AREA_STATS = {};  // "los angeles": 6.52      (from CA_FAIR_Rate_County.csv)
+const AREA_STATS = {};  // "los angeles": 6.52      (latest date, from CA_FAIR_Rate_County.csv)
+let   SERIES_DATES = [];  // sorted date keys "YYYY-MM-DD" found in the ZIP file
+const ZIP_SERIES  = {};   // "90001": { "2026-06-30": [rate, total, low, med, high], ... }
+const AREA_SERIES = {};   // "los angeles": { "2026-06-30": 6.52, ... }
 const ZIP_NAMES  = {};  // populated from GeoJSON
 
 /* ═══════════════════════════════════════════════════════
@@ -1130,20 +1150,46 @@ const normCounty = s => String(s || '')
   .trim()
   .toLowerCase();
 
+const dateKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const keyToDate = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+
+// Rows without a readable asOfDate are treated as belonging to the latest date.
+function groupByDate(rows) {
+  const latest = latestDate(rows);
+  const fallbackKey = latest ? dateKey(latest) : '0000-00-00';
+  return rows.map(r => {
+    const d = parseDate(r.asofdate);
+    return [d ? dateKey(d) : fallbackKey, r];
+  });
+}
+
 function ingestZipRows(rows) {
-  rows.forEach(r => {
+  const keyed = groupByDate(rows);
+  const keys = new Set();
+  keyed.forEach(([k, r]) => {
     if (!r.zip) return;
     const zip = String(r.zip).split('.')[0].replace(/\D/g, '').padStart(5, '0');
     if (zip.length !== 5) return;
-    ZIP_DATA[zip] = [num(r.fair), num(r.totalpolicies), num(r.lowrisk), num(r.medrisk), num(r.highrisk)];
+    keys.add(k);
+    (ZIP_SERIES[zip] = ZIP_SERIES[zip] || {})[k] =
+      [num(r.fair), num(r.totalpolicies), num(r.lowrisk), num(r.medrisk), num(r.highrisk)];
   });
-  return latestDate(rows);
+  SERIES_DATES = [...keys].sort();
+  const latestKey = SERIES_DATES[SERIES_DATES.length - 1];
+  for (const zip in ZIP_SERIES) {
+    if (ZIP_SERIES[zip][latestKey]) ZIP_DATA[zip] = ZIP_SERIES[zip][latestKey];
+  }
+  return latestKey ? keyToDate(latestKey) : null;
 }
 
 function ingestAreaRows(rows) {
-  rows.forEach(r => {
+  const keyed = groupByDate(rows);
+  const latestByArea = {};
+  keyed.forEach(([k, r]) => {
     if (!r.area || r.fair_area === '') return;
-    AREA_STATS[normCounty(r.area)] = num(r.fair_area);
+    const a = normCounty(r.area);
+    (AREA_SERIES[a] = AREA_SERIES[a] || {})[k] = num(r.fair_area);
+    if (!latestByArea[a] || k >= latestByArea[a]) { latestByArea[a] = k; AREA_STATS[a] = num(r.fair_area); }
   });
   return latestDate(rows);
 }
@@ -1483,28 +1529,30 @@ function renderTooltip(zip) {
     : counties.length ? counties[0] + ' County' : '';
 
   document.getElementById('tt-rate').textContent = fmtPct(rate);
-  document.getElementById('tt-gauge-marker').style.left = Math.max(0, Math.min(100, rate)) + '%';
 
-  const avg = primary ? areaValue(primary) : null;
-  const tick = document.getElementById('tt-gauge-tick');
-  if (avg !== null) {
-    tick.style.display = 'block';
-    tick.style.left = Math.max(0, Math.min(100, avg)) + '%';
-    document.getElementById('tt-avg-label').textContent = primary + ' avg';
-    document.getElementById('tt-avg').textContent = fmtPct(avg);
-  } else {
-    const state = areaValue('All California');
-    if (state !== null) {
-      tick.style.display = 'block';
-      tick.style.left = Math.max(0, Math.min(100, state)) + '%';
-    } else {
-      tick.style.display = 'none';
-    }
-    document.getElementById('tt-avg-label').textContent = 'California avg';
-    document.getElementById('tt-avg').textContent = state !== null ? fmtPct(state) : '—';
-  }
+  // County (or statewide) average — tile value + reference line in the trend chart
+  let refName = primary, avg = primary ? areaValue(primary) : null;
+  if (avg === null) { refName = 'All California'; avg = areaValue('All California'); }
+  document.getElementById('tt-avg-label').textContent = (refName === 'All California' ? 'California' : refName) + ' avg';
+  document.getElementById('tt-avg').textContent = avg !== null ? fmtPct(avg) : '—';
 
   document.getElementById('tt-total').textContent = total.toLocaleString();
+
+  // Change vs. the previous quarter in the file
+  const prevKey = SERIES_DATES.length > 1 ? SERIES_DATES[SERIES_DATES.length - 2] : null;
+  const prev = prevKey && ZIP_SERIES[zip] ? ZIP_SERIES[zip][prevKey] : null;
+  const prevLabel = prevKey ? formatDate(keyToDate(prevKey)) : '';
+  const chg = document.getElementById('tt-total-chg');
+  if (prev) {
+    const dt = total - prev[1];
+    chg.className = 'tt-chg ' + (dt > 0 ? 'up' : dt < 0 ? 'down' : 'flat');
+    chg.textContent = dt > 0 ? '+' + dt.toLocaleString() : dt < 0 ? '−' + Math.abs(dt).toLocaleString() : '±0';
+    chg.title = 'Change since ' + prevLabel;
+  } else {
+    chg.className = 'tt-chg'; chg.textContent = ''; chg.title = '';
+  }
+
+  renderTrend(zip, refName, rate, prev, prevLabel);
 
   const hasPolicies = total > 0;
   document.getElementById('tt-risk').style.display  = hasPolicies ? '' : 'none';
@@ -1518,6 +1566,146 @@ function renderTooltip(zip) {
   });
 
   setHint();
+}
+
+/* ═══════════════════════════════════════════════════════
+   TREND LINE (inside the tooltip)
+═══════════════════════════════════════════════════════ */
+let deltaDefault = { cls: '', text: '' };
+
+function setDelta(cls, text) {
+  const el = document.getElementById('tt-delta');
+  el.className = 'tt-delta' + (cls ? ' ' + cls : '');
+  el.textContent = text;
+}
+
+function quarterLabel(k) {
+  const d = keyToDate(k);
+  return 'Q' + (Math.floor(d.getMonth() / 3) + 1) + " '" + String(d.getFullYear()).slice(2);
+}
+
+function renderTrend(zip, refName, rate, prev, prevLabel) {
+  const box = document.getElementById('tt-trend');
+  const svg = document.getElementById('tt-spark');
+  const keys = SERIES_DATES;
+  const series = ZIP_SERIES[zip] || {};
+  const vals = keys.map(k => series[k] ? series[k][0] : null);
+
+  if (keys.length < 2 || vals.filter(v => v !== null).length < 1) {
+    box.style.display = 'none';
+    return;
+  }
+  box.style.display = '';
+
+  // Headline: latest vs. previous quarter
+  if (prev) {
+    const diff = rate - prev[0];
+    const pts = Math.abs(diff).toFixed(1);
+    if (pts === '0.0') deltaDefault = { cls: 'flat', text: 'No change since ' + prevLabel };
+    else deltaDefault = { cls: diff > 0 ? 'up' : 'down', text: (diff > 0 ? '▲ ' : '▼ ') + pts + ' pts since ' + prevLabel };
+  } else {
+    deltaDefault = { cls: 'flat', text: 'No data for ' + prevLabel };
+  }
+  setDelta(deltaDefault.cls, deltaDefault.text);
+
+  // Reference line: county (or state) average over time if available, else flat at the latest value
+  const aSeries = AREA_SERIES[normCounty(refName)] || {};
+  let ref = keys.map(k => aSeries[k] !== undefined ? aSeries[k] : null);
+  if (ref.filter(v => v !== null).length < 2) {
+    const latest = areaValue(refName);
+    ref = latest !== null ? keys.map(() => latest) : keys.map(() => null);
+  }
+
+  // Scales
+  const W = 252, X0 = 6, X1 = W - 6, Y0 = 10, Y1 = 58, LABEL_Y = 76;
+  const all = vals.concat(ref).filter(v => v !== null);
+  let lo = Math.min(...all), hi = Math.max(...all);
+  if (hi - lo < 1) { const m = (hi + lo) / 2; lo = m - 0.5; hi = m + 0.5; }
+  const pad = (hi - lo) * 0.14;
+  lo = Math.max(0, lo - pad); hi = Math.min(100, hi + pad);
+  const n = keys.length;
+  const x = i => X0 + i * (X1 - X0) / (n - 1);
+  const y = v => Y1 - (v - lo) / (hi - lo) * (Y1 - Y0);
+
+  const ink = getComputedStyle(tt).getPropertyValue('--tt-ink').trim() || '#a3283a';
+  const accent = getComputedStyle(tt).getPropertyValue('--tt-accent').trim() || '#d1474b';
+
+  // Break lines at missing quarters instead of bridging them
+  const segments = (arr) => {
+    const segs = []; let cur = [];
+    arr.forEach((v, i) => { if (v === null) { if (cur.length) segs.push(cur); cur = []; } else cur.push([x(i), y(v)]); });
+    if (cur.length) segs.push(cur);
+    return segs;
+  };
+  const pathOf = seg => seg.map((p, j) => (j ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+
+  let h = '';
+  h += '<line x1="' + X0 + '" x2="' + X1 + '" y1="' + (Y1 + 4) + '" y2="' + (Y1 + 4) + '" stroke="#e1e6ec" stroke-width="1"/>';
+
+  segments(ref).forEach(seg => {
+    if (seg.length > 1) h += '<path d="' + pathOf(seg) + '" fill="none" stroke="#8a9aaa" stroke-width="1.25" stroke-dasharray="3 3"/>';
+  });
+
+  segments(vals).forEach(seg => {
+    if (seg.length > 1) {
+      const area = pathOf(seg) + ' L' + seg[seg.length - 1][0].toFixed(1) + ',' + (Y1 + 4) + ' L' + seg[0][0].toFixed(1) + ',' + (Y1 + 4) + ' Z';
+      h += '<path d="' + area + '" fill="' + accent + '" fill-opacity=".16"/>';
+      h += '<path d="' + pathOf(seg) + '" fill="none" stroke="' + ink + '" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+    }
+  });
+
+  // First-value label, placed away from the line's direction
+  const firstIdx = vals.findIndex(v => v !== null);
+  const lastIdx = vals.length - 1 - [...vals].reverse().findIndex(v => v !== null);
+  if (firstIdx !== lastIdx) {
+    const fv = vals[firstIdx], nv = vals.slice(firstIdx + 1).find(v => v !== null);
+    const py = y(fv);
+    let below = nv !== undefined && nv >= fv;      // line heads up → label goes underneath
+    if (below && py + 13 > Y1 + 2) below = false;  // no room underneath → go above
+    if (!below && py - 7 < Y0 - 2) below = true;   // no room above → go underneath
+    const ly = below ? py + 13 : py - 7;
+    h += '<text x="' + (x(firstIdx) + 3).toFixed(1) + '" y="' + ly.toFixed(1) + '">' + fmtPct(fv) + '</text>';
+  }
+
+  // Points
+  vals.forEach((v, i) => {
+    if (v === null) return;
+    const isLast = i === lastIdx;
+    h += '<circle class="spark-dot" data-i="' + i + '" cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="' + (isLast ? 4.5 : 2.75) + '" ' +
+         (isLast ? 'fill="' + ink + '" stroke="#fff" stroke-width="2"' : 'fill="#fff" stroke="' + ink + '" stroke-width="1.75"') + '/>';
+  });
+
+  // X-axis labels (all of them when they fit, otherwise first / middle / last)
+  const show = n <= 5 ? keys.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
+  show.forEach(i => {
+    const anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
+    const tx = i === 0 ? X0 - 4 : i === n - 1 ? X1 + 4 : x(i);
+    h += '<text x="' + tx.toFixed(1) + '" y="' + LABEL_Y + '" text-anchor="' + anchor + '">' + quarterLabel(keys[i]) + '</text>';
+  });
+
+  // Invisible hover targets: hovering a point shows its date and value in the badge
+  vals.forEach((v, i) => {
+    if (v === null) return;
+    h += '<circle class="spark-hit" data-i="' + i + '" cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="11" fill="transparent"/>';
+  });
+
+  svg.innerHTML = h;
+  svg.setAttribute('aria-label', 'FAIR Plan rate by quarter: ' +
+    keys.map((k, i) => vals[i] === null ? null : formatDate(keyToDate(k)) + ' ' + fmtPct(vals[i])).filter(Boolean).join(', '));
+
+  svg.querySelectorAll('.spark-hit').forEach(hit => {
+    const i = +hit.dataset.i;
+    const dot = svg.querySelector('.spark-dot[data-i="' + i + '"]');
+    const baseR = dot.getAttribute('r');
+    hit.addEventListener('mouseenter', () => {
+      dot.setAttribute('r', i === lastIdx ? 5.5 : 4.25);
+      setDelta('read', formatDate(keyToDate(keys[i])) + ' · ' + fmtPct(vals[i]));
+    });
+    hit.addEventListener('mouseleave', () => {
+      dot.setAttribute('r', baseR);
+      setDelta(deltaDefault.cls, deltaDefault.text);
+    });
+  });
 }
 
 function showTooltip() { tt.classList.add('show'); }
@@ -1779,7 +1967,6 @@ function showLoadError(html) {
 
 async function boot() {
   document.getElementById('legend-ramp').style.background = RAMP_CSS;
-  document.getElementById('tt-gauge').style.background = RAMP_CSS;
   if (IS_TOUCH) document.querySelector('.js-pin-legend').textContent = 'Tap a ZIP to see its details';
   setHint();
 
@@ -1787,7 +1974,11 @@ async function boot() {
 
   // 1) Policy data
   try {
-    const [zipRows, areaRows] = await Promise.all([loadTable(FILES.zipData), loadTable(FILES.areaData)]);
+    const zipRowsP = loadTable(FILES.zipSeries).catch(err => {
+      console.warn('Time-series file not found (' + err.message + '); falling back to ' + FILES.zipData + ' without trend lines.');
+      return loadTable(FILES.zipData);
+    });
+    const [zipRows, areaRows] = await Promise.all([zipRowsP, loadTable(FILES.areaData)]);
     const zipDate  = ingestZipRows(zipRows);
     const areaDate = ingestAreaRows(areaRows);
     const d = zipDate || areaDate;
