@@ -2155,6 +2155,17 @@ function syncRangeFill(el) {
 }
 window.addEventListener('DOMContentLoaded', () => {
   initLeafletMap();
+
+  // Default to a specific community when embedded with ?community=KEY in the URL
+  // e.g. flood-risk-explorer-v2.html?community=monterey
+  const params = new URLSearchParams(window.location.search);
+  const requestedCommunity = params.get('community');
+  if (requestedCommunity && COMMUNITY_META[requestedCommunity]) {
+    const select = document.getElementById('community-select');
+    select.value = requestedCommunity;
+    select.dispatchEvent(new Event('change'));
+  }
+
   document.querySelectorAll('input[type=range]').forEach(el => {
     syncRangeFill(el);
     el.addEventListener('input', () => syncRangeFill(el));
