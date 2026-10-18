@@ -79,6 +79,26 @@ body {
   font-weight: 400;
 }
 
+/* ── Logo ── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  height: 34px;          /* adjust to taste; width scales automatically */
+  width: auto;
+  display: block;
+}
+
+.brand-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+}
+  
 /* ── Search ── */
 .header-center {
   flex: 1;
@@ -804,9 +824,13 @@ select.county-sel option { background: #ffffff; color: var(--text); }
 
 <!-- HEADER -->
 <header class="header">
-  <div class="header-left">
-    <div class="map-title">Percent of Residential Structures with a FAIR Plan Policy</div>
-    <div class="map-subtitle">As of <span class="js-asof">—</span></div>
+  <div class="brand">
+    <img class="brand-logo" src="./I4G.png" alt="I4G logo">
+    <div class="brand-divider"></div>
+    <div class="header-left">
+      <div class="map-title">Percent of Residential Structures with a FAIR Plan Policy</div>
+      <div class="map-subtitle">As of <span class="js-asof">—</span></div>
+    </div>
   </div>
 
   <div class="header-center">
