@@ -563,38 +563,46 @@ select.county-sel option { background: #ffffff; color: var(--text); }
   margin: 15px 0 8px;
 }
 
-.tt-stack {
+.tt-bar-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 46px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.tt-bar-row:last-child { margin-bottom: 0; }
+
+.tt-bar-name {
   display: flex;
-  gap: 2px;
-  height: 8px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(15,23,42,.06);
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text2);
 }
 
-.tt-stack span {
+.tt-dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+
+.tt-bar-track {
+  height: 12px;
+  border-radius: 4px;
+  background: #eef1f5;
+  box-shadow: inset 0 0 0 1px rgba(15,23,42,.04);
+  overflow: hidden;
+}
+
+.tt-bar-fill {
   height: 100%;
+  border-radius: 4px;
   transition: width .35s cubic-bezier(.2,.8,.2,1);
 }
 
-.tt-risk-list {
-  display: grid;
-  gap: 6px;
-  margin-top: 10px;
+.tt-bar-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: right;
 }
-
-.tt-risk-row {
-  display: grid;
-  grid-template-columns: 9px 1fr auto 42px;
-  align-items: center;
-  gap: 8px;
-  font-size: 11.5px;
-}
-
-.tt-dot { width: 8px; height: 8px; border-radius: 2.5px; }
-.tt-risk-name { color: var(--text2); }
-.tt-risk-count { font-family: var(--mono); font-weight: 500; color: var(--text); }
-.tt-risk-pct { font-family: var(--mono); font-size: 10.5px; color: var(--text3); text-align: right; }
 
 .tt-empty {
   padding: 10px 12px;
@@ -917,30 +925,20 @@ select.county-sel option { background: #ffffff; color: var(--text); }
       </div>
 
       <div id="tt-risk">
-        <div class="tt-stack">
-          <span id="seg-low"  style="background:var(--risk-low)"></span>
-          <span id="seg-med"  style="background:var(--risk-med)"></span>
-          <span id="seg-high" style="background:var(--risk-high)"></span>
+        <div class="tt-bar-row">
+          <div class="tt-bar-name"><span class="tt-dot" style="background:var(--risk-low)"></span>Low</div>
+          <div class="tt-bar-track"><div class="tt-bar-fill" id="bar-low" style="background:var(--risk-low);"></div></div>
+          <div class="tt-bar-count" id="count-low">—</div>
         </div>
-        <div class="tt-risk-list">
-          <div class="tt-risk-row">
-            <span class="tt-dot" style="background:var(--risk-low)"></span>
-            <span class="tt-risk-name">Low</span>
-            <span class="tt-risk-count" id="count-low">—</span>
-            <span class="tt-risk-pct" id="pct-low">—</span>
-          </div>
-          <div class="tt-risk-row">
-            <span class="tt-dot" style="background:var(--risk-med)"></span>
-            <span class="tt-risk-name">Medium</span>
-            <span class="tt-risk-count" id="count-med">—</span>
-            <span class="tt-risk-pct" id="pct-med">—</span>
-          </div>
-          <div class="tt-risk-row">
-            <span class="tt-dot" style="background:var(--risk-high)"></span>
-            <span class="tt-risk-name">High</span>
-            <span class="tt-risk-count" id="count-high">—</span>
-            <span class="tt-risk-pct" id="pct-high">—</span>
-          </div>
+        <div class="tt-bar-row">
+          <div class="tt-bar-name"><span class="tt-dot" style="background:var(--risk-med)"></span>Medium</div>
+          <div class="tt-bar-track"><div class="tt-bar-fill" id="bar-med" style="background:var(--risk-med);"></div></div>
+          <div class="tt-bar-count" id="count-med">—</div>
+        </div>
+        <div class="tt-bar-row">
+          <div class="tt-bar-name"><span class="tt-dot" style="background:var(--risk-high)"></span>High</div>
+          <div class="tt-bar-track"><div class="tt-bar-fill" id="bar-high" style="background:var(--risk-high);"></div></div>
+          <div class="tt-bar-count" id="count-high">—</div>
         </div>
       </div>
       <div class="tt-empty" id="tt-empty" style="display:none;">No active FAIR Plan policies in this ZIP.</div>
@@ -967,7 +965,7 @@ select.county-sel option { background: #ffffff; color: var(--text); }
    No edits to this HTML are needed.
 
    CA_FAIR_Rate.csv columns:
-     zip, County, fair, totalPolicies, lowRisk, medRisk, highRisk, asOfDate
+     zip, fair, totalPolicies, lowRisk, medRisk, highRisk, asOfDate
      (fair = percent, e.g. 20.17 means 20.17%)
 
    CA_FAIR_Rate_County.csv columns:
@@ -986,14 +984,13 @@ const FILES = {
 
 let DATA_DATE = '';
 const ZIP_DATA   = {};  // "90001": [fair_rate_pct, totalPolicies, lowRisk, medRisk, highRisk]
-const ZIP_COUNTY = {};  // "90001": "Los Angeles"   (from CA_FAIR_Rate.csv)
 const AREA_STATS = {};  // "los angeles": 6.52      (from CA_FAIR_Rate_County.csv)
 const ZIP_NAMES  = {};  // populated from GeoJSON
 
 /* ═══════════════════════════════════════════════════════
    COUNTY DEFINITIONS
-   A ZIP is shown for a county if it is listed here OR its
-   "County" value in CA_FAIR_Rate.csv matches.
+   The sole source of the ZIP → county crosswalk (filter,
+   tooltip county label and county-average comparison).
 ═══════════════════════════════════════════════════════ */
 const COUNTY_ZIP_MAP = {
   "Alameda": z => ["94501","94502","94505","94514","94536","94538","94539","94541","94542","94544","94545","94546","94550","94551","94552","94555","94560","94566","94568","94577","94578","94579","94580","94586","94587","94588","94601","94602","94603","94605","94606","94607","94608","94609","94610","94611","94612","94613","94618","94619","94621","94702","94703","94704","94705","94706","94707","94708","94709","94710","94720","95377","95391"].includes(z),
@@ -1115,7 +1112,6 @@ function ingestZipRows(rows) {
     const zip = String(r.zip).split('.')[0].replace(/\D/g, '').padStart(5, '0');
     if (zip.length !== 5) return;
     ZIP_DATA[zip] = [num(r.fair), num(r.totalpolicies), num(r.lowrisk), num(r.medrisk), num(r.highrisk)];
-    if (r.county) ZIP_COUNTY[zip] = r.county.replace(/\s+County$/i, '').trim();
   });
   return latestDate(rows);
 }
@@ -1196,14 +1192,25 @@ function readableInk(hex) {
 let map = null;
 let zipLayer = null;
 let countyGeoData = null;
-let allCountyLayer = null;
 let countyHighlightLayer = null;
 let currentFilter = null;
 let searchMarker = null;
+let hoverOutline = null;     // single outline for the ZIP under the mouse
+let pinOutline = null;       // single outline for the pinned ZIP
 const zipLayers = {};        // zip -> Leaflet layer
-
-const HOVER_STYLE  = { fillOpacity: 0.92, weight: 2,   color: '#1a2533' };
 const IS_TOUCH = window.matchMedia && window.matchMedia('(hover: none)').matches;
+
+/* Layer stacking is handled by fixed panes, so nothing is ever re-ordered
+   while the mouse is over it (re-ordering is what broke clicks/mouseout):
+     overlayPane (400)  ZIP fills          — interactive
+     countyPane  (440)  county boundaries  — not interactive
+     outlinePane (450)  hover / pin rings  — not interactive
+     searchPane  (650)  searched address   — not interactive            */
+function makePane(name, z) {
+  map.createPane(name);
+  map.getPane(name).style.zIndex = z;
+  map.getPane(name).style.pointerEvents = 'none';
+}
 
 function initMap() {
   map = L.map('leaflet-map', {
@@ -1226,15 +1233,38 @@ function initMap() {
 
   map.attributionControl.addAttribution('Search &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors');
 
-  // Pane for the searched-address marker, above ZIP polygons
-  map.createPane('searchPane');
-  map.getPane('searchPane').style.zIndex = 650;
-  map.getPane('searchPane').style.pointerEvents = 'none';
+  makePane('countyPane', 440);
+  makePane('outlinePane', 450);
+  makePane('searchPane', 650);
 
   // Keep a pinned tooltip attached to its spot while the map moves
   map.on('move zoom resize', () => { if (pinned) positionPinned(); });
-  // Clicking empty map closes a pinned tooltip
+  // Clicking empty map (or a hidden ZIP) closes a pinned tooltip
   map.on('click', () => { if (pinned) unpin(); });
+  // Mouse leaves the map entirely → clear hover state
+  map.getContainer().addEventListener('mouseleave', clearHover);
+}
+
+function outlineFor(zip, style) {
+  const layer = zipLayers[zip];
+  if (!layer) return null;
+  return L.geoJSON(layer.feature, { pane: 'outlinePane', interactive: false, style }).addTo(map);
+}
+
+const HOVER_RING = { fill: false, color: '#1a2533', weight: 2,    opacity: 0.9 };
+const PIN_RING   = { fill: false, color: '#1a2533', weight: 3.25, opacity: 1 };
+
+let hoverZip = null;
+function setHover(zip) {
+  if (hoverZip === zip) return;
+  clearHover();
+  hoverZip = zip;
+  if (!pinned || pinned.zip !== zip) hoverOutline = outlineFor(zip, HOVER_RING);
+}
+function clearHover() {
+  if (hoverOutline) { map.removeLayer(hoverOutline); hoverOutline = null; }
+  hoverZip = null;
+  if (!pinned) hideTooltip();
 }
 
 function buildZipLayer(geoData) {
@@ -1251,10 +1281,8 @@ function buildZipLayer(geoData) {
 
       layer.on({
         mouseover: e => {
-          if (!isVisible(zip)) return;
-          layer.setStyle(HOVER_STYLE);
-          layer.bringToFront();
-          keepOverlaysOnTop();
+          if (!isVisible(zip)) { clearHover(); return; }
+          setHover(zip);
           if (!pinned) {
             renderTooltip(zip);
             showTooltip();
@@ -1262,17 +1290,17 @@ function buildZipLayer(geoData) {
           }
         },
         mousemove: e => {
-          if (pinned || !isVisible(zip)) return;
+          if (!isVisible(zip)) return;
+          if (hoverZip !== zip) setHover(zip);
+          if (pinned) return;
           if (ttZip !== zip) { renderTooltip(zip); showTooltip(); }
           placeFromEvent(e.originalEvent);
         },
         mouseout: () => {
-          zipLayer.resetStyle(layer);
-          keepOverlaysOnTop();
-          if (!pinned) hideTooltip();
+          if (hoverZip === zip) clearHover();
         },
         click: e => {
-          if (!isVisible(zip)) return;          // let it fall through to the map (unpins)
+          if (!isVisible(zip)) return;          // falls through to the map → unpins
           L.DomEvent.stopPropagation(e);
           if (pinned && pinned.zip === zip) unpin();
           else pin(zip, e.latlng);
@@ -1289,7 +1317,8 @@ function buildZipLayer(geoData) {
 ═══════════════════════════════════════════════════════ */
 function buildAllCountyBoundaries() {
   if (!countyGeoData) return;
-  allCountyLayer = L.geoJSON(countyGeoData, {
+  L.geoJSON(countyGeoData, {
+    pane: 'countyPane',
     style: { fill: false, color: '#ffffff', weight: 2, opacity: 0.9 },
     interactive: false,
   }).addTo(map);
@@ -1309,17 +1338,11 @@ function highlightCountyBoundary(countyName) {
   countyHighlightLayer = L.geoJSON(
     { type: 'FeatureCollection', features: matching },
     {
+      pane: 'countyPane',
       style: { fill: false, color: '#1a2533', weight: 3, opacity: 1 },
       interactive: false,
     }
   ).addTo(map);
-  countyHighlightLayer.bringToFront();
-}
-
-function keepOverlaysOnTop() {
-  if (pinned && zipLayers[pinned.zip]) zipLayers[pinned.zip].bringToFront();
-  if (allCountyLayer) allCountyLayer.bringToFront();
-  if (countyHighlightLayer) countyHighlightLayer.bringToFront();
 }
 
 function styleZip(feat) {
@@ -1328,9 +1351,6 @@ function styleZip(feat) {
   if (!d) return { fillOpacity: 0, stroke: false };
 
   const visible = isVisible(zip);
-  if (visible && pinned && pinned.zip === zip) {
-    return { fillColor: getColor(d[0]), fillOpacity: 0.9, color: '#1a2533', weight: 2.75, opacity: 1 };
-  }
   return {
     fillColor: getColor(d[0]),
     fillOpacity: visible ? 0.72 : 0,
@@ -1340,11 +1360,19 @@ function styleZip(feat) {
   };
 }
 
+/* County membership comes only from COUNTY_ZIP_MAP */
 function isVisible(zip) {
   if (!currentFilter) return true;
   const fn = COUNTY_ZIP_MAP[currentFilter];
-  if (fn && fn(zip)) return true;
-  return normCounty(ZIP_COUNTY[zip]) === normCounty(currentFilter);
+  return fn ? fn(zip) : true;
+}
+
+const zipCountyCache = {};
+function countiesOf(zip) {
+  if (!zipCountyCache[zip]) {
+    zipCountyCache[zip] = Object.keys(COUNTY_ZIP_MAP).filter(c => COUNTY_ZIP_MAP[c](zip)).sort();
+  }
+  return zipCountyCache[zip];
 }
 
 function applyFilter(countyName, opts = {}) {
@@ -1352,10 +1380,10 @@ function applyFilter(countyName, opts = {}) {
   if (!zipLayer) return;
 
   if (pinned && !isVisible(pinned.zip)) unpin();
+  clearHover();
 
   zipLayer.eachLayer(layer => layer.setStyle(styleZip(layer.feature)));
   highlightCountyBoundary(currentFilter);
-  keepOverlaysOnTop();
 
   const badge = document.getElementById('county-badge');
   if (currentFilter) {
@@ -1369,13 +1397,11 @@ function applyFilter(countyName, opts = {}) {
     if (currentFilter) {
       let bounds = null;
       zipLayer.eachLayer(layer => {
-        const zip = layer.feature.properties.ZIP_CODE;
-        if (isVisible(zip)) {
-          try { bounds = bounds ? bounds.extend(layer.getBounds()) : L.latLngBounds(layer.getBounds().getSouthWest(), layer.getBounds().getNorthEast()); } catch (e) {}
-        }
+        if (!isVisible(layer.feature.properties.ZIP_CODE)) return;
+        const b = layer.getBounds();
+        bounds = bounds ? bounds.extend(b) : L.latLngBounds(b.getSouthWest(), b.getNorthEast());
       });
       if (bounds) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
-      setTimeout(keepOverlaysOnTop, 300);
     } else {
       map.flyTo([37.5, -119.5], 6, { duration: 0.8 });
     }
@@ -1424,23 +1450,32 @@ function renderTooltip(zip) {
   document.getElementById('tt-zip').textContent = zip;
   document.getElementById('tt-place').textContent = titleCase(ZIP_NAMES[zip]);
 
-  const county = ZIP_COUNTY[zip] || '';
-  document.getElementById('tt-county').textContent = county ? county + ' County' : '';
+  // County (from COUNTY_ZIP_MAP). A ZIP can straddle counties; when a county
+  // filter is active, that county is used for the comparison average.
+  const counties = countiesOf(zip);
+  const primary = (currentFilter && counties.includes(currentFilter)) ? currentFilter : (counties[0] || '');
+  document.getElementById('tt-county').textContent =
+    counties.length > 1 ? counties.join(' · ') + ' Counties'
+    : counties.length ? counties[0] + ' County' : '';
 
   document.getElementById('tt-rate').textContent = fmtPct(rate);
   document.getElementById('tt-gauge-marker').style.left = Math.max(0, Math.min(100, rate)) + '%';
 
-  const avg = county ? areaValue(county) : null;
+  const avg = primary ? areaValue(primary) : null;
   const tick = document.getElementById('tt-gauge-tick');
   if (avg !== null) {
     tick.style.display = 'block';
     tick.style.left = Math.max(0, Math.min(100, avg)) + '%';
-    document.getElementById('tt-avg-label').textContent = county + ' avg';
+    document.getElementById('tt-avg-label').textContent = primary + ' avg';
     document.getElementById('tt-avg').textContent = fmtPct(avg);
-    document.getElementById('tt-avg-wrap').style.display = '';
   } else {
-    tick.style.display = 'none';
     const state = areaValue('All California');
+    if (state !== null) {
+      tick.style.display = 'block';
+      tick.style.left = Math.max(0, Math.min(100, state)) + '%';
+    } else {
+      tick.style.display = 'none';
+    }
     document.getElementById('tt-avg-label').textContent = 'California avg';
     document.getElementById('tt-avg').textContent = state !== null ? fmtPct(state) : '—';
   }
@@ -1451,18 +1486,12 @@ function renderTooltip(zip) {
   document.getElementById('tt-risk').style.display  = hasPolicies ? '' : 'none';
   document.getElementById('tt-empty').style.display = hasPolicies ? 'none' : 'block';
 
-  if (hasPolicies) {
-    const sum = (low + med + high) || total;
-    [['low', low], ['med', med], ['high', high]].forEach(([k, v]) => {
-      const share = v / sum * 100;
-      const seg = document.getElementById('seg-' + k);
-      seg.style.width = share + '%';
-      seg.style.display = v > 0 ? '' : 'none';
-      document.getElementById('count-' + k).textContent = v.toLocaleString();
-      document.getElementById('pct-' + k).textContent =
-        v === 0 ? '0%' : share < 1 ? '<1%' : Math.round(share) + '%';
-    });
-  }
+  // Original design: each bar's length = that risk level's share of total policies
+  [['low', low], ['med', med], ['high', high]].forEach(([k, v]) => {
+    const pct = total > 0 ? (v / total) * 100 : 0;
+    document.getElementById('bar-' + k).style.width = Math.min(100, pct) + '%';
+    document.getElementById('count-' + k).textContent = v.toLocaleString();
+  });
 
   setHint();
 }
@@ -1502,12 +1531,10 @@ function positionPinned() {
 }
 
 function pin(zip, latlng) {
-  const prev = pinned && zipLayers[pinned.zip];
   pinned = { zip, latlng };
-  if (prev) zipLayer.resetStyle(prev);
-  const layer = zipLayers[zip];
-  if (layer) { layer.setStyle(styleZip(layer.feature)); }
-  keepOverlaysOnTop();
+  if (pinOutline) map.removeLayer(pinOutline);
+  pinOutline = outlineFor(zip, PIN_RING);
+  if (hoverZip === zip && hoverOutline) { map.removeLayer(hoverOutline); hoverOutline = null; }
 
   renderTooltip(zip);
   tt.classList.add('pinned', 'show');
@@ -1516,10 +1543,8 @@ function pin(zip, latlng) {
 
 function unpin() {
   if (!pinned) return;
-  const layer = zipLayers[pinned.zip];
   pinned = null;
-  if (layer) zipLayer.resetStyle(layer);
-  keepOverlaysOnTop();
+  if (pinOutline) { map.removeLayer(pinOutline); pinOutline = null; }
   tt.classList.remove('pinned', 'offscreen');
   hideTooltip();
 }
@@ -1706,7 +1731,6 @@ function buildCountyDropdown() {
   const sel = document.getElementById('county-select');
   const names = new Map();
   Object.keys(COUNTY_ZIP_MAP).forEach(n => names.set(normCounty(n), n));
-  Object.values(ZIP_COUNTY).forEach(n => { if (n && !names.has(normCounty(n))) names.set(normCounty(n), n); });
 
   [...names.values()].sort().forEach(name => {
     const opt = document.createElement('option');
@@ -1773,7 +1797,6 @@ async function boot() {
     countyGeoData = countyGeo;
     buildAllCountyBoundaries();
   }
-  keepOverlaysOnTop();
   document.getElementById('loading').classList.add('hidden');
   updateStats();
 }
